@@ -29,7 +29,7 @@ constexpr std::array KEYS{
   K_Z, K_X, K_C, K_V, K_B, K_N, K_M,
   K_LCTRL, K_LSHIFT, K_LALT, K_LGUI,
   K_RCTRL, K_RSHIFT, K_RALT, K_RGUI,
-  K_MUHENKAN, K_HENKAN,
+  K_MUHENKAN, K_HENKAN, K_KATAKANA_HIRAGANA,
   K_MICROPHONE_MUTE,
 
   // そのままにするキー
@@ -38,7 +38,7 @@ constexpr std::array KEYS{
   K_AT, K_LBRACKET,
   K_SCOLON, K_COLON, K_RBRACKET,
   K_COMMA, K_DOT, K_SLASH, K_BSLASH,
-  K_BSPACE, K_TAB, K_CAPSLOCK, K_ENTER, K_SPACE, K_KATAKANA_HIRAGANA, K_APPLICATION,
+  K_BSPACE, K_TAB, K_CAPSLOCK, K_ENTER, K_SPACE, K_APPLICATION,
   K_PSCREEN, K_SCROLLLOCK, K_PAUSE,
   K_INSERT, K_HOME, K_PGUP,
   K_DELETE, K_END, K_PGDOWN,
@@ -85,11 +85,10 @@ enum FuncId {
   FN_RGUI,
   FN_IME_OFF,
   FN_IME_ON,
+  FN_IME_OFF_KANA,
   FN_MICROPHONE_MUTE,  // マイクのオン/オフを切り替える
 };
 
-constexpr action_t AC_FN_IME_OFF = ACTION_FUNCTION(FN_IME_OFF);
-constexpr action_t AC_FN_IME_ON = ACTION_FUNCTION(FN_IME_ON);
 constexpr action_t AC_FN_LCTRL = ACTION_FUNCTION(FN_LCTRL);
 constexpr action_t AC_FN_LSHIFT = ACTION_FUNCTION(FN_LSHIFT);
 constexpr action_t AC_FN_LALT = ACTION_FUNCTION(FN_LALT);
@@ -98,6 +97,9 @@ constexpr action_t AC_FN_RCTRL = ACTION_FUNCTION(FN_RCTRL);
 constexpr action_t AC_FN_RSHIFT = ACTION_FUNCTION(FN_RSHIFT);
 constexpr action_t AC_FN_RALT = ACTION_FUNCTION(FN_RALT);
 constexpr action_t AC_FN_RGUI = ACTION_FUNCTION(FN_RGUI);
+constexpr action_t AC_FN_IME_OFF = ACTION_FUNCTION(FN_IME_OFF);
+constexpr action_t AC_FN_IME_ON = ACTION_FUNCTION(FN_IME_ON);
+constexpr action_t AC_FN_IME_OFF_KANA = ACTION_FUNCTION(FN_IME_OFF_KANA);
 constexpr action_t AC_FN_MICROPHONE_MUTE = ACTION_FUNCTION(FN_MICROPHONE_MUTE);
 
 // IMEオフのときのアクションリスト
@@ -108,7 +110,7 @@ constexpr std::array IME_OFF_ACTIONS{
   AC_Z,AC_X,AC_C,AC_V,AC_B,AC_N,AC_M,
   AC_FN_LCTRL, AC_FN_LSHIFT, AC_FN_LALT, AC_FN_LGUI,
   AC_FN_RCTRL, AC_FN_RSHIFT, AC_FN_RALT, AC_FN_RGUI,
-  AC_FN_IME_OFF, AC_FN_IME_ON,
+  AC_FN_IME_OFF, AC_FN_IME_ON, AC_FN_IME_OFF_KANA,
   AC_FN_MICROPHONE_MUTE,
     /* clang-format on */
 };
@@ -116,15 +118,24 @@ constexpr std::array IME_OFF_ACTIONS{
 // IMEオンのときのアクションリスト
 constexpr std::array IME_ON_ACTIONS{
     /* clang-format off */
+  // v2.1
+  // AC_P,AC_D,AC_R,AC_G,AC_F,AC_YE,AC_YO,AC_U,AC_O,AC_Q,
+  // AC_N,AC_S,AC_T,AC_K,AC_H,AC_YU,AC_A,AC_I,AC_E,
+  // AC_Z,AC_B,AC_W,AC_M,AC_V,AC_YA,AC_L,
+
+  // v2.2
   AC_P,AC_D,AC_R,AC_G,AC_F,AC_YE,AC_YO,AC_U,AC_O,AC_Q,
-  AC_N,AC_S,AC_T,AC_K,AC_H,AC_YU,AC_A,AC_I,AC_E,
-  AC_Z,AC_B,AC_W,AC_M,AC_V,AC_YA,AC_L,
+  AC_N,AC_T,AC_S,AC_K,AC_H,AC_YU,AC_A,AC_I,AC_E,
+  AC_B,AC_W,AC_Z,AC_M,AC_V,AC_YA,AC_L,
+
   AC_FN_LCTRL, AC_FN_LSHIFT, AC_FN_LALT, AC_FN_LGUI,
   AC_FN_RCTRL, AC_FN_RSHIFT, AC_FN_RALT, AC_FN_RGUI,
-  AC_FN_IME_OFF, AC_FN_IME_ON,
+  AC_FN_IME_OFF, AC_FN_IME_ON, AC_FN_IME_OFF_KANA,
   AC_FN_MICROPHONE_MUTE,
     /* clang-format on */
 };
+
+static_assert(IME_OFF_ACTIONS.size() == IME_ON_ACTIONS.size());
 
 extern "C" {
 action_t action_for_key(uint8_t layer, keypos_t pos) {
@@ -219,6 +230,19 @@ void action_function(keyrecord_t* record, uint8_t id, uint8_t opt) {
           register_code(KC_HENKAN);
         } else {
           unregister_code(KC_HENKAN);
+        }
+        send_keyboard_report();
+        break;
+      }
+      case FN_IME_OFF_KANA: {
+        // IMEをオフにしたときにレイヤーを右にずらす
+        if (event.pressed) {
+          if (layer_state & (0b11 << L_IME_ON)) {
+            layer_state >>= L_IME_ON;
+          }
+          register_code(KC_KATAKANA_HIRAGANA);
+        } else {
+          unregister_code(KC_KATAKANA_HIRAGANA);
         }
         send_keyboard_report();
         break;
