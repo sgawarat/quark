@@ -21,6 +21,14 @@ using Key = uint16_t;
 static constexpr size_t KEY_COUNT = 0x200;
 
 /**
+ * @brief イベントコード
+ */
+enum class KeyboardEvent : DWORD {
+  NONE,   //< 通常のキー入力
+  CLEAR,  //< 状態のクリア
+};
+
+/**
  * @brief キーイベントを格納するクラス
  */
 class KeyEvent final {
@@ -29,6 +37,8 @@ public:
 
   KeyEvent(const KBDLLHOOKSTRUCT& info) noexcept : vk_(info.vkCode), sc_(info.scanCode), flags_(info.flags) {}
 
+  KeyEvent(KeyboardEvent event) noexcept : vk_(0xffff), sc_(0xffff), flags_(static_cast<DWORD>(event)) {}
+
   Key key() const noexcept {
     // HACK: 8ビットより大きなスキャンコードが現れないことを前提としている
     return ((flags_ & LLKHF_EXTENDED) ? 0x100 : 0) | (sc_ & 0xff);
@@ -36,6 +46,11 @@ public:
 
   bool is_pressed() const noexcept {
     return !(flags_ & LLKHF_UP);
+  }
+
+  KeyboardEvent keyboard_event() const noexcept {
+    // HACK: メッセージをやりとりするための範囲をねじ込む
+    return vk_ == 0xffff && sc_ == 0xffff ? KeyboardEvent{flags_} : KeyboardEvent::NONE;
   }
 
 private:

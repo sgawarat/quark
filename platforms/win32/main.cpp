@@ -8,6 +8,13 @@
 #include <utility>
 #include <cstdio>
 #include <Windows.h>
+#ifndef OUT
+#define OUT
+#endif
+#include <WtsApi32.h>
+#ifdef OUT
+#undef OUT
+#endif
 #include <tmk_desktop/source.hpp>
 #include <tmk_desktop/keyboard.hpp>
 #include <tmk_desktop/sink.hpp>
@@ -102,6 +109,17 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
       }
       return 0;
     }
+    case WM_WTSSESSION_CHANGE: {
+      switch (wparam) {
+        // 画面がロックされたとき
+        case WTS_SESSION_LOCK: {
+          // 誤動作を防ぐためにキーをすべて離す
+          send_to_keyboard(KeyboardEvent::CLEAR);
+          break;
+        }
+      }
+      return 0;
+    }
     default:
       return DefWindowProc(hwnd, msg, wparam, lparam);
   }
@@ -172,6 +190,10 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   // 通知アイコン
   if (!add_notify_icon(wnd, 0, WM_APP_NOTIFY_ICON, icon, TITLE)) return EXIT_FAILURE;
   const Scoped notify_icon_dtor{[&] { remove_notify_icon(wnd, 0); }};
+
+  // 画面ロック検知
+  WTSRegisterSessionNotification(wnd, NOTIFY_FOR_THIS_SESSION);
+  const Scoped session_notification_dtor{[&] { WTSUnRegisterSessionNotification(wnd); }};
 
   // Sink
   start_sink();

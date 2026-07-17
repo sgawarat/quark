@@ -114,34 +114,48 @@ bool start_keyboard() {
           event_queue_.pop_front();
         }
 
-        const auto key = event.key();
-        const auto keypos = key_to_keypos(key);
-        if (keypos.row < MATRIX_ROWS && keypos.col < MATRIX_COLS) {
-          const auto pos = Matrix::Position{keypos.row, keypos.col};
-          if (event.is_pressed()) {
-            if (key == repeat_key_) {
-              send_to_sink(SinkSignal::KEY_REPEAT);
-            } else {
-              send_to_sink(SinkSignal::KEY_REPEAT_END);
-              repeat_key_ = key;
-              matrix_.set(pos);
-              keyboard_task();
+        switch (event.keyboard_event()) {
+          case KeyboardEvent::NONE: {
+            const auto key = event.key();
+            const auto keypos = key_to_keypos(key);
+            if (keypos.row < MATRIX_ROWS && keypos.col < MATRIX_COLS) {
+              const auto pos = Matrix::Position{keypos.row, keypos.col};
+              if (event.is_pressed()) {
+                if (key == repeat_key_) {
+                  send_to_sink(SinkSignal::KEY_REPEAT);
+                } else {
+                  send_to_sink(SinkSignal::KEY_REPEAT_END);
+                  repeat_key_ = key;
+                  matrix_.set(pos);
+                  keyboard_task();
 
-              // 指定のキーはすぐに離す処理を行う
-              if (is_tapping_key(key)) {
-                send_to_sink(SinkSignal::KEY_REPEAT_END);
-                repeat_key_ = NO_REPEAT;
+                  // 指定のキーはすぐに離す処理を行う
+                  if (is_tapping_key(key)) {
+                    send_to_sink(SinkSignal::KEY_REPEAT_END);
+                    repeat_key_ = NO_REPEAT;
+                    matrix_.reset(pos);
+                    keyboard_task();
+                  }
+                }
+              } else {
+                if (key == repeat_key_) {
+                  send_to_sink(SinkSignal::KEY_REPEAT_END);
+                  repeat_key_ = NO_REPEAT;
+                }
                 matrix_.reset(pos);
                 keyboard_task();
               }
             }
-          } else {
-            if (key == repeat_key_) {
+            break;
+          }
+          case KeyboardEvent::CLEAR: {
+            if (repeat_key_ != NO_REPEAT) {
               send_to_sink(SinkSignal::KEY_REPEAT_END);
               repeat_key_ = NO_REPEAT;
             }
-            matrix_.reset(pos);
+            matrix_.clear();
             keyboard_task();
+            break;
           }
         }
 

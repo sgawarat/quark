@@ -6,4 +6,5 @@ target_link_libraries(tmk_desktop PRIVATE
     config
     engine
     keyboard
+    wtsapi32.lib
 )
