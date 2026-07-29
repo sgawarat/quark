@@ -182,13 +182,13 @@ const macro_t* action_get_macro(keyrecord_t* record, uint8_t id, [[maybe_unused]
   if (record && record->event.pressed) {
     switch (id) {
       case M_YA:
-        return MACRO(T(Y), T(A), END);
+        return MACRO(U(Y), U(A), T(Y), T(A), END);
       case M_YU:
-        return MACRO(T(Y), T(U), END);
+        return MACRO(U(Y), U(U), T(Y), T(U), END);
       case M_YE:
-        return MACRO(T(Y), T(E), END);
+        return MACRO(U(Y), U(E), T(Y), T(E), END);
       case M_YO:
-        return MACRO(T(Y), T(O), END);
+        return MACRO(U(Y), U(O), T(Y), T(O), END);
     }
   }
   return nullptr;
