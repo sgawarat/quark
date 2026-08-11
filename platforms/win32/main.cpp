@@ -111,8 +111,9 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
     }
     case WM_WTSSESSION_CHANGE: {
       switch (wparam) {
-        // 画面がロックされたとき
-        case WTS_SESSION_LOCK: {
+        // ロック画面を行き来するとき
+        case WTS_SESSION_LOCK:
+        case WTS_SESSION_UNLOCK: {
           // 誤動作を防ぐためにキーをすべて離す
           send_to_keyboard(KeyboardEvent::CLEAR);
           break;
