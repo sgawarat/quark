@@ -24,8 +24,9 @@ static constexpr size_t KEY_COUNT = 0x200;
  * @brief イベントコード
  */
 enum class KeyboardEvent : DWORD {
-  NONE,   //< 通常のキー入力
-  CLEAR,  //< 状態のクリア
+  NONE,   ///< 通常のキー入力
+  CLEAR,  ///< すべてのキーを離す
+  RESET,  ///< 初期状態に戻す
 };
 
 /**

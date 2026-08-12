@@ -83,15 +83,8 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
           break;
         }
         // すべてのキーを離す
-        case ID_RELEASE_ALL_KEYS: {
-          INPUT input{.type = INPUT_KEYBOARD, .ki = {}};
-          for (WORD i = 1; i < 255; ++i) {
-            input.ki.wVk = i;
-            input.ki.dwFlags = KEYEVENTF_KEYUP;
-            SendInput(1, &input, sizeof(INPUT));
-            input.ki.dwFlags = KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY;
-            SendInput(1, &input, sizeof(INPUT));
-          }
+        case ID_RESET: {
+          send_to_keyboard(KeyboardEvent::RESET);
           break;
         }
       }

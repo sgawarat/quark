@@ -42,6 +42,7 @@ struct HidUsage {
 enum class SinkSignal {
   KEY_REPEAT,      ///< キーリピート
   KEY_REPEAT_END,  ///< キーリピートが途切れた
+  RESET,           ///< 状態をリセットする
 };
 
 /**

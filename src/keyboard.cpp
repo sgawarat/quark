@@ -17,6 +17,7 @@
 extern "C" {
 #include <common/keyboard.h>
 #include <common/action.h>
+#include <common/action_layer.h>
 #include <common/matrix.h>
 #include <common/host.h>
 #include <common/report.h>
@@ -153,8 +154,19 @@ bool start_keyboard() {
               send_to_sink(SinkSignal::KEY_REPEAT_END);
               repeat_key_ = NO_REPEAT;
             }
-            matrix_.clear();
-            keyboard_task();
+            matrix_clear();
+            clear_keyboard();
+            break;
+          }
+          case KeyboardEvent::RESET: {
+            if (repeat_key_ != NO_REPEAT) {
+              send_to_sink(SinkSignal::KEY_REPEAT_END);
+              repeat_key_ = NO_REPEAT;
+            }
+            matrix_clear();
+            clear_keyboard();
+            layer_clear();
+            send_to_sink(SinkSignal::RESET);
             break;
           }
         }
@@ -209,6 +221,10 @@ extern "C" {
 
 #ifndef TMK_DESKTOP_NOIMPL_MATRIX
 void matrix_init() {
+  matrix_.clear();
+}
+
+void matrix_clear() {
   matrix_.clear();
 }
 

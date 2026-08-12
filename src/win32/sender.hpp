@@ -114,6 +114,20 @@ public:
     latest_press_input_.clear();
   }
 
+  /**
+   * @brief すべてのキー状態をリセットする
+   */
+  void reset() noexcept {
+    INPUT input{.type = INPUT_KEYBOARD, .ki = {}};
+    for (WORD i = 1; i < 255; ++i) {
+      input.ki.wVk = i;
+      input.ki.dwFlags = KEYEVENTF_KEYUP;
+      SendInput(1, &input, sizeof(INPUT));
+      input.ki.dwFlags = KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY;
+      SendInput(1, &input, sizeof(INPUT));
+    }
+  }
+
 private:
   uint8_t latest_press_keycode_ = KC_NO;  ///< 最後に押したキー
   Input latest_press_input_{};            ///< 最後に押したキーイベント

@@ -5,7 +5,7 @@ BEGIN
     POPUP "Context Menu"
     BEGIN
         MENUITEM "Enable/Disable", ID_ENABLE_DISABLE
-        MENUITEM "Release all keys", ID_RELEASE_ALL_KEYS
+        MENUITEM "Reset", ID_RESET
         MENUITEM "&Exit", ID_EXIT
     END
 END

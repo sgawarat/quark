@@ -156,6 +156,9 @@ public:
       case SinkSignal::KEY_REPEAT_END:
         sender_.clear_key_repeat();
         break;
+      case SinkSignal::RESET:
+        sender_.reset();
+        break;
     }
   }
 
