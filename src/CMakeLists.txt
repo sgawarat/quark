@@ -21,6 +21,7 @@ add_library(engine STATIC
     sink.cpp
     timer.cpp
     wait.cpp
+    protocol.cpp
 )
 target_link_libraries(engine PRIVATE
     config

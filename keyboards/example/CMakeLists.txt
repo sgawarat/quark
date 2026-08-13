@@ -3,6 +3,7 @@ add_library(keyboard STATIC
 )
 target_compile_definitions(keyboard PUBLIC
     ACTIONMAP_ENABLE
+    NKRO_ENABLE
 )
 target_link_libraries(keyboard PRIVATE
     config

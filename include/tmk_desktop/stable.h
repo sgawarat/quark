@@ -33,6 +33,16 @@ inline void bootloader_jump() {}
 #define pgm_read_byte(p) *((unsigned char*)p)
 #define pgm_read_word(p) *((uint16_t*)p)
 
+// KEYBOARD_REPORT_SIZEを指定の値で定義させるため、PROTOCOL_PJRCを使う
+#define PROTOCOL_PJRC
+#ifdef NKRO_ENABLE
+// 修飾キー（8ビット）とキーコード全種（256ビット）
+#define KBD2_SIZE 33
+#else
+// 10キーくらい同時押しできれば大丈夫そう？
+#define KBD2_SIZE 12
+#endif
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif
