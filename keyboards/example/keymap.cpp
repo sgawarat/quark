@@ -207,8 +207,6 @@ constexpr std::array THUMB_ACTIONS{
 static_assert(THUMB_ACTIONS.size() == KEYS.size());
 
 extern "C" {
-extern const action_t actionmaps[/* layers */][MATRIX_ROWS][MATRIX_COLS] = {};
-
 action_t action_for_key(uint8_t layer, keypos_t pos) {
   const size_t index = pos.row * MATRIX_COLS + pos.col;
   if (index < KEYS.size()) {

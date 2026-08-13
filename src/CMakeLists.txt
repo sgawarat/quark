@@ -15,7 +15,6 @@ add_library(engine STATIC
     ${TMK_CORE_DIR}/common/debug.c
     ${TMK_CORE_DIR}/common/util.c
     ${TMK_CORE_DIR}/common/hook.c
-    ${TMK_CORE_DIR}/common/actionmap.c
 
     source.cpp
     keyboard.cpp
@@ -25,5 +24,6 @@ add_library(engine STATIC
 )
 target_link_libraries(engine PRIVATE
     config
+    keyboard
     engine_impl
 )
