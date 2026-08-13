@@ -77,6 +77,17 @@ inline void remove_notify_icon(HWND wnd, UINT id) noexcept {
   Shell_NotifyIcon(NIM_DELETE, &nid);
 }
 
+inline void modify_notify_icon(HWND wnd, UINT id, HICON icon) noexcept {
+  NOTIFYICONDATA nid{
+      .cbSize = sizeof(NOTIFYICONDATA),
+      .hWnd = wnd,
+      .uID = id,
+      .uFlags = NIF_SHOWTIP | NIF_ICON,
+      .hIcon = icon,
+  };
+  Shell_NotifyIcon(NIM_MODIFY, &nid);
+}
+
 /**
  * @brief IMEの状態を取得する
  *

@@ -29,6 +29,8 @@ const WCHAR* const WINDOW_NAME = L"TMK Desktop WINDOW";   // ウィンドウ名
 constexpr UINT WM_APP_NOTIFY_ICON = WM_APP + 1;           // 通知アイコンのメッセージID
 
 HMENU context_menu_ = NULL;  // コンテキストメニュー
+HICON keyboard_on_icon_ = NULL;
+HICON keyboard_off_icon_ = NULL;
 
 DWORD main_thread_id_ = 0;                  ///< メインスレッドID
 std::exception_ptr main_ep_ = nullptr;      ///< メインスレッドで投げられた例外
@@ -71,10 +73,12 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
               start_sink();
               start_keyboard();
               start_source();
+              modify_notify_icon(hwnd, 0, keyboard_on_icon_);
             } else {
               stop_source();
               stop_keyboard();
               stop_sink();
+              modify_notify_icon(hwnd, 0, keyboard_off_icon_);
             }
           } catch (...) {
             main_ep_ = std::current_exception();
@@ -92,6 +96,26 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
     }
     case WM_APP_NOTIFY_ICON: {
       switch (LOWORD(lparam)) {
+        // オンオフを切り替える
+        case WM_LBUTTONDOWN: {
+          try {
+            if (get_source_status() == SourceStatus::RESET) {
+              start_sink();
+              start_keyboard();
+              start_source();
+              modify_notify_icon(hwnd, 0, keyboard_on_icon_);
+            } else {
+              stop_source();
+              stop_keyboard();
+              stop_sink();
+              modify_notify_icon(hwnd, 0, keyboard_off_icon_);
+            }
+          } catch (...) {
+            main_ep_ = std::current_exception();
+            PostQuitMessage(0);
+          }
+          break;
+        }
         // コンテキストメニューを表示させる
         case WM_CONTEXTMENU: {
           SetForegroundWindow(hwnd);
@@ -171,9 +195,17 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   const Scoped wnd_dtor{[&] { DestroyWindow(wnd); }};
 
   // アイコン
-  const HICON icon = LoadIcon(NULL, IDI_APPLICATION);
+  const HICON icon = LoadIcon(instance, MAKEINTRESOURCE(IDI_MYAPP));
   if (!icon) return EXIT_FAILURE;
   const Scoped icon_dtor{[&] { DestroyIcon(icon); }};
+
+  keyboard_on_icon_ = LoadIcon(instance, MAKEINTRESOURCE(IDI_KEYBOARD_ON));
+  if (!keyboard_on_icon_) return EXIT_FAILURE;
+  const Scoped keyboard_on_icon_dtor{[&] { DestroyIcon(keyboard_on_icon_); }};
+
+  keyboard_off_icon_ = LoadIcon(instance, MAKEINTRESOURCE(IDI_KEYBOARD_OFF));
+  if (!keyboard_off_icon_) return EXIT_FAILURE;
+  const Scoped keyboard_off_icon_dtor{[&] { DestroyIcon(keyboard_off_icon_); }};
 
   // コンテキストメニュー
   const HMENU menu = LoadMenu(instance, MAKEINTRESOURCE(IDR_CONTEXT_MENU));
@@ -182,7 +214,7 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   if (!(context_menu_ = GetSubMenu(menu, 0))) return EXIT_FAILURE;
 
   // 通知アイコン
-  if (!add_notify_icon(wnd, 0, WM_APP_NOTIFY_ICON, icon, TITLE)) return EXIT_FAILURE;
+  if (!add_notify_icon(wnd, 0, WM_APP_NOTIFY_ICON, keyboard_on_icon_, TITLE)) return EXIT_FAILURE;
   const Scoped notify_icon_dtor{[&] { remove_notify_icon(wnd, 0); }};
 
   // 画面ロック検知

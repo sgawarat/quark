@@ -9,3 +9,7 @@ BEGIN
         MENUITEM "&Exit", ID_EXIT
     END
 END
+
+IDI_MYAPP ICON "assets/keyboard.ico"
+IDI_KEYBOARD_ON ICON "assets/keyboard.ico"
+IDI_KEYBOARD_OFF ICON "assets/keyboard-off.ico"
