@@ -3,25 +3,38 @@ if(WIN32)
 endif()
 
 add_library(engine STATIC
-    ${TMK_CORE_DIR}/common/host.c
-    ${TMK_CORE_DIR}/common/keyboard.c
-    ${TMK_CORE_DIR}/common/matrix.c
-    ${TMK_CORE_DIR}/common/action.c
-    ${TMK_CORE_DIR}/common/action_tapping.c
-    ${TMK_CORE_DIR}/common/action_macro.c
-    ${TMK_CORE_DIR}/common/action_layer.c
-    ${TMK_CORE_DIR}/common/action_util.c
-    ${TMK_CORE_DIR}/common/print.c
-    ${TMK_CORE_DIR}/common/debug.c
-    ${TMK_CORE_DIR}/common/util.c
-    ${TMK_CORE_DIR}/common/hook.c
+    ${QMK_SOURCE_DIR}/quantum/action.c
+    ${QMK_SOURCE_DIR}/quantum/action_layer.c
+    ${QMK_SOURCE_DIR}/quantum/action_tapping.c
+    ${QMK_SOURCE_DIR}/quantum/action_util.c
+    ${QMK_SOURCE_DIR}/quantum/bitwise.c
+    ${QMK_SOURCE_DIR}/quantum/eeconfig.c
+    ${QMK_SOURCE_DIR}/quantum/keycode_config.c
+    ${QMK_SOURCE_DIR}/quantum/keyboard.c
+    ${QMK_SOURCE_DIR}/quantum/keymap_common.c
+    ${QMK_SOURCE_DIR}/quantum/keymap_introspection.c
+    ${QMK_SOURCE_DIR}/quantum/led.c
+    ${QMK_SOURCE_DIR}/quantum/nvm/eeprom/nvm_eeconfig.c
+    ${QMK_SOURCE_DIR}/quantum/process_keycode/process_default_layer.c
+    ${QMK_SOURCE_DIR}/quantum/process_keycode/process_oneshot.c
+    ${QMK_SOURCE_DIR}/quantum/process_keycode/process_quantum.c
+    ${QMK_SOURCE_DIR}/quantum/quantum.c
+    ${QMK_SOURCE_DIR}/quantum/logging/debug.c
+    ${QMK_SOURCE_DIR}/quantum/logging/print.c
+    ${QMK_SOURCE_DIR}/quantum/logging/sendchar.c
+    ${QMK_SOURCE_DIR}/drivers/eeprom/eeprom_driver.c
+    ${QMK_SOURCE_DIR}/drivers/eeprom/eeprom_transient.c
+    ${QMK_SOURCE_DIR}/platforms/suspend.c
+    ${QMK_SOURCE_DIR}/platforms/test/bootloaders/none.c
+    ${QMK_SOURCE_DIR}/tmk_core/protocol/host.c
+    ${QMK_SOURCE_DIR}/tmk_core/protocol/report.c
+    ${QMK_SOURCE_DIR}/tmk_core/protocol/usb_device_state.c
 
     source.cpp
     keyboard.cpp
     sink.cpp
     timer.cpp
     wait.cpp
-    protocol.cpp
 )
 target_link_libraries(engine PRIVATE
     config

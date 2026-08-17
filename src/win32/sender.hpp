@@ -7,13 +7,10 @@
 #pragma once
 
 #include <Windows.h>
-#include <tmk_desktop/win32/settings.hpp>
 #include "injected.hpp"
 
 namespace tmk_desktop::inline win32 {
-inline uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
-  return keycode_to_scancode_table[keycode];
-}
+extern uint16_t keycode_to_scancode(uint8_t keycode) noexcept;
 
 struct Input final : INPUT {
   constexpr Input() noexcept : INPUT{.type = INPUT_HARDWARE} {}

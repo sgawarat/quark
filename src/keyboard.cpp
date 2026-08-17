@@ -15,17 +15,13 @@
 #include <tmk_desktop/sink.hpp>
 
 extern "C" {
-#include <common/keyboard.h>
-#include <common/action.h>
-#include <common/action_layer.h>
-#include <common/matrix.h>
-#include <common/host.h>
-#include <common/report.h>
+#include <keyboard.h>
+#include <action.h>
+#include <action_layer.h>
+#include <matrix.h>
+#include <host.h>
+#include <report.h>
 }  // extern "C"
-
-#ifdef _WIN32
-#include <tmk_desktop/win32/settings.hpp>
-#endif
 
 namespace tmk_desktop {
 namespace {
@@ -50,8 +46,14 @@ uint8_t keyboard_leds() noexcept {
 void send_keyboard(report_keyboard_t* report_ptr) noexcept {
   if (report_ptr) send_to_sink(*report_ptr);
 }
+void send_nkro(report_nkro_t* report_ptr) noexcept {
+  // if (report_ptr) send_to_sink(*report_ptr);
+}
 void send_mouse(report_mouse_t* report_ptr) noexcept {
   if (report_ptr) send_to_sink(*report_ptr);
+}
+void send_extra(report_extra_t* report_ptr) noexcept {
+  // if (report_ptr) send_to_sink(*report_ptr);
 }
 void send_system(uint16_t val) noexcept {
   send_to_sink(HidUsage{HidUsagePage::GENERIC_DESKTOP_CONTROL, val});
@@ -59,17 +61,11 @@ void send_system(uint16_t val) noexcept {
 void send_consumer(uint16_t val) noexcept {
   send_to_sink(HidUsage{HidUsagePage::CONSUMER, val});
 }
+}  // namespace
 
 // 変換表にアクセスする関数
-inline keypos_t key_to_keypos(Key key) noexcept {
-  if (key >= KEY_COUNT) return {0xff, 0xff};
-  return key_to_keypos_table[key];
-}
-inline bool is_tapping_key(Key key) noexcept {
-  if (key >= KEY_COUNT) return false;
-  return tapping_key_table[key];
-}
-}  // namespace
+extern keypos_t key_to_keypos(Key key) noexcept;
+extern bool is_tapping_key(Key key) noexcept;
 
 bool start_keyboard() {
   if (thread_.joinable()) return false;
@@ -91,9 +87,10 @@ bool start_keyboard() {
       const struct ScopedInit {
         ScopedInit() {
           static host_driver_t driver{
-              keyboard_leds, send_keyboard, send_mouse, send_system, send_consumer,
+              keyboard_leds, send_keyboard, send_nkro, send_mouse, send_extra,
           };
           host_set_driver(&driver);
+          keyboard_setup();
           keyboard_init();
         }
         ~ScopedInit() {
@@ -154,7 +151,6 @@ bool start_keyboard() {
               send_to_sink(SinkSignal::KEY_REPEAT_END);
               repeat_key_ = NO_REPEAT;
             }
-            matrix_clear();
             clear_keyboard();
             break;
           }
@@ -163,9 +159,7 @@ bool start_keyboard() {
               send_to_sink(SinkSignal::KEY_REPEAT_END);
               repeat_key_ = NO_REPEAT;
             }
-            matrix_clear();
             clear_keyboard();
-            layer_clear();
             send_to_sink(SinkSignal::RESET);
             break;
           }
@@ -224,10 +218,6 @@ void matrix_init() {
   matrix_.clear();
 }
 
-void matrix_clear() {
-  matrix_.clear();
-}
-
 uint8_t matrix_scan() {
   return 0;
 }
@@ -235,6 +225,8 @@ uint8_t matrix_scan() {
 matrix_row_t matrix_get_row(uint8_t row) {
   return matrix_.value(row);
 }
+
+void matrix_print() {}
 #endif
 
 }  // extern "C"

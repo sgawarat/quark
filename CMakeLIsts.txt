@@ -1,7 +1,8 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.20)
 project(tmk_desktop)
 
 set(TMK_CORE_DIR "" CACHE PATH "Path to the tmk_core directory")
+set(QMK_SOURCE_DIR "${TMK_CORE_DIR}")
 
 if(NOT IS_ABSOLUTE ${TMK_CORE_DIR})
     set(TMK_CORE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${TMK_CORE_DIR}")
@@ -34,20 +35,26 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     )
 else()
     target_compile_options(config INTERFACE
-        -Wall
-        -Wextra
+        # -Wall
+        # -Wextra
         -Wno-unused-parameter
         -Wno-c++98-compat
         -Wno-c++98-compat-pedantic
+        -Wno-pre-c23-compat
+        -Wno-pre-c11-compat
     )
 endif()
 
 target_compile_features(config INTERFACE
-    cxx_std_20
+    cxx_std_23
+    c_std_23
 )
 target_compile_definitions(config INTERFACE
     NO_DEBUG
     NO_PRINT
+    IGNORE_ATOMIC_BLOCK
+    LAYER_STATE_32BIT
+    KEYMAP_C="keymap.h"
 
     _CRT_SECURE_NO_WARNINGS
     WIN32_LEAN_AND_MEAN
@@ -58,8 +65,17 @@ target_compile_definitions(config INTERFACE
     TMK_DESKTOP_FIX_WEAK_MODS
 )
 target_include_directories(config INTERFACE
-    ${TMK_CORE_DIR}
+    ${TMK_CORE_DIR}/quantum
+    ${TMK_CORE_DIR}/quantum/keymap_extras
+    ${TMK_CORE_DIR}/quantum/logging
+    ${TMK_CORE_DIR}/quantum/nvm
+    ${TMK_CORE_DIR}/quantum/nvm/eeprom
+    ${TMK_CORE_DIR}/quantum/process_keycode
+    ${TMK_CORE_DIR}/quantum/sequencer
+    ${TMK_CORE_DIR}/platforms
+    ${TMK_CORE_DIR}/tmk_core/protocol
     ./include
+    ./include/tmk_desktop/quantum
 )
 
 add_subdirectory(src)

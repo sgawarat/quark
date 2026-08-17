@@ -12,7 +12,7 @@
 #include "event.hpp"
 
 extern "C" {
-#include <common/report.h>
+#include <report.h>
 }  // extern "C"
 
 namespace tmk_desktop {
@@ -56,7 +56,7 @@ using SinkEvent = std::variant<report_keyboard_t, report_mouse_t, HidUsage, Nati
  * @retval true 始動に成功
  * @retval false すでに始動している
  * @exception system_error スレッドの生成に失敗
- * @exception 設定の読み込みに失敗
+ * @exception e 設定の読み込みに失敗
  */
 bool start_sink();
 

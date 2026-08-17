@@ -8,7 +8,7 @@
 #include <cstdint>
 
 extern "C" {
-#include <common/timer.h>
+#include <timer.h>
 }  // extern "C"
 
 namespace {

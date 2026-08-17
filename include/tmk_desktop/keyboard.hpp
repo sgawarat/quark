@@ -26,7 +26,7 @@ enum class KeyboardStatus {
  * @retval true 始動に成功
  * @retval false すでに始動している
  * @exception system_error スレッドの生成に失敗
- * @exception 設定の読み込みに失敗
+ * @exception e 設定の読み込みに失敗
  */
 bool start_keyboard();
 

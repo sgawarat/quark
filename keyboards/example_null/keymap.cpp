@@ -1,37 +1,19 @@
-#include <cstdint>
+/**
+ * @file keymap.c
+ * @brief キーマップ
+ * @copyright Copyright 2026 sgawarat <sgawarat@gmail.com>
+ * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
+ */
+#include <tmk_desktop/layouts/oadg109.hpp>
 
+#ifdef __cplusplus
 extern "C" {
-#include <common/action_code.h>
+#endif
 
-/**
- * @brief アクションマップ
- *
- * 既定ではaction_for_key()の中で参照される。
- */
-extern const action_t actionmaps[/* layers */][MATRIX_ROWS][MATRIX_COLS] = {};
-}  // extern "C"
+extern const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+  LAYOUT(JP_LPRN),
+};
 
-// Win32アプリケーションに必要なもの
-#ifdef _WIN32
-#include <tmk_desktop/win32/settings.hpp>
-
-namespace tmk_desktop::inline win32 {
-
-/**
- * @brief キーからkeypos_tへの変換表
- */
-const KeyToKeyposTable key_to_keypos_table{};
-
-/**
- * @brief 押すと同時に離すキーを示すフラグ列
- */
-const TappingKeyTable tapping_key_table{};
-
-/**
- * @brief キーコードからスキャンコードへの変換表
- *
- * デフォルト値が用意されるが、独自の対応表が欲しければここで定義する。
- */
-// const KeycodeToScancodeTable keycode_to_scancode_table{};
-}  // namespace tmk_desktop::inline win32
+#ifdef __cplusplus
+}
 #endif

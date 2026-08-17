@@ -1,3 +1,9 @@
+/**
+ * @file config.h
+ * @brief コンフィグ
+ * @copyright Copyright 2026 sgawarat <sgawarat@gmail.com>
+ * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
+ */
 #pragma once
 
 /**
@@ -13,13 +19,3 @@
  * matrix_row_tの配列の大きさを決定するのに使われる。
  */
 #define MATRIX_ROWS 1
-
-/**
- * @brief 既定のmatrix関数を定義しない
- */
-// #define TMK_DESKTOP_NOIMPL_MATRIX
-
-/**
- * @brief 既定のスキャンコード表を定義しない
- */
-// #define TMK_DESKTOP_NOIMPL_KEYCODE_TO_SCANCODE_TABLE

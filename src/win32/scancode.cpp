@@ -4,182 +4,170 @@
  * @copyright Copyright 2021 sgawarat <sgawarat@gmail.com>
  * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
  */
-
-#include <tmk_desktop/win32/settings.hpp>
+#include <array>
 
 extern "C" {
-#include <common/keycode.h>
+#include <keycode.h>
 }  // extern "C"
 
-/* clang-format off */
-/**
- * @brief キーコードに対応するPS/2 Set1のコード一覧
- */
-#define TMK_DESKTOP_WIN32_PS2_SET1_SCANCODES(m) \
-    m(ESCAPE, 0x0001) \
-    m(1, 0x0002) \
-    m(2, 0x0003) \
-    m(3, 0x0004) \
-    m(4, 0x0005) \
-    m(5, 0x0006) \
-    m(6, 0x0007) \
-    m(7, 0x0008) \
-    m(8, 0x0009) \
-    m(9, 0x000a) \
-    m(0, 0x000b) \
-    m(MINUS, 0x000c) \
-    m(EQUAL, 0x000d) \
-    m(BSPACE, 0x000e) \
-    m(TAB, 0x000f) \
-    m(Q, 0x0010) \
-    m(W, 0x0011) \
-    m(E, 0x0012) \
-    m(R, 0x0013) \
-    m(T, 0x0014) \
-    m(Y, 0x0015) \
-    m(U, 0x0016) \
-    m(I, 0x0017) \
-    m(O, 0x0018) \
-    m(P, 0x0019) \
-    m(LBRACKET, 0x001a) \
-    m(RBRACKET, 0x001b) \
-    m(ENTER, 0x001c) \
-    m(LCTRL, 0x001d) \
-    m(A, 0x001e) \
-    m(S, 0x001f) \
-    m(D, 0x0020) \
-    m(F, 0x0021) \
-    m(G, 0x0022) \
-    m(H, 0x0023) \
-    m(J, 0x0024) \
-    m(K, 0x0025) \
-    m(L, 0x0026) \
-    m(SCOLON, 0x0027) \
-    m(QUOTE, 0x0028) \
-    m(GRAVE, 0x0029) \
-    m(LSHIFT, 0x002a) \
-    m(BSLASH, 0x002b) \
-    m(Z, 0x002c) \
-    m(X, 0x002d) \
-    m(C, 0x002e) \
-    m(V, 0x002f) \
-    m(B, 0x0030) \
-    m(N, 0x0031) \
-    m(M, 0x0032) \
-    m(COMMA, 0x0033) \
-    m(DOT, 0x0034) \
-    m(SLASH, 0x0035) \
-    m(RSHIFT, 0x0036) \
-    m(KP_ASTERISK, 0x0037) \
-    m(LALT, 0x0038) \
-    m(SPACE, 0x0039) \
-    m(CAPSLOCK, 0x003a) \
-    m(F1, 0x003b) \
-    m(F2, 0x003c) \
-    m(F3, 0x003d) \
-    m(F4, 0x003e) \
-    m(F5, 0x003f) \
-    m(F6, 0x0040) \
-    m(F7, 0x0041) \
-    m(F8, 0x0042) \
-    m(F9, 0x0043) \
-    m(F10, 0x0044) \
-    m(NUMLOCK, 0x0045) \
-    m(SCROLLLOCK, 0x0046) \
-    m(KP_7, 0x0047) \
-    m(KP_8, 0x0048) \
-    m(KP_9, 0x0049) \
-    m(KP_MINUS, 0x004a) \
-    m(KP_4, 0x004b) \
-    m(KP_5, 0x004c) \
-    m(KP_6, 0x004d) \
-    m(KP_PLUS, 0x004e) \
-    m(KP_1, 0x004f) \
-    m(KP_2, 0x0050) \
-    m(KP_3, 0x0051) \
-    m(KP_0, 0x0052) \
-    m(KP_DOT, 0x0053) \
-    m(NONUS_BSLASH, 0x0056) \
-    m(F11, 0x0057) \
-    m(F12, 0x0058) \
-    m(KP_EQUAL, 0x0059) \
-    m(INT6, 0x005c) \
-    m(F13, 0x0064) \
-    m(F14, 0x0065) \
-    m(F15, 0x0066) \
-    m(F16, 0x0067) \
-    m(F17, 0x0068) \
-    m(F18, 0x0069) \
-    m(F19, 0x006a) \
-    m(F20, 0x006b) \
-    m(F21, 0x006c) \
-    m(F22, 0x006d) \
-    m(F23, 0x006e) \
-    m(INT2, 0x0070) \
-    m(INT1, 0x0073) \
-    m(F24, 0x0076) \
-    m(LANG5, 0x0076) \
-    m(LANG4, 0x0077) \
-    m(LANG3, 0x0078) \
-    m(INT4, 0x0079) \
-    m(INT5, 0x007b) \
-    m(INT3, 0x007d) \
-    m(KP_COMMA, 0x007e) \
-    m(LANG2, 0x00f1) \
-    m(LANG1, 0x00f2) \
-    m(POST_FAIL, 0x00fc) \
-    m(ROLL_OVER, 0x00ff) \
-    m(MEDIA_PREV_TRACK, 0xe010) \
-    m(MEDIA_NEXT_TRACK, 0xe019) \
-    m(KP_ENTER, 0xe01c) \
-    m(RCTRL, 0xe01d) \
-    m(AUDIO_MUTE, 0xe020) \
-    m(CALCULATOR, 0xe021) \
-    m(MEDIA_PLAY_PAUSE, 0xe022) \
-    m(MEDIA_STOP, 0xe024) \
-    m(AUDIO_VOL_DOWN, 0xe02e) \
-    m(AUDIO_VOL_UP, 0xe030) \
-    m(WWW_HOME, 0xe032) \
-    m(KP_SLASH, 0xe035) \
-    m(PSCREEN, 0xe037) \
-    m(RALT, 0xe038) \
-    m(HOME, 0xe047) \
-    m(UP, 0xe048) \
-    m(PGUP, 0xe049) \
-    m(LEFT, 0xe04b) \
-    m(RIGHT, 0xe04d) \
-    m(END, 0xe04f) \
-    m(DOWN, 0xe050) \
-    m(PGDOWN, 0xe051) \
-    m(INSERT, 0xe052) \
-    m(DELETE, 0xe053) \
-    m(LGUI, 0xe05b) \
-    m(RGUI, 0xe05c) \
-    m(APPLICATION, 0xe05d) \
-    m(SYSTEM_POWER, 0xe05e) \
-    m(SYSTEM_SLEEP, 0xe05f) \
-    m(SYSTEM_WAKE, 0xe063) \
-    m(WWW_SEARCH, 0xe065) \
-    m(WWW_FAVORITES, 0xe066) \
-    m(WWW_REFRESH, 0xe067) \
-    m(WWW_STOP, 0xe068) \
-    m(WWW_FORWARD, 0xe069) \
-    m(WWW_BACK, 0xe06a) \
-    m(MY_COMPUTER, 0xe06b) \
-    m(MAIL, 0xe06c) \
-    m(MEDIA_SELECT, 0xe06d) \
-    m(PAUSE, 0xe11d)
-    // m(POWER, 0xe05e)
-/* clang-format on */
-
 namespace tmk_desktop::inline win32 {
-#ifndef TMK_DESKTOP_NOIMPL_KEYCODE_TO_SCANCODE_TABLE
-const KeycodeToScancodeTable keycode_to_scancode_table = []() {
-  KeycodeToScancodeTable t{};
-#define M(name, value) t[KC_##name] = value;
-  TMK_DESKTOP_WIN32_PS2_SET1_SCANCODES(M)
-#undef M
-  return t;
-}();
-#endif
+uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
+  switch (keycode) {
+    case KC_ESCAPE: return 0x0001;
+    case KC_1: return 0x0002;
+    case KC_2: return 0x0003;
+    case KC_3: return 0x0004;
+    case KC_4: return 0x0005;
+    case KC_5: return 0x0006;
+    case KC_6: return 0x0007;
+    case KC_7: return 0x0008;
+    case KC_8: return 0x0009;
+    case KC_9: return 0x000a;
+    case KC_0: return 0x000b;
+    case KC_MINUS: return 0x000c;
+    case KC_EQUAL: return 0x000d;
+    case KC_BACKSPACE: return 0x000e;
+    case KC_TAB: return 0x000f;
+    case KC_Q: return 0x0010;
+    case KC_W: return 0x0011;
+    case KC_E: return 0x0012;
+    case KC_R: return 0x0013;
+    case KC_T: return 0x0014;
+    case KC_Y: return 0x0015;
+    case KC_U: return 0x0016;
+    case KC_I: return 0x0017;
+    case KC_O: return 0x0018;
+    case KC_P: return 0x0019;
+    case KC_LEFT_BRACKET: return 0x001a;
+    case KC_RIGHT_BRACKET: return 0x001b;
+    case KC_ENTER: return 0x001c;
+    case KC_LEFT_CTRL: return 0x001d;
+    case KC_A: return 0x001e;
+    case KC_S: return 0x001f;
+    case KC_D: return 0x0020;
+    case KC_F: return 0x0021;
+    case KC_G: return 0x0022;
+    case KC_H: return 0x0023;
+    case KC_J: return 0x0024;
+    case KC_K: return 0x0025;
+    case KC_L: return 0x0026;
+    case KC_SEMICOLON: return 0x0027;
+    case KC_QUOTE: return 0x0028;
+    case KC_GRAVE: return 0x0029;
+    case KC_LEFT_SHIFT: return 0x002a;
+    case KC_BACKSLASH: return 0x002b;
+    case KC_Z: return 0x002c;
+    case KC_X: return 0x002d;
+    case KC_C: return 0x002e;
+    case KC_V: return 0x002f;
+    case KC_B: return 0x0030;
+    case KC_N: return 0x0031;
+    case KC_M: return 0x0032;
+    case KC_COMMA: return 0x0033;
+    case KC_DOT: return 0x0034;
+    case KC_SLASH: return 0x0035;
+    case KC_RIGHT_SHIFT: return 0x0036;
+    case KC_KP_ASTERISK: return 0x0037;
+    case KC_LEFT_ALT: return 0x0038;
+    case KC_SPACE: return 0x0039;
+    case KC_CAPS_LOCK: return 0x003a;
+    case KC_F1: return 0x003b;
+    case KC_F2: return 0x003c;
+    case KC_F3: return 0x003d;
+    case KC_F4: return 0x003e;
+    case KC_F5: return 0x003f;
+    case KC_F6: return 0x0040;
+    case KC_F7: return 0x0041;
+    case KC_F8: return 0x0042;
+    case KC_F9: return 0x0043;
+    case KC_F10: return 0x0044;
+    case KC_NUM_LOCK: return 0x0045;
+    case KC_SCROLL_LOCK: return 0x0046;
+    case KC_KP_7: return 0x0047;
+    case KC_KP_8: return 0x0048;
+    case KC_KP_9: return 0x0049;
+    case KC_KP_MINUS: return 0x004a;
+    case KC_KP_4: return 0x004b;
+    case KC_KP_5: return 0x004c;
+    case KC_KP_6: return 0x004d;
+    case KC_KP_PLUS: return 0x004e;
+    case KC_KP_1: return 0x004f;
+    case KC_KP_2: return 0x0050;
+    case KC_KP_3: return 0x0051;
+    case KC_KP_0: return 0x0052;
+    case KC_KP_DOT: return 0x0053;
+    case KC_NONUS_BACKSLASH: return 0x0056;
+    case KC_F11: return 0x0057;
+    case KC_F12: return 0x0058;
+    case KC_KP_EQUAL: return 0x0059;
+    case KC_INT6: return 0x005c;
+    case KC_F13: return 0x0064;
+    case KC_F14: return 0x0065;
+    case KC_F15: return 0x0066;
+    case KC_F16: return 0x0067;
+    case KC_F17: return 0x0068;
+    case KC_F18: return 0x0069;
+    case KC_F19: return 0x006a;
+    case KC_F20: return 0x006b;
+    case KC_F21: return 0x006c;
+    case KC_F22: return 0x006d;
+    case KC_F23: return 0x006e;
+    case KC_INT2: return 0x0070;
+    case KC_INT1: return 0x0073;
+    case KC_F24: return 0x0076;
+    case KC_LANGUAGE_5: return 0x0076;
+    case KC_LANGUAGE_4: return 0x0077;
+    case KC_LANGUAGE_3: return 0x0078;
+    case KC_INTERNATIONAL_4: return 0x0079;
+    case KC_INTERNATIONAL_5: return 0x007b;
+    case KC_INTERNATIONAL_3: return 0x007d;
+    case KC_KP_COMMA: return 0x007e;
+    case KC_LANGUAGE_2: return 0x00f1;
+    case KC_LANGUAGE_1: return 0x00f2;
+    case KC_MEDIA_PREV_TRACK: return 0xe010;
+    case KC_MEDIA_NEXT_TRACK: return 0xe019;
+    case KC_KP_ENTER: return 0xe01c;
+    case KC_RIGHT_CTRL: return 0xe01d;
+    case KC_AUDIO_MUTE: return 0xe020;
+    case KC_CALCULATOR: return 0xe021;
+    case KC_MEDIA_PLAY_PAUSE: return 0xe022;
+    case KC_MEDIA_STOP: return 0xe024;
+    case KC_AUDIO_VOL_DOWN: return 0xe02e;
+    case KC_AUDIO_VOL_UP: return 0xe030;
+    case KC_WWW_HOME: return 0xe032;
+    case KC_KP_SLASH: return 0xe035;
+    case KC_PRINT_SCREEN: return 0xe037;
+    case KC_RIGHT_ALT: return 0xe038;
+    case KC_HOME: return 0xe047;
+    case KC_UP: return 0xe048;
+    case KC_PAGE_UP: return 0xe049;
+    case KC_LEFT: return 0xe04b;
+    case KC_RIGHT: return 0xe04d;
+    case KC_END: return 0xe04f;
+    case KC_DOWN: return 0xe050;
+    case KC_PAGE_DOWN: return 0xe051;
+    case KC_INSERT: return 0xe052;
+    case KC_DELETE: return 0xe053;
+    case KC_LEFT_GUI: return 0xe05b;
+    case KC_RIGHT_GUI: return 0xe05c;
+    case KC_APPLICATION: return 0xe05d;
+    case KC_SYSTEM_POWER: return 0xe05e;
+    case KC_SYSTEM_SLEEP: return 0xe05f;
+    case KC_SYSTEM_WAKE: return 0xe063;
+    case KC_WWW_SEARCH: return 0xe065;
+    case KC_WWW_FAVORITES: return 0xe066;
+    case KC_WWW_REFRESH: return 0xe067;
+    case KC_WWW_STOP: return 0xe068;
+    case KC_WWW_FORWARD: return 0xe069;
+    case KC_WWW_BACK: return 0xe06a;
+    case KC_MY_COMPUTER: return 0xe06b;
+    case KC_MAIL: return 0xe06c;
+    case KC_MEDIA_SELECT: return 0xe06d;
+    case KC_PAUSE: return 0xe11d;
+    // POWER, 0xe05e
+    // POST_FAIL, 0x00fc
+    // ROLL_OVER, 0x00ff
+  }
+  return 0;
+}
 }  // namespace tmk_desktop::inline win32

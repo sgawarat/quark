@@ -14,7 +14,7 @@
 #include <tmk_desktop/bitset.hpp>
 
 extern "C" {
-#include <common/action.h>
+#include <action.h>
 }  // extern "C"
 
 #ifdef _WIN32
@@ -52,7 +52,7 @@ public:
 #else
     keyset_.clear();
     for (auto key : std::span(report.keys)) {
-      if (key >= KC_LCTRL && key <= KC_RGUI) continue;
+      if (key >= KC_LEFT_CTRL && key <= KC_RIGHT_GUI) continue;
       if (key != 0) keyset_.set(key);
     }
     mod_keyset_ = ModKeyset{report.mods};
@@ -69,10 +69,10 @@ public:
       sender_.send_key_release(pos.index());
     });
     released_mod_keyset.scan([](auto pos) {  // 修飾キーを離す
-      sender_.send_key_release(KC_LCTRL + pos.index());
+      sender_.send_key_release(KC_LEFT_CTRL + pos.index());
     });
     pressed_mod_keyset.scan([](auto pos) {  // 修飾キーを押す
-      sender_.send_key_press(KC_LCTRL + pos.index());
+      sender_.send_key_press(KC_LEFT_CTRL + pos.index());
     });
     pressed_keyset.scan([](auto pos) {  // 非修飾キーを押す
       sender_.send_key_press(pos.index());
@@ -114,27 +114,27 @@ public:
               return KC_MEDIA_EJECT;
             case TRANSPORT_PLAY_PAUSE:
               return KC_MEDIA_PLAY_PAUSE;
-            case APPLAUNCH_CC_CONFIG:
+            case AL_CC_CONFIG:
               return KC_MEDIA_SELECT;
-            case APPLAUNCH_EMAIL:
+            case AL_EMAIL:
               return KC_MAIL;
-            case APPLAUNCH_CALCULATOR:
+            case AL_CALCULATOR:
               return KC_CALCULATOR;
-            case APPLAUNCH_LOCAL_BROWSER:
+            case AL_LOCAL_BROWSER:
               return KC_MY_COMPUTER;
-            case APPCONTROL_SEARCH:
+            case AC_SEARCH:
               return KC_WWW_SEARCH;
-            case APPCONTROL_HOME:
+            case AC_HOME:
               return KC_WWW_HOME;
-            case APPCONTROL_BACK:
+            case AC_BACK:
               return KC_WWW_BACK;
-            case APPCONTROL_FORWARD:
+            case AC_FORWARD:
               return KC_WWW_FORWARD;
-            case APPCONTROL_STOP:
+            case AC_STOP:
               return KC_WWW_STOP;
-            case APPCONTROL_REFRESH:
+            case AC_REFRESH:
               return KC_WWW_REFRESH;
-            case APPCONTROL_BOOKMARKS:
+            case AC_BOOKMARKS:
               return KC_WWW_FAVORITES;
           }
           break;
