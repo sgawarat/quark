@@ -55,7 +55,9 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_QUOTE: return 0x0028;
     case KC_GRAVE: return 0x0029;
     case KC_LEFT_SHIFT: return 0x002a;
-    case KC_BACKSLASH: return 0x002b;
+    case KC_BACKSLASH:
+    case KC_NONUS_HASH:
+      return 0x002b;
     case KC_Z: return 0x002c;
     case KC_X: return 0x002d;
     case KC_C: return 0x002e;
@@ -100,7 +102,7 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_F11: return 0x0057;
     case KC_F12: return 0x0058;
     case KC_KP_EQUAL: return 0x0059;
-    case KC_INT6: return 0x005c;
+    case KC_INTERNATIONAL_6: return 0x005c;
     case KC_F13: return 0x0064;
     case KC_F14: return 0x0065;
     case KC_F15: return 0x0066;
@@ -112,8 +114,8 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_F21: return 0x006c;
     case KC_F22: return 0x006d;
     case KC_F23: return 0x006e;
-    case KC_INT2: return 0x0070;
-    case KC_INT1: return 0x0073;
+    case KC_INTERNATIONAL_2: return 0x0070;
+    case KC_INTERNATIONAL_1: return 0x0073;
     case KC_F24: return 0x0076;
     case KC_LANGUAGE_5: return 0x0076;
     case KC_LANGUAGE_4: return 0x0077;
@@ -122,8 +124,8 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_INTERNATIONAL_5: return 0x007b;
     case KC_INTERNATIONAL_3: return 0x007d;
     case KC_KP_COMMA: return 0x007e;
-    case KC_LANGUAGE_2: return 0x00f1;
-    case KC_LANGUAGE_1: return 0x00f2;
+    case KC_LANGUAGE_2: return 0x00f1;  // or 0x0071
+    case KC_LANGUAGE_1: return 0x00f2;  // or 0x0072
     case KC_MEDIA_PREV_TRACK: return 0xe010;
     case KC_MEDIA_NEXT_TRACK: return 0xe019;
     case KC_KP_ENTER: return 0xe01c;
@@ -138,6 +140,7 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_KP_SLASH: return 0xe035;
     case KC_PRINT_SCREEN: return 0xe037;
     case KC_RIGHT_ALT: return 0xe038;
+    case KC_CANCEL: return 0xe046;
     case KC_HOME: return 0xe047;
     case KC_UP: return 0xe048;
     case KC_PAGE_UP: return 0xe049;
@@ -151,7 +154,9 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_LEFT_GUI: return 0xe05b;
     case KC_RIGHT_GUI: return 0xe05c;
     case KC_APPLICATION: return 0xe05d;
-    case KC_SYSTEM_POWER: return 0xe05e;
+    case KC_SYSTEM_POWER:
+    case KC_KB_POWER:
+      return 0xe05e;
     case KC_SYSTEM_SLEEP: return 0xe05f;
     case KC_SYSTEM_WAKE: return 0xe063;
     case KC_WWW_SEARCH: return 0xe065;
@@ -164,9 +169,6 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_MAIL: return 0xe06c;
     case KC_MEDIA_SELECT: return 0xe06d;
     case KC_PAUSE: return 0xe11d;
-    // POWER, 0xe05e
-    // POST_FAIL, 0x00fc
-    // ROLL_OVER, 0x00ff
   }
   return 0;
 }

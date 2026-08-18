@@ -82,9 +82,19 @@ public:
    *
    * @param values ビット列を格納する値の配列
    */
-  constexpr explicit Bitset(std::span<const ValueT, VALUE_COUNT> values) noexcept {
-    for (size_t i = 0; i < VALUE_COUNT; ++i) {
-      values_[i] = values[i];
+  template <size_t SIZE>
+  constexpr explicit Bitset(std::span<const ValueT, SIZE> values) noexcept {
+    if constexpr (SIZE >= N) {
+      for (size_t i = 0; i < VALUE_COUNT; ++i) {
+        values_[i] = values[i];
+      }
+    } else {
+      for (size_t i = 0; i < SIZE; ++i) {
+        values_[i] = values[i];
+      }
+      for (size_t i = SIZE; i < VALUE_COUNT; ++i) {
+        values_[i] = 0;
+      }
     }
   }
 
@@ -93,7 +103,8 @@ public:
    *
    * @param values ビット列を格納する値の配列
    */
-  constexpr explicit Bitset(const ValueT (&values)[VALUE_COUNT]) noexcept : Bitset(std::span(values)) {}
+  template <size_t SIZE>
+  constexpr explicit Bitset(const ValueT (&values)[SIZE]) noexcept : Bitset(std::span(values)) {}
 
   /**
    * @brief ビット列を格納する数値列を取得する

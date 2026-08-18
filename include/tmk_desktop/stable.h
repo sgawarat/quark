@@ -9,16 +9,13 @@
 #ifdef _WIN32
 #include <Windows.h>
 
-// TMKと干渉するマクロを取り除く
+// QMKと干渉するマクロを取り除く
 // #undef IS_ERROR
 // #undef DELETE
 // #undef OUT
 #undef KEY_EVENT
 #undef DELETE
 #endif
-
-#define EEPROM_CUSTOM
-#define EEPROM_SIZE 0
 
 // QMKが必要とする宣言や定義
 #ifdef __cplusplus
@@ -28,28 +25,14 @@ extern "C" {
 // timer
 #define FAST_TIMER_T_SIZE 32
 
-
 // wait
 void wait_ms(uintptr_t ms);
 void wait_us(uintptr_t us);
+#define waitInputPinDelay(...) ((void)0)
 
-// #define waitInputPinDelay(...) ((void)0)
-
-// #include <progmem.h>
-
-// #define PROGMEM
-// #define pgm_read_byte(p) *((unsigned char*)p)
-// #define pgm_read_word(p) *((uint16_t*)p)
-
-// KEYBOARD_REPORT_SIZEを指定の値で定義させるため、PROTOCOL_PJRCを使う
-// #define PROTOCOL_PJRC
-// #ifdef NKRO_ENABLE
-// // 修飾キー（8ビット）とキーコード全種（256ビット）
-// #define KBD2_SIZE 33
-// #else
-// // 10キーくらい同時押しできれば大丈夫そう？
-// #define KBD2_SIZE 12
-// #endif
+// platforms/eeprom
+#define EEPROM_CUSTOM
+#define EEPROM_SIZE 0
 
 #ifdef __cplusplus
 }  // extern "C"

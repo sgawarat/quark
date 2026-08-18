@@ -1,13 +1,11 @@
 /**
- * @file protocol.cpp
- * @brief Protocol
+ * @file key.hpp
+ * @brief キー
  * @copyright Copyright 2026 sgawarat <sgawarat@gmail.com>
  * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
  */
-#include <common/host.h>
+#pragma once
 
-extern "C" {
-#ifdef NKRO_ENABLE
-uint8_t keyboard_protocol = 1;
+#ifdef _WIN32
+#include "win32/key.hpp"
 #endif
-}  // extern "C"

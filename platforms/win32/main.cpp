@@ -21,6 +21,10 @@
 #include "utility.hpp"
 #include "resource.h"
 
+extern "C" {
+#include <debug.h>
+}
+
 namespace tmk_desktop {
 namespace {
 const WCHAR* const TITLE = L"TMK Desktop";                // アプリケーション名
@@ -88,7 +92,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
         }
         // すべてのキーを離す
         case ID_RESET: {
-          send_to_keyboard(KeyboardEvent::RESET);
+          send_to_keyboard(KeyboardSignal::RESET);
           break;
         }
       }
@@ -132,7 +136,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
         case WTS_SESSION_LOCK:
         case WTS_SESSION_UNLOCK: {
           // 誤動作を防ぐためにキーをすべて離す
-          send_to_keyboard(KeyboardEvent::CLEAR);
+          send_to_keyboard(KeyboardSignal::CLEAR);
           break;
         }
       }
@@ -163,6 +167,19 @@ void on_sink_error(std::exception&) noexcept {
  * @brief メイン関数
  */
 extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
+#ifndef NO_PRINT
+  AllocConsole();
+  FILE* fp = nullptr;
+  freopen_s(&fp, "CONOUT$", "w", stdout);
+  debug_config = {
+    .enable   = true,
+    .matrix   = true,
+    .keyboard = true,
+    .mouse    = false,
+    .reserved = 0
+  };
+#endif
+
   // 重複起動を防止する
   if (FindWindow(CLASS_NAME, WINDOW_NAME) != NULL) return 0;
 

@@ -1,28 +1,31 @@
 /**
- * @file jp109.hpp
- * @brief 日本語配列
- * @copyright Copyright 2021 sgawarat <sgawarat@gmail.com>
+ * @file key.hpp
+ * @brief Win32のキー
+ * @copyright Copyright 2026 sgawarat <sgawarat@gmail.com>
  * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
  */
 #pragma once
 
-#include <tmk_desktop/event.hpp>
+#include <cstdint>
 
-extern "C" {
-#include <quantum_keycodes.h>
-#include <keymap_japanese.h>
-}  // extern "C"
+namespace tmk_desktop::inline win32 {
 
-namespace tmk_desktop {
 /**
- * @brief 日本語配列にあるキー
+ * @brief キーの個数
+ */
+static constexpr size_t KEY_COUNT = 0x200;
+
+/**
+ * @brief キーを表す値の型
  *
- * 基本的にはPS/2 Set1コードと等価だが、
- * - PauseキーがNumLockの値(45)に割り当てられる
+ * 値を連続させるためにExtendedキーを0x100以降に並べている。
+ *
+ * 内容は基本的にはPS/2 Set1コードと同じだが、
+ * - PauseキーがNumLockの値(0x45)に割り当てられる
  * - NumLockキーがExtendedキーになっている
  * - RShiftキーがExtendedキーになっている
  */
-enum KeyConst : Key {
+enum Key : uint16_t {
   K_ESCAPE = 0x1,
   K_1 = 0x2,
   K_2 = 0x3,
@@ -35,7 +38,7 @@ enum KeyConst : Key {
   K_9 = 0xa,
   K_0 = 0xb,
   K_MINUS = 0xc,
-  K_CIRCUMFLEX = 0xd,
+  K_EQUAL = 0xd,
   K_BACKSPACE = 0xe,
   K_TAB = 0xf,
   K_Q = 0x10,
@@ -48,8 +51,8 @@ enum KeyConst : Key {
   K_I = 0x17,
   K_O = 0x18,
   K_P = 0x19,
-  K_AT = 0x1a,
-  K_LEFT_BRACKET = 0x1b,
+  K_LEFT_BRACKET = 0x1a,
+  K_RIGHT_BRACKET = 0x1b,
   K_ENTER = 0x1c,
   K_LEFT_CTRL = 0x1d,
   K_A = 0x1e,
@@ -62,10 +65,11 @@ enum KeyConst : Key {
   K_K = 0x25,
   K_L = 0x26,
   K_SEMICOLON = 0x27,
-  K_COLON = 0x28,
-  K_HANKAKU_ZENKAKU = 0x29,
+  K_QUOTE = 0x28,
+  K_GRAVE = 0x29,
   K_LEFT_SHIFT = 0x2a,
-  K_RIGHT_BRACKET = 0x2b,
+  K_BACKSLASH = 0x2b,
+  K_NONUS_HASH = 0x2b,
   K_Z = 0x2c,
   K_X = 0x2d,
   K_C = 0x2e,
@@ -107,24 +111,48 @@ enum KeyConst : Key {
   K_KP_DOT = 0x53,
   K_F11 = 0x57,
   K_F12 = 0x58,
-  K_KATAKANA_HIRAGANA = 0x70,
-  K_BACKSLASH = 0x73,
-  K_HENKAN = 0x79,
-  K_MUHENKAN = 0x7b,
-  K_YEN = 0x7d,
+  K_KP_EQUAL = 0x59,
+  K_INTERNATIONAL_6 = 0x5c,
+  K_F13 = 0x64,
+  K_F14 = 0x65,
+  K_F15 = 0x66,
+  K_F16 = 0x67,
+  K_F17 = 0x68,
+  K_F18 = 0x69,
+  K_F19 = 0x6a,
+  K_F20 = 0x6b,
+  K_F21 = 0x6c,
+  K_F22 = 0x6d,
+  K_F23 = 0x6e,
+  K_INTERNATIONAL_2 = 0x70,
+  K_INTERNATIONAL_1 = 0x73,
+  K_F24 = 0x76,
+  K_LANGUAGE_5 = 0x76,
+  K_LANGUAGE_4 = 0x77,
+  K_LANGUAGE_3 = 0x78,
+  K_INTERNATIONAL_4 = 0x79,
+  K_INTERNATIONAL_5 = 0x7b,
+  K_INTERNATIONAL_3 = 0x7d,
+  K_KP_COMMA = 0x007e,
+  K_LANGUAGE_2 = 0x00f1,
+  K_LANGUAGE_1 = 0x00f2,
   K_MEDIA_PREV_TRACK = 0x110,
   K_MEDIA_NEXT_TRACK = 0x119,
   K_KP_ENTER = 0x11c,
-  K_RCTRL = 0x11d,
+  K_RIGHT_CTRL = 0x11d,
   K_AUDIO_MUTE = 0x120,
+  K_CALCULATOR = 0x121,
   K_MEDIA_PLAY_PAUSE = 0x122,
+  K_MEDIA_STOP = 0x124,
   K_AUDIO_VOL_DOWN = 0x12e,
   K_AUDIO_VOL_UP = 0x130,
+  K_WWW_HOME = 0x132,
   K_KP_SLASH = 0x135,
   K_RIGHT_SHIFT = 0x136,
   K_PRINT_SCREEN = 0x137,
   K_RIGHT_ALT = 0x138,
   K_NUM_LOCK = 0x145,
+  K_CANCEL = 0x146,
   K_HOME = 0x147,
   K_UP = 0x148,
   K_PAGE_UP = 0x149,
@@ -138,15 +166,15 @@ enum KeyConst : Key {
   K_LEFT_GUI = 0x15b,
   K_RIGHT_GUI = 0x15c,
   K_APPLICATION = 0x15d,
+  K_SYSTEM_SLEEP = 0x15f,
+  K_WWW_SEARCH = 0x165,
+  K_WWW_FAVORITES = 0x166,
+  K_WWW_REFRESH = 0x167,
+  K_WWW_STOP = 0x168,
+  K_WWW_FORWARD = 0x169,
+  K_WWW_BACK = 0x16a,
+  K_MY_COMPUTER = 0x16b,
+  K_MAIL = 0x16c,
+  K_MEDIA_SELECT = 0x16d,
 };
-
-extern bool is_tapping_key(Key key) noexcept {
-  switch (key) {
-    case K_HANKAKU_ZENKAKU:
-    case K_CAPS_LOCK:
-    case K_KATAKANA_HIRAGANA:
-      return true;
-  }
-  return false;
-}
-}  // namespace tmk_desktop
+}  // namespace tmk_desktop::inline win32

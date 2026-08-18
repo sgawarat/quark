@@ -8,12 +8,14 @@ add_library(engine STATIC
     ${QMK_SOURCE_DIR}/quantum/action_tapping.c
     ${QMK_SOURCE_DIR}/quantum/action_util.c
     ${QMK_SOURCE_DIR}/quantum/bitwise.c
+    ${QMK_SOURCE_DIR}/quantum/debounce/none.c
     ${QMK_SOURCE_DIR}/quantum/eeconfig.c
     ${QMK_SOURCE_DIR}/quantum/keycode_config.c
     ${QMK_SOURCE_DIR}/quantum/keyboard.c
     ${QMK_SOURCE_DIR}/quantum/keymap_common.c
     ${QMK_SOURCE_DIR}/quantum/keymap_introspection.c
     ${QMK_SOURCE_DIR}/quantum/led.c
+    ${QMK_SOURCE_DIR}/quantum/matrix_common.c
     ${QMK_SOURCE_DIR}/quantum/nvm/eeprom/nvm_eeconfig.c
     ${QMK_SOURCE_DIR}/quantum/process_keycode/process_default_layer.c
     ${QMK_SOURCE_DIR}/quantum/process_keycode/process_oneshot.c

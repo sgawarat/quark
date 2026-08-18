@@ -21,23 +21,106 @@ extern "C" {
 #include <matrix.h>
 #include <host.h>
 #include <report.h>
+#include <debug.h>
+
+extern matrix_row_t raw_matrix[MATRIX_ROWS];
 }  // extern "C"
 
 namespace tmk_desktop {
+// 変換表にアクセスする関数
+extern keypos_t key_to_keypos(Key key) noexcept;
+extern bool is_tapping_key(Key key) noexcept;
+
 namespace {
 std::thread thread_{};                     ///< スレッド
 std::atomic<bool> running_{false};         ///< スレッドが動作中かどうか
 std::atomic<bool> stop_requested_{false};  ///< スレッドに対する停止要求
 
-std::deque<KeyEvent> event_queue_;        ///< イベントキュー
+std::deque<KeyboardEvent> event_queue_;   ///< イベントキュー
 std::mutex event_queue_mtx_;              ///< イベントキューのためのMutex
 std::condition_variable event_queue_cv_;  ///< イベントキューのためのCV
 
-using Matrix = Bitset<MATRIX_ROWS * MATRIX_COLS, matrix_row_t>;
 static constexpr Key NO_REPEAT = Key{KEY_COUNT};  ///< キーリピートしていないことを示す値
 
-Matrix matrix_;               ///< キーボードの状態
 Key repeat_key_ = NO_REPEAT;  ///< リピートしているキー
+
+inline void matrix_set(keypos_t keypos) noexcept {
+  raw_matrix[keypos.row] |= static_cast<matrix_row_t>(1) << keypos.col;
+}
+
+inline void matrix_reset(keypos_t keypos) noexcept {
+  raw_matrix[keypos.row] &= ~(static_cast<matrix_row_t>(1) << keypos.col);
+}
+
+inline void matrix_clear() noexcept {
+  for (size_t i = 0; i < MATRIX_ROWS; ++i) {
+    raw_matrix[i] = 0;
+  }
+}
+
+/**
+ * @brief KeyboardEventのvisitor
+ */
+class KeyboardVisitor final {
+public:
+  void operator()(const KeyEvent& event) noexcept {
+    const auto key = event.key();
+    const auto keypos = key_to_keypos(key);
+    if (keypos.row < MATRIX_ROWS && keypos.col < MATRIX_COLS) {
+      if (event.is_pressed()) {
+        if (key == repeat_key_) {
+          send_to_sink(SinkSignal::KEY_REPEAT);
+        } else {
+          send_to_sink(SinkSignal::KEY_REPEAT_END);
+          repeat_key_ = key;
+          matrix_set(keypos);
+          keyboard_task();
+
+          // 指定のキーはすぐに離す処理を行う
+          if (is_tapping_key(key)) {
+            send_to_sink(SinkSignal::KEY_REPEAT_END);
+            repeat_key_ = NO_REPEAT;
+            matrix_reset(keypos);
+            keyboard_task();
+          }
+        }
+      } else {
+        if (key == repeat_key_) {
+          send_to_sink(SinkSignal::KEY_REPEAT_END);
+          repeat_key_ = NO_REPEAT;
+        }
+        matrix_reset(keypos);
+        keyboard_task();
+      }
+    }
+  }
+
+  void operator()(KeyboardSignal signal) noexcept {
+    switch (signal) {
+      case KeyboardSignal::CLEAR: {
+        if (repeat_key_ != NO_REPEAT) {
+          send_to_sink(SinkSignal::KEY_REPEAT_END);
+          repeat_key_ = NO_REPEAT;
+        }
+        matrix_clear();
+        clear_keyboard();
+        break;
+      }
+      case KeyboardSignal::RESET: {
+        if (repeat_key_ != NO_REPEAT) {
+          send_to_sink(SinkSignal::KEY_REPEAT_END);
+          repeat_key_ = NO_REPEAT;
+        }
+        matrix_clear();
+        clear_keyboard();
+        layer_clear();
+        send_to_sink(SinkSignal::RESET);
+        break;
+      }
+    }
+  }
+
+} visitor_;
 
 // Sinkにイベントを送信するホストドライバ関数たち
 uint8_t keyboard_leds() noexcept {
@@ -47,25 +130,15 @@ void send_keyboard(report_keyboard_t* report_ptr) noexcept {
   if (report_ptr) send_to_sink(*report_ptr);
 }
 void send_nkro(report_nkro_t* report_ptr) noexcept {
-  // if (report_ptr) send_to_sink(*report_ptr);
+  if (report_ptr) send_to_sink(*report_ptr);
 }
 void send_mouse(report_mouse_t* report_ptr) noexcept {
   if (report_ptr) send_to_sink(*report_ptr);
 }
 void send_extra(report_extra_t* report_ptr) noexcept {
-  // if (report_ptr) send_to_sink(*report_ptr);
-}
-void send_system(uint16_t val) noexcept {
-  send_to_sink(HidUsage{HidUsagePage::GENERIC_DESKTOP_CONTROL, val});
-}
-void send_consumer(uint16_t val) noexcept {
-  send_to_sink(HidUsage{HidUsagePage::CONSUMER, val});
+  if (report_ptr) send_to_sink(*report_ptr);
 }
 }  // namespace
-
-// 変換表にアクセスする関数
-extern keypos_t key_to_keypos(Key key) noexcept;
-extern bool is_tapping_key(Key key) noexcept;
 
 bool start_keyboard() {
   if (thread_.joinable()) return false;
@@ -100,7 +173,7 @@ bool start_keyboard() {
       } _init{};
 
       while (!stop_requested_.load(std::memory_order_acquire)) {
-        KeyEvent event;
+        KeyboardEvent event;
         {
           std::unique_lock lock{event_queue_mtx_};
           if (event_queue_.empty()) {
@@ -112,58 +185,8 @@ bool start_keyboard() {
           event_queue_.pop_front();
         }
 
-        switch (event.keyboard_event()) {
-          case KeyboardEvent::NONE: {
-            const auto key = event.key();
-            const auto keypos = key_to_keypos(key);
-            if (keypos.row < MATRIX_ROWS && keypos.col < MATRIX_COLS) {
-              const auto pos = Matrix::Position{keypos.row, keypos.col};
-              if (event.is_pressed()) {
-                if (key == repeat_key_) {
-                  send_to_sink(SinkSignal::KEY_REPEAT);
-                } else {
-                  send_to_sink(SinkSignal::KEY_REPEAT_END);
-                  repeat_key_ = key;
-                  matrix_.set(pos);
-                  keyboard_task();
-
-                  // 指定のキーはすぐに離す処理を行う
-                  if (is_tapping_key(key)) {
-                    send_to_sink(SinkSignal::KEY_REPEAT_END);
-                    repeat_key_ = NO_REPEAT;
-                    matrix_.reset(pos);
-                    keyboard_task();
-                  }
-                }
-              } else {
-                if (key == repeat_key_) {
-                  send_to_sink(SinkSignal::KEY_REPEAT_END);
-                  repeat_key_ = NO_REPEAT;
-                }
-                matrix_.reset(pos);
-                keyboard_task();
-              }
-            }
-            break;
-          }
-          case KeyboardEvent::CLEAR: {
-            if (repeat_key_ != NO_REPEAT) {
-              send_to_sink(SinkSignal::KEY_REPEAT_END);
-              repeat_key_ = NO_REPEAT;
-            }
-            clear_keyboard();
-            break;
-          }
-          case KeyboardEvent::RESET: {
-            if (repeat_key_ != NO_REPEAT) {
-              send_to_sink(SinkSignal::KEY_REPEAT_END);
-              repeat_key_ = NO_REPEAT;
-            }
-            clear_keyboard();
-            send_to_sink(SinkSignal::RESET);
-            break;
-          }
-        }
+        // イベントの中身に応じて処理を行う
+        std::visit(visitor_, event);
 
         // CPUを明け渡す
         std::this_thread::yield();
@@ -193,7 +216,7 @@ bool stop_keyboard() {
   return true;
 }
 
-void send_to_keyboard(const KeyEvent& event) {
+void send_to_keyboard(const KeyboardEvent& event) {
   {
     std::lock_guard lock{event_queue_mtx_};
     event_queue_.emplace_back(event);
@@ -210,24 +233,4 @@ KeyboardStatus get_keyboard_status() noexcept {
     return KeyboardStatus::RESET;
   }
 }
-
-extern "C" {
-
-#ifndef TMK_DESKTOP_NOIMPL_MATRIX
-void matrix_init() {
-  matrix_.clear();
-}
-
-uint8_t matrix_scan() {
-  return 0;
-}
-
-matrix_row_t matrix_get_row(uint8_t row) {
-  return matrix_.value(row);
-}
-
-void matrix_print() {}
-#endif
-
-}  // extern "C"
 }  // namespace tmk_desktop

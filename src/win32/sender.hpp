@@ -10,7 +10,7 @@
 #include "injected.hpp"
 
 namespace tmk_desktop::inline win32 {
-extern uint16_t keycode_to_scancode(uint8_t keycode) noexcept;
+uint16_t keycode_to_scancode(uint8_t keycode) noexcept;
 
 struct Input final : INPUT {
   constexpr Input() noexcept : INPUT{.type = INPUT_HARDWARE} {}

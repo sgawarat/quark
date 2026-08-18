@@ -7,7 +7,12 @@
 #pragma once
 
 #include <exception>
-#include "event.hpp"
+#include <variant>
+
+#ifdef _WIN32
+#include "win32/keyboard.hpp"
+#endif
+
 
 namespace tmk_desktop {
 /**
@@ -19,6 +24,19 @@ enum class KeyboardStatus {
   STOPPING,  ///< 停止しようとしている
   STOPPED,   ///< 停止した
 };
+
+/**
+ * @brief シグナルの値
+ */
+enum class KeyboardSignal {
+  CLEAR,  ///< すべてのキーを離す
+  RESET,  ///< 初期状態に戻す
+};
+
+/**
+ * @brief Keyboardに渡されるイベントを格納するクラス
+ */
+using KeyboardEvent = std::variant<KeyEvent, KeyboardSignal>;
 
 /**
  * @brief Keyboardを始動させる
@@ -42,11 +60,11 @@ bool stop_keyboard();
 /**
  * @brief Keyboardにイベントを送る
  *
- * @param event 入力イベント
+ * @param event イベント
  * @exception bad_alloc メモリ確保に失敗
  * @exception system_error mutexのロックに失敗
  */
-void send_to_keyboard(const KeyEvent& event);
+void send_to_keyboard(const KeyboardEvent& event);
 
 /**
  * @brief Keyboardの状態を取得する

@@ -9,7 +9,10 @@
 #include <exception>
 #include <variant>
 #include <cstdint>
-#include "event.hpp"
+
+#ifdef _WIN32
+#include "win32/sink.hpp"
+#endif
 
 extern "C" {
 #include <report.h>
@@ -26,16 +29,6 @@ enum class SinkStatus {
   STOPPED,   ///< 停止した
 };
 
-enum class HidUsagePage : uint16_t {
-  GENERIC_DESKTOP_CONTROL = 0x01,
-  CONSUMER = 0x0c,
-};
-
-struct HidUsage {
-  HidUsagePage page;
-  uint16_t id;
-};
-
 /**
  * @brief シグナルの値
  */
@@ -48,7 +41,7 @@ enum class SinkSignal {
 /**
  * @brief Sinkに渡されるイベントを格納するクラス
  */
-using SinkEvent = std::variant<report_keyboard_t, report_mouse_t, HidUsage, NativeSinkEvent, SinkSignal>;
+using SinkEvent = std::variant<report_keyboard_t, report_nkro_t, report_mouse_t, report_extra_t, NativeSinkEvent, SinkSignal>;
 
 /**
  * @brief Sinkを始動させる

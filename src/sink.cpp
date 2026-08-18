@@ -46,102 +46,36 @@ public:
     const auto prev_mod_keyset = mod_keyset_;  // 前回の修飾キー状態
 
     // 今回のキー状態を記録する
-#ifdef NKRO_ENABLE
-    keyset_ = Keyset{report.nkro.bits};         // 今回のキー状態
-    mod_keyset_ = ModKeyset{report.nkro.mods};  // 今回の修飾キー状態
-#else
     keyset_.clear();
     for (auto key : std::span(report.keys)) {
       if (key >= KC_LEFT_CTRL && key <= KC_RIGHT_GUI) continue;
       if (key != 0) keyset_.set(key);
     }
     mod_keyset_ = ModKeyset{report.mods};
-#endif
 
     // 今回の更新で変化するキーを抽出する
-    const auto pressed_keyset = reset_to_set(prev_keyset, keyset_);               // 押した
-    const auto released_keyset = set_to_reset(prev_keyset, keyset_);              // 離した
-    const auto pressed_mod_keyset = reset_to_set(prev_mod_keyset, mod_keyset_);   // 押した
-    const auto released_mod_keyset = set_to_reset(prev_mod_keyset, mod_keyset_);  // 離した
+    scan(prev_keyset, prev_mod_keyset);
+  }
 
-    // キーイベントを送信する
-    released_keyset.scan([](auto pos) {  // 非修飾キーを離す
-      sender_.send_key_release(pos.index());
-    });
-    released_mod_keyset.scan([](auto pos) {  // 修飾キーを離す
-      sender_.send_key_release(KC_LEFT_CTRL + pos.index());
-    });
-    pressed_mod_keyset.scan([](auto pos) {  // 修飾キーを押す
-      sender_.send_key_press(KC_LEFT_CTRL + pos.index());
-    });
-    pressed_keyset.scan([](auto pos) {  // 非修飾キーを押す
-      sender_.send_key_press(pos.index());
-    });
+  void operator()(const report_nkro_t& report) noexcept {
+    // 前回のキー状態を保存する
+    const auto prev_keyset = keyset_;          // 前回のキー状態
+    const auto prev_mod_keyset = mod_keyset_;  // 前回の修飾キー状態
+
+    // 今回のキー状態を記録する
+    keyset_ = Keyset{report.bits};         // 今回のキー状態
+    mod_keyset_ = ModKeyset{report.mods};  // 今回の修飾キー状態
+
+    // 今回の更新で変化するキーを抽出する
+    scan(prev_keyset, prev_mod_keyset);
   }
 
   void operator()(const report_mouse_t& report) noexcept {
     // TODO: send_mouseを実装する
   }
 
-  void operator()(const HidUsage& usage) noexcept {
-    const auto keycode = [=]() -> uint8_t {
-      switch (usage.page) {
-        case HidUsagePage::GENERIC_DESKTOP_CONTROL:
-          switch (usage.id) {
-            case SYSTEM_POWER_DOWN:
-              return KC_SYSTEM_POWER;
-            case SYSTEM_SLEEP:
-              return KC_SYSTEM_SLEEP;
-            case SYSTEM_WAKE_UP:
-              return KC_SYSTEM_WAKE;
-          }
-          break;
-        case HidUsagePage::CONSUMER:
-          switch (usage.id) {
-            case AUDIO_MUTE:
-              return KC_AUDIO_MUTE;
-            case AUDIO_VOL_UP:
-              return KC_AUDIO_VOL_UP;
-            case AUDIO_VOL_DOWN:
-              return KC_AUDIO_VOL_DOWN;
-            case TRANSPORT_NEXT_TRACK:
-              return KC_MEDIA_NEXT_TRACK;
-            case TRANSPORT_PREV_TRACK:
-              return KC_MEDIA_PREV_TRACK;
-            case TRANSPORT_STOP:
-              return KC_MEDIA_STOP;
-            case TRANSPORT_STOP_EJECT:
-              return KC_MEDIA_EJECT;
-            case TRANSPORT_PLAY_PAUSE:
-              return KC_MEDIA_PLAY_PAUSE;
-            case AL_CC_CONFIG:
-              return KC_MEDIA_SELECT;
-            case AL_EMAIL:
-              return KC_MAIL;
-            case AL_CALCULATOR:
-              return KC_CALCULATOR;
-            case AL_LOCAL_BROWSER:
-              return KC_MY_COMPUTER;
-            case AC_SEARCH:
-              return KC_WWW_SEARCH;
-            case AC_HOME:
-              return KC_WWW_HOME;
-            case AC_BACK:
-              return KC_WWW_BACK;
-            case AC_FORWARD:
-              return KC_WWW_FORWARD;
-            case AC_STOP:
-              return KC_WWW_STOP;
-            case AC_REFRESH:
-              return KC_WWW_REFRESH;
-            case AC_BOOKMARKS:
-              return KC_WWW_FAVORITES;
-          }
-          break;
-      }
-      return KC_NO;
-    }();
-    if (keycode != KC_NO) sender_.send_key_tap(keycode);
+  void operator()(const report_extra_t& report) noexcept {
+    // TODO: send_extraを実装する
   }
 
   void operator()(const NativeSinkEvent& event) noexcept {
@@ -163,6 +97,28 @@ public:
   }
 
 private:
+  void scan(const Keyset& prev_keyset, const ModKeyset& prev_mod_keyset) noexcept {
+    // 今回の更新で変化するキーを抽出する
+    const auto pressed_keyset = reset_to_set(prev_keyset, keyset_);               // 押した
+    const auto released_keyset = set_to_reset(prev_keyset, keyset_);              // 離した
+    const auto pressed_mod_keyset = reset_to_set(prev_mod_keyset, mod_keyset_);   // 押した
+    const auto released_mod_keyset = set_to_reset(prev_mod_keyset, mod_keyset_);  // 離した
+
+    // キーイベントを送信する
+    released_keyset.scan([](auto pos) {  // 非修飾キーを離す
+      sender_.send_key_release(pos.index());
+    });
+    released_mod_keyset.scan([](auto pos) {  // 修飾キーを離す
+      sender_.send_key_release(KC_LEFT_CTRL + pos.index());
+    });
+    pressed_mod_keyset.scan([](auto pos) {  // 修飾キーを押す
+      sender_.send_key_press(KC_LEFT_CTRL + pos.index());
+    });
+    pressed_keyset.scan([](auto pos) {  // 非修飾キーを押す
+      sender_.send_key_press(pos.index());
+    });
+  }
+
   Keyset keyset_{};         ///< 最新のキー状態
   ModKeyset mod_keyset_{};  ///< 最新の修飾キー状態
 } visitor_;

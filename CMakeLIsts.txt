@@ -8,6 +8,12 @@ if(NOT IS_ABSOLUTE ${TMK_CORE_DIR})
     set(TMK_CORE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${TMK_CORE_DIR}")
 endif()
 
+set(TMK_DESKTOP_LAYOUT_DIR "" CACHE PATH "Path to the layout directory")
+
+if(NOT IS_ABSOLUTE ${TMK_DESKTOP_LAYOUT_DIR})
+    set(TMK_DESKTOP_LAYOUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${TMK_DESKTOP_LAYOUT_DIR}")
+endif()
+
 set(TMK_DESKTOP_KEYMAP_DIR "" CACHE PATH "Path to the keymap directory")
 
 if(NOT IS_ABSOLUTE ${TMK_DESKTOP_KEYMAP_DIR})
@@ -16,6 +22,10 @@ endif()
 
 if(NOT EXISTS ${TMK_CORE_DIR})
     message(FATAL_ERROR "tmk_core directory '${TMK_CORE_DIR}' NOT FOUND")
+endif()
+
+if(NOT EXISTS ${TMK_DESKTOP_LAYOUT_DIR})
+    message(FATAL_ERROR "layout directory '${TMK_DESKTOP_LAYOUT_DIR}' NOT FOUND")
 endif()
 
 if(NOT EXISTS ${TMK_DESKTOP_KEYMAP_DIR})
@@ -50,8 +60,8 @@ target_compile_features(config INTERFACE
     c_std_23
 )
 target_compile_definitions(config INTERFACE
-    NO_DEBUG
-    NO_PRINT
+    # NO_DEBUG
+    # NO_PRINT
     IGNORE_ATOMIC_BLOCK
     LAYER_STATE_32BIT
     KEYMAP_C="keymap.h"
@@ -79,6 +89,7 @@ target_include_directories(config INTERFACE
 )
 
 add_subdirectory(src)
+add_subdirectory(${TMK_DESKTOP_LAYOUT_DIR})
 add_subdirectory(${TMK_DESKTOP_KEYMAP_DIR})
 add_subdirectory(platforms)
 add_subdirectory(tools/key_test)
