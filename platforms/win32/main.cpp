@@ -162,16 +162,16 @@ void on_sink_error(std::exception&) noexcept {
  */
 extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
 #ifndef NO_PRINT
+  // プリント機能のためにコンソールを出す
   AllocConsole();
-  FILE* fp = nullptr;
-  freopen_s(&fp, "CONOUT$", "w", stdout);
-  debug_config = {
-    .enable   = true,
-    .matrix   = true,
-    .keyboard = true,
-    .mouse    = false,
-    .reserved = 0
-  };
+  [[maybe_unused]] FILE* conout_fp = nullptr;
+  freopen_s(&conout_fp, "CONOUT$", "w", stdout);
+  freopen_s(&conout_fp, "CONOUT$", "w", stderr);
+#endif
+
+#ifndef NO_DEBUG
+  // QMKのデバッグ機能を有効化する
+  debug_config = {.enable = true, .matrix = true, .keyboard = true, .mouse = true};
 #endif
 
   // 重複起動を防止する
