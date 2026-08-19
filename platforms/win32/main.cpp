@@ -10,9 +10,9 @@
 #include <cstdio>
 #include <Windows.h>
 #include <WtsApi32.h>
-#include <tmk_desktop/source.hpp>
-#include <tmk_desktop/keyboard.hpp>
-#include <tmk_desktop/sink.hpp>
+#include <quark/source.hpp>
+#include <quark/keyboard.hpp>
+#include <quark/sink.hpp>
 #include "utility.hpp"
 #include "resource.h"
 
@@ -20,12 +20,12 @@ extern "C" {
 #include <debug.h>
 }
 
-namespace tmk_desktop {
+namespace quark {
 namespace {
-const WCHAR* const TITLE = L"TMK Desktop";                // アプリケーション名
-const WCHAR* const CLASS_NAME = L"TMK Desktop WNDCLASS";  // ウィンドウクラス名
-const WCHAR* const WINDOW_NAME = L"TMK Desktop WINDOW";   // ウィンドウ名
-constexpr UINT WM_APP_NOTIFY_ICON = WM_APP + 1;           // 通知アイコンのメッセージID
+const WCHAR* const TITLE = L"Quark";                // アプリケーション名
+const WCHAR* const CLASS_NAME = L"Quark WNDCLASS";  // ウィンドウクラス名
+const WCHAR* const WINDOW_NAME = L"Quark WINDOW";   // ウィンドウ名
+constexpr UINT WM_APP_NOTIFY_ICON = WM_APP + 1;     // 通知アイコンのメッセージID
 
 HMENU context_menu_{};  // コンテキストメニュー
 HICON keyboard_on_icon_{};
@@ -264,4 +264,4 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
 
   return static_cast<int>(msg.wParam);
 }
-}  // namespace tmk_desktop
+}  // namespace quark

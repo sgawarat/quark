@@ -8,9 +8,9 @@
 #include <string_view>
 #include <iostream>
 #include <Windows.h>
-#include <tmk_desktop/win32/keyboard.hpp>
+#include <quark/win32/keyboard.hpp>
 
-namespace tmk_desktop {
+namespace quark {
 static LRESULT CALLBACK hook_proc(int code, WPARAM wparam, LPARAM lparam) noexcept {
   switch (code) {
     case HC_ACTION: {
@@ -27,17 +27,19 @@ static LRESULT CALLBACK hook_proc(int code, WPARAM wparam, LPARAM lparam) noexce
 
       return TRUE;
     }
+    default: break;
   }
 
-  return CallNextHookEx(NULL, code, wparam, lparam);
+  return CallNextHookEx(nullptr, code, wparam, lparam);
 }
 
 std::string_view get_vk_name(UINT vk) noexcept;
 
 extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   AllocConsole();
-  [[maybe_unused]] const auto conout_fp = freopen("CONOUT$", "w", stdout);
-  SetWindowPos(GetConsoleWindow(), NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+  [[maybe_unused]] FILE* conout_fp{};
+  freopen_s(&conout_fp, "CONOUT$", "w", stdout);
+  SetWindowPos(GetConsoleWindow(), nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
   SetConsoleOutputCP(CP_UTF8);
 
   // 有効なスキャンコードを列挙する
@@ -50,7 +52,7 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   const HHOOK hook = SetWindowsHookEx(WH_KEYBOARD_LL, hook_proc, instance, 0);
   MSG msg{};
   while (true) {
-    const auto result = GetMessage(&msg, NULL, 0, 0);
+    const auto result = GetMessage(&msg, nullptr, 0, 0);
     if (result == 0) break;  // WM_QUITを受け取った
     if (result > 0) {
       TranslateMessage(&msg);
@@ -294,7 +296,8 @@ std::string_view get_vk_name(UINT vk) noexcept {
     case VK_NONAME: return "VK_NONAME";
     case VK_PA1: return "VK_PA1";
     case VK_OEM_CLEAR: return "VK_OEM_CLEAR";
-  };
+    default: break;
+  }
   return "Unknown";
 }
-}  // namespace tmk_desktop
+}  // namespace quark

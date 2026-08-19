@@ -5,15 +5,15 @@
  * @file keyboard.cpp
  * @brief Keyboard
  */
-#include <tmk_desktop/keyboard.hpp>
+#include <quark/keyboard.hpp>
 #include <atomic>
 #include <deque>
 #include <mutex>
 #include <condition_variable>
 #include <exception>
 #include <thread>
-#include <tmk_desktop/bitset.hpp>
-#include <tmk_desktop/sink.hpp>
+#include <quark/bitset.hpp>
+#include <quark/sink.hpp>
 
 extern "C" {
 #include <keyboard.h>
@@ -26,7 +26,7 @@ extern "C" {
 extern matrix_row_t raw_matrix[MATRIX_ROWS];
 }  // extern "C"
 
-namespace tmk_desktop {
+namespace quark {
 // 変換表にアクセスする関数
 extern keypos_t key_to_keypos(Key key) noexcept;
 extern bool is_tapping_key(Key key) noexcept;
@@ -241,4 +241,4 @@ KeyboardStatus get_keyboard_status() noexcept {
     return KeyboardStatus::RESET;
   }
 }
-}  // namespace tmk_desktop
+}  // namespace quark

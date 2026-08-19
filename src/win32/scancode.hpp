@@ -7,6 +7,6 @@
  */
 #include <cstdint>
 
-namespace tmk_desktop::inline win32 {
+namespace quark::inline win32 {
 uint16_t keycode_to_scancode(uint8_t keycode) noexcept;
-}  // namespace tmk_desktop::inline win32
+}  // namespace quark::inline win32

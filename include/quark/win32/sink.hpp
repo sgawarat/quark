@@ -9,7 +9,7 @@
 
 #include <Windows.h>
 
-namespace tmk_desktop::inline win32 {
+namespace quark::inline win32 {
 /**
  * @brief Sinkで使うOSネイティブなイベント
  */
@@ -24,4 +24,4 @@ struct NativeSinkEvent : INPUT {
                 },
         } {}
 };
-}  // namespace tmk_desktop::inline win32
+}  // namespace quark::inline win32

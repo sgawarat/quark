@@ -9,11 +9,11 @@
 
 #include <exception>
 #include <Windows.h>
-#include <tmk_desktop/source.hpp>
-#include <tmk_desktop/keyboard.hpp>
+#include <quark/source.hpp>
+#include <quark/keyboard.hpp>
 #include "injected.hpp"
 
-namespace tmk_desktop::inline win32 {
+namespace quark::inline win32 {
 class EventReceiver final {
 public:
   /**
@@ -88,4 +88,4 @@ private:
   HHOOK hook_ = nullptr;  ///< フックのハンドル
   DWORD thread_id_ = 0;   ///< スレッドID
 };
-}  // namespace tmk_desktop::inline win32
+}  // namespace quark::inline win32

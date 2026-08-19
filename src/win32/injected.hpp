@@ -9,7 +9,7 @@
 
 #include <Windows.h>
 
-namespace tmk_desktop::inline win32 {
+namespace quark::inline win32 {
 /**
  * @brief 自前のINJECTEDフラグ
  *
@@ -40,4 +40,4 @@ constexpr bool remove_injected(KBDLLHOOKSTRUCT& info) noexcept {
   info.dwExtraInfo = 0;
   return true;
 }
-}  // namespace tmk_desktop::inline win32
+}  // namespace quark::inline win32

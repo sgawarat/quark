@@ -5,7 +5,7 @@
  * @file source.cpp
  * @brief Source
  */
-#include <tmk_desktop/source.hpp>
+#include <quark/source.hpp>
 #include <atomic>
 #include <exception>
 #include <thread>
@@ -14,7 +14,7 @@
 #include "win32/receiver.hpp"
 #endif
 
-namespace tmk_desktop {
+namespace quark {
 namespace {
 std::thread thread_;                       ///< スレッド
 std::atomic<bool> running_{false};         ///< スレッドが動作中かどうか
@@ -86,4 +86,4 @@ SourceStatus get_source_status() noexcept {
     return SourceStatus::RESET;
   }
 }
-}  // namespace tmk_desktop
+}  // namespace quark

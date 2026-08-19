@@ -5,8 +5,8 @@
  * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
  */
 #include <array>
-#include <tmk_desktop/sink.hpp>
-#include <tmk_desktop/win32/layouts/jp109.hpp>
+#include <quark/sink.hpp>
+#include <quark/win32/layouts/jp109.hpp>
 
 extern "C" {
 #include <common/action.h>
@@ -14,7 +14,7 @@ extern "C" {
 #include <common/action_util.h>
 }  // extern "C"
 
-namespace tmk_desktop {
+namespace quark {
 using namespace jp109;
 
 // 自環境でのマイクミュートキー
@@ -281,12 +281,12 @@ void action_function(keyrecord_t* record, uint8_t id, uint8_t opt) {
   }
 }
 }  // extern "C"
-}  // namespace tmk_desktop
+}  // namespace quark
 
 #ifdef _WIN32
-#include <tmk_desktop/win32/settings.hpp>
+#include <quark/win32/settings.hpp>
 
-namespace tmk_desktop::inline win32 {
+namespace quark::inline win32 {
 using namespace jp109;
 
 // 物理キーボードから仮想キーボードへの対応表を定義します。
@@ -299,5 +299,5 @@ const KeyToKeyposTable key_to_keypos_table = [] {
   }
   return t;
 }();
-}  // namespace tmk_desktop::inline win32
+}  // namespace quark::inline win32
 #endif

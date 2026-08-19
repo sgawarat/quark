@@ -19,7 +19,7 @@ extern "C" {
 #include <report.h>
 }  // extern "C"
 
-namespace tmk_desktop {
+namespace quark {
 /**
  * @brief Sinkの状態
  */
@@ -50,7 +50,6 @@ using SinkEvent = std::variant<report_keyboard_t, report_nkro_t, report_mouse_t,
  * @retval true 始動に成功
  * @retval false すでに始動している
  * @exception system_error スレッドの生成に失敗
- * @exception e 設定の読み込みに失敗
  */
 bool start_sink();
 
@@ -85,4 +84,4 @@ SinkStatus get_sink_status() noexcept;
  * アプリケーション側で実装される。
  */
 void on_sink_error(std::exception& e) noexcept;
-}  // namespace tmk_desktop
+}  // namespace quark

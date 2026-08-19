@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-namespace tmk_desktop::inline win32 {
+namespace quark::inline win32 {
 
 /**
  * @brief キーの個数
@@ -178,4 +178,4 @@ enum Key : uint16_t {
   K_MAIL = 0x16c,
   K_MEDIA_SELECT = 0x16d,
 };
-}  // namespace tmk_desktop::inline win32
+}  // namespace quark::inline win32

@@ -11,7 +11,7 @@
 #include "injected.hpp"
 #include "scancode.hpp"
 
-namespace tmk_desktop::inline win32 {
+namespace quark::inline win32 {
 struct Input final : INPUT {
   constexpr Input() noexcept : INPUT{.type = INPUT_HARDWARE} {}
 
@@ -129,4 +129,4 @@ private:
   uint8_t latest_press_keycode_ = KC_NO;  ///< 最後に押したキー
   Input latest_press_input_{};            ///< 最後に押したキーイベント
 };
-}  // namespace tmk_desktop::inline win32
+}  // namespace quark::inline win32

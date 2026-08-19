@@ -10,7 +10,7 @@
 #include <Windows.h>
 #include <shellapi.h>
 
-namespace tmk_desktop::inline win32 {
+namespace quark::inline win32 {
 /**
  * @brief 通知領域にアイコンを登録する
  *
@@ -80,7 +80,7 @@ inline void remove_notify_icon(HWND wnd, UINT id) noexcept {
 
 /**
  * @brief 通知領域のアイコンを変更する
- * 
+ *
  * @param wnd ウィンドウのハンドル
  * @param id 識別番号
  * @param icon アイコンのハンドル
@@ -109,4 +109,4 @@ inline bool get_im_status() noexcept {
   const HWND hwnd = ImmGetDefaultIMEWnd(gui_thread_info.hwndFocus);
   return SendMessage(hwnd, WM_IME_CONTROL, 5 /*IMC_GETOPENSTATUS*/, 0) != 0;
 }
-}  // namespace tmk_desktop::inline win32
+}  // namespace quark::inline win32

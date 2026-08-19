@@ -6,11 +6,11 @@
  * @brief 日本語配列
  */
 #include <array>
-#include <tmk_desktop/key.hpp>
+#include <quark/key.hpp>
 
 #include "oadg109.h"
 
-namespace tmk_desktop {
+namespace quark {
 namespace {
 // 言語固有のキー
 constexpr Key K_CIRCUMFLEX = K_EQUAL;
@@ -66,4 +66,4 @@ bool is_tapping_key(enum Key key) noexcept {
 keypos_t key_to_keypos(enum Key key) noexcept {
   return layout[key];
 }
-}  // namespace tmk_desktop
+}  // namespace quark

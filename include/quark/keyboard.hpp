@@ -14,7 +14,7 @@
 #include "win32/keyboard.hpp"
 #endif
 
-namespace tmk_desktop {
+namespace quark {
 /**
  * @brief Keyboardの状態
  */
@@ -44,7 +44,6 @@ using KeyboardEvent = std::variant<KeyEvent, KeyboardSignal>;
  * @retval true 始動に成功
  * @retval false すでに始動している
  * @exception system_error スレッドの生成に失敗
- * @exception e 設定の読み込みに失敗
  */
 bool start_keyboard();
 
@@ -79,4 +78,4 @@ KeyboardStatus get_keyboard_status() noexcept;
  * アプリケーション側で実装される。
  */
 void on_keyboard_error(std::exception& e) noexcept;
-}  // namespace tmk_desktop
+}  // namespace quark

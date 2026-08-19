@@ -5,14 +5,14 @@
  * @file sink.cpp
  * @brief Sink
  */
-#include <tmk_desktop/sink.hpp>
+#include <quark/sink.hpp>
 #include <atomic>
 #include <deque>
 #include <mutex>
 #include <condition_variable>
 #include <exception>
 #include <thread>
-#include <tmk_desktop/bitset.hpp>
+#include <quark/bitset.hpp>
 
 extern "C" {
 #include <action.h>
@@ -22,7 +22,7 @@ extern "C" {
 #include "win32/sender.hpp"
 #endif
 
-namespace tmk_desktop {
+namespace quark {
 namespace {
 std::thread thread_{};                     ///< スレッド
 std::atomic<bool> running_{false};         ///< スレッドが動作中かどうか
@@ -207,4 +207,4 @@ SinkStatus get_sink_status() noexcept {
     return SinkStatus::RESET;
   }
 }
-}  // namespace tmk_desktop
+}  // namespace quark

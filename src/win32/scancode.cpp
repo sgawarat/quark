@@ -11,7 +11,7 @@ extern "C" {
 #include <keycode.h>
 }  // extern "C"
 
-namespace tmk_desktop::inline win32 {
+namespace quark::inline win32 {
 uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
   switch (keycode) {
     case KC_ESCAPE: return 0x0001;
@@ -172,4 +172,4 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
   }
   return 0;
 }
-}  // namespace tmk_desktop::inline win32
+}  // namespace quark::inline win32

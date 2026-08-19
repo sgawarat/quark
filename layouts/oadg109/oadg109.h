@@ -11,10 +11,21 @@
 #include <quantum_keycodes.h>
 #include <keymap_japanese.h>
 
+/**
+ * @brief レイアウトが必要とするmatrixの横幅
+ */
 #define LAYOUT_COLS 22
+
+/**
+ * @brief レイアウトが必要とするmatrixの縦幅
+ */
 #define LAYOUT_ROWS 6
 
 /* clang-format off */
+
+/**
+ * @brief キーマップレイヤーを定義するための便利マクロ
+ */
 #define LAYOUT( \
   ESCAPE, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, PRINT_SCREEN, SCROLL_LOCK, PAUSE, \
   HANKAKU_ZENKAKU, _1, _2, _3, _4, _5, _6, _7, _8, _9, _0, MINUS, CIRCUMFLEX, YEN, BACKSPACE, INSERT, HOME, PAGE_UP, NUM_LOCK, KP_SLASH, KP_ASTERISK, KP_MINUS, \

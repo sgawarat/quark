@@ -11,7 +11,7 @@
 #include <Windows.h>
 #include "../win32/key.hpp"
 
-namespace tmk_desktop::inline win32 {
+namespace quark::inline win32 {
 /**
  * @brief キーイベントを格納するクラス
  */
@@ -35,4 +35,4 @@ private:
   DWORD sc_ = 0;
   DWORD flags_ = 0;
 };
-}  // namespace tmk_desktop::inline win32
+}  // namespace quark::inline win32

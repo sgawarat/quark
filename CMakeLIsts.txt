@@ -1,50 +1,34 @@
 # SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-cmake_minimum_required(VERSION 3.21)
-project(tmk_desktop)
+cmake_minimum_required(VERSION 3.18)
+project(quark)
 
-set(TMK_CORE_DIR "" CACHE PATH "Path to the tmk_core directory")
-set(QMK_SOURCE_DIR "${TMK_CORE_DIR}")
+set(QMK_FIRMWARE_DIR "" CACHE PATH "Path to the qmk_firmware directory")
+set(QUARK_LAYOUT_DIR "" CACHE PATH "Path to the layout directory")
+set(QUARK_KEYMAP_DIR "" CACHE PATH "Path to the keymap directory")
 
-if(NOT IS_ABSOLUTE ${TMK_CORE_DIR})
-    set(TMK_CORE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${TMK_CORE_DIR}")
+if(NOT IS_DIRECTORY ${QMK_FIRMWARE_DIR})
+    message(FATAL_ERROR "QMK Firmware Directory '${QMK_FIRMWARE_DIR}' NOT FOUND")
 endif()
 
-set(TMK_DESKTOP_LAYOUT_DIR "" CACHE PATH "Path to the layout directory")
-
-if(NOT IS_ABSOLUTE ${TMK_DESKTOP_LAYOUT_DIR})
-    set(TMK_DESKTOP_LAYOUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${TMK_DESKTOP_LAYOUT_DIR}")
+if(NOT IS_DIRECTORY ${QUARK_LAYOUT_DIR})
+    message(FATAL_ERROR "Layout Directory '${QUARK_LAYOUT_DIR}' NOT FOUND")
 endif()
 
-set(TMK_DESKTOP_KEYMAP_DIR "" CACHE PATH "Path to the keymap directory")
-
-if(NOT IS_ABSOLUTE ${TMK_DESKTOP_KEYMAP_DIR})
-    set(TMK_DESKTOP_KEYMAP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${TMK_DESKTOP_KEYMAP_DIR}")
-endif()
-
-if(NOT EXISTS ${TMK_CORE_DIR})
-    message(FATAL_ERROR "tmk_core directory '${TMK_CORE_DIR}' NOT FOUND")
-endif()
-
-if(NOT EXISTS ${TMK_DESKTOP_LAYOUT_DIR})
-    message(FATAL_ERROR "layout directory '${TMK_DESKTOP_LAYOUT_DIR}' NOT FOUND")
-endif()
-
-if(NOT EXISTS ${TMK_DESKTOP_KEYMAP_DIR})
-    message(FATAL_ERROR "keymap directory '${TMK_DESKTOP_KEYMAP_DIR}' NOT FOUND")
+if(NOT IS_DIRECTORY ${QUARK_KEYMAP_DIR})
+    message(FATAL_ERROR "Keymap Directory '${QUARK_KEYMAP_DIR}' NOT FOUND")
 endif()
 
 add_library(config INTERFACE)
 target_precompile_headers(config INTERFACE
-    ${TMK_DESKTOP_KEYMAP_DIR}/config.h
-    ./include/tmk_desktop/stable.h
+    ${QUARK_KEYMAP_DIR}/config.h
+    ./include/quark/stable.h
 )
 target_compile_options(config INTERFACE
     -Wall
     -Wextra
 
-    # -Werror
     -Wno-c++98-compat
     -Wno-c++98-compat-pedantic
     -Wno-pre-c++17-compat
@@ -66,8 +50,7 @@ target_compile_options(config INTERFACE
     -Wno-padded
 )
 target_compile_features(config INTERFACE
-    cxx_std_23
-    c_std_23
+    cxx_std_20
 )
 target_compile_definitions(config INTERFACE
     KEYMAP_C="keymap.h"
@@ -79,21 +62,21 @@ target_compile_definitions(config INTERFACE
     _UNICODE
 )
 target_include_directories(config INTERFACE
-    ${TMK_CORE_DIR}/quantum
-    ${TMK_CORE_DIR}/quantum/keymap_extras
-    ${TMK_CORE_DIR}/quantum/logging
-    ${TMK_CORE_DIR}/quantum/nvm
-    ${TMK_CORE_DIR}/quantum/nvm/eeprom
-    ${TMK_CORE_DIR}/quantum/process_keycode
-    ${TMK_CORE_DIR}/quantum/sequencer
-    ${TMK_CORE_DIR}/platforms
-    ${TMK_CORE_DIR}/tmk_core/protocol
+    ${QMK_FIRMWARE_DIR}/quantum
+    ${QMK_FIRMWARE_DIR}/quantum/keymap_extras
+    ${QMK_FIRMWARE_DIR}/quantum/logging
+    ${QMK_FIRMWARE_DIR}/quantum/nvm
+    ${QMK_FIRMWARE_DIR}/quantum/nvm/eeprom
+    ${QMK_FIRMWARE_DIR}/quantum/process_keycode
+    ${QMK_FIRMWARE_DIR}/quantum/sequencer
+    ${QMK_FIRMWARE_DIR}/platforms
+    ${QMK_FIRMWARE_DIR}/tmk_core/protocol
     ./include
-    ./include/tmk_desktop/quantum
+    ./include/quark/quantum
 )
 
 add_subdirectory(src)
-add_subdirectory(${TMK_DESKTOP_LAYOUT_DIR})
-add_subdirectory(${TMK_DESKTOP_KEYMAP_DIR})
+add_subdirectory(${QUARK_LAYOUT_DIR})
+add_subdirectory(${QUARK_KEYMAP_DIR})
 add_subdirectory(platforms)
 add_subdirectory(tools/key_test)

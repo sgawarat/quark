@@ -9,7 +9,7 @@
 
 #include <exception>
 
-namespace tmk_desktop {
+namespace quark {
 /**
  * @brief Sourceの状態
  */
@@ -51,4 +51,4 @@ SourceStatus get_source_status() noexcept;
  * アプリケーション側で実装される。
  */
 void on_source_error(std::exception& e) noexcept;
-}  // namespace tmk_desktop
+}  // namespace quark

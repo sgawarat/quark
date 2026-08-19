@@ -11,7 +11,7 @@
 #include <span>
 #include <cstdint>
 
-namespace tmk_desktop {
+namespace quark {
 /**
  * @brief ビットセット
  *
@@ -261,4 +261,4 @@ public:
 private:
   std::array<ValueT, VALUE_COUNT> values_;  ///< ビット列を格納する値の配列
 };
-}  // namespace tmk_desktop
+}  // namespace quark
