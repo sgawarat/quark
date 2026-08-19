@@ -1,8 +1,9 @@
+// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /**
  * @file utility.hpp
  * @brief ユーティリティ
- * @copyright Copyright 2021 sgawarat <sgawarat@gmail.com>
- * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
  */
 #pragma once
 
@@ -77,6 +78,13 @@ inline void remove_notify_icon(HWND wnd, UINT id) noexcept {
   Shell_NotifyIcon(NIM_DELETE, &nid);
 }
 
+/**
+ * @brief 通知領域のアイコンを変更する
+ * 
+ * @param wnd ウィンドウのハンドル
+ * @param id 識別番号
+ * @param icon アイコンのハンドル
+ */
 inline void modify_notify_icon(HWND wnd, UINT id, HICON icon) noexcept {
   NOTIFYICONDATA nid{
       .cbSize = sizeof(NOTIFYICONDATA),

@@ -1,8 +1,9 @@
+// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /**
  * @file oadg109.h
  * @brief 日本語配列
- * @copyright Copyright 2021 sgawarat <sgawarat@gmail.com>
- * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
  */
 #pragma once
 
@@ -13,7 +14,7 @@
 #define LAYOUT_COLS 22
 #define LAYOUT_ROWS 6
 
-/* clang-format: off */
+/* clang-format off */
 #define LAYOUT( \
   ESCAPE, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, PRINT_SCREEN, SCROLL_LOCK, PAUSE, \
   HANKAKU_ZENKAKU, _1, _2, _3, _4, _5, _6, _7, _8, _9, _0, MINUS, CIRCUMFLEX, YEN, BACKSPACE, INSERT, HOME, PAGE_UP, NUM_LOCK, KP_SLASH, KP_ASTERISK, KP_MINUS, \
@@ -29,4 +30,4 @@
   LEFT_SHIFT, Z, X, C, V, B, N, M, COMMA, DOT, SLASH, BACKSLASH, RIGHT_SHIFT, UP, KP_1, KP_2, KP_3, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, \
   LEFT_CTRL, LEFT_GUI, LEFT_ALT, MUHENKAN, SPACE, HENKAN, KATAKANA_HIRAGANA, RIGHT_ALT, RIGHT_GUI, APPLICATION, RIGHT_CTRL, LEFT, DOWN, RIGHT, KP_0, KP_DOT, KP_ENTER, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO \
 }
-/* clang-format: on */
+/* clang-format on */

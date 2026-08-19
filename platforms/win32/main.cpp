@@ -1,20 +1,15 @@
+// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /**
  * @file main.cpp
  * @brief Win32アプリケーション
- * @copyright Copyright 2021 sgawarat <sgawarat@gmail.com>
- * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
  */
 #include <thread>
 #include <utility>
 #include <cstdio>
 #include <Windows.h>
-#ifndef OUT
-#define OUT
-#endif
 #include <WtsApi32.h>
-#ifdef OUT
-#undef OUT
-#endif
 #include <tmk_desktop/source.hpp>
 #include <tmk_desktop/keyboard.hpp>
 #include <tmk_desktop/sink.hpp>
@@ -142,8 +137,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
       }
       return 0;
     }
-    default:
-      return DefWindowProc(hwnd, msg, wparam, lparam);
+    default: return DefWindowProc(hwnd, msg, wparam, lparam);
   }
 }
 }  // namespace

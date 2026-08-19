@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 #define IDR_CONTEXT_MENU 4
 #define ID_EXIT 40001
 #define ID_ENABLE_DISABLE 40002

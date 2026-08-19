@@ -1,13 +1,14 @@
+// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /**
  * @file keymap.c
  * @brief キーマップ
- * @copyright Copyright 2026 sgawarat <sgawarat@gmail.com>
- * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
  */
 #include QMK_KEYBOARD_H
 
+/* clang-format off */
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-  /* clang-format: off */
   LAYOUT(
     KC_ESC, KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_F12, KC_PSCR, KC_SCRL, KC_PAUSE,
     JP_ZKHK, JP_1, JP_2, JP_3, JP_4, JP_5, JP_6, JP_7, JP_8, JP_9, JP_0, JP_MINS, JP_CIRC, JP_YEN, KC_BSPC, KC_INS, KC_HOME, KC_PGUP, KC_NUM, KC_PSLS, KC_PAST, KC_PMNS,
@@ -16,5 +17,5 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_LSFT, JP_Z, JP_X, JP_C, JP_V, JP_B, JP_N, JP_M, JP_COMM, JP_DOT, JP_SLSH, JP_BSLS, KC_RSFT, KC_UP, KC_P1, KC_P2, KC_P3,
     KC_LCTL, KC_LGUI, KC_LALT, JP_MHEN, KC_SPC, JP_HENK, JP_KANA, KC_RALT, KC_RGUI, KC_APP, KC_RCTL, KC_LEFT, KC_DOWN, KC_RGHT, KC_P0, KC_PDOT, KC_PENT
   ),
-  /* clang-format: on */
 };
+/* clang-format on */

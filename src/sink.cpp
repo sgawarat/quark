@@ -1,8 +1,9 @@
+// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /**
  * @file sink.cpp
  * @brief Sink
- * @copyright Copyright 2021 sgawarat <sgawarat@gmail.com>
- * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
  */
 #include <tmk_desktop/sink.hpp>
 #include <atomic>

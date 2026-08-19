@@ -1,8 +1,9 @@
+// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /**
  * @file keyboard.cpp
  * @brief Keyboard
- * @copyright Copyright 2021 sgawarat <sgawarat@gmail.com>
- * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
  */
 #include <tmk_desktop/keyboard.hpp>
 #include <atomic>
@@ -21,7 +22,6 @@ extern "C" {
 #include <matrix.h>
 #include <host.h>
 #include <report.h>
-#include <debug.h>
 
 extern matrix_row_t raw_matrix[MATRIX_ROWS];
 }  // extern "C"

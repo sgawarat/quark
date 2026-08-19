@@ -1,20 +1,17 @@
+// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /**
  * @file stable.h
  * @brief すべてのソースにインクルードされるヘッダ
- * @copyright Copyright 2021 sgawarat <sgawarat@gmail.com>
- * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
  */
 #pragma once
 
 #ifdef _WIN32
 #include <Windows.h>
 
-// QMKと干渉するマクロを取り除く
-// #undef IS_ERROR
-// #undef DELETE
-// #undef OUT
+// QMKと衝突するマクロを取り除く
 #undef KEY_EVENT
-#undef DELETE
 #endif
 
 // QMKが必要とする宣言や定義

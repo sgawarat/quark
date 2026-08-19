@@ -1,8 +1,9 @@
+// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /**
  * @file scancode.cpp
  * @brief PS/2 Set1 スキャンコード
- * @copyright Copyright 2021 sgawarat <sgawarat@gmail.com>
- * @license This program is licensed under the GPLv2 or later. For more details, see LICENSE.
  */
 #include <array>
 
@@ -55,9 +56,8 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_QUOTE: return 0x0028;
     case KC_GRAVE: return 0x0029;
     case KC_LEFT_SHIFT: return 0x002a;
-    case KC_BACKSLASH:
-    case KC_NONUS_HASH:
-      return 0x002b;
+    case KC_BACKSLASH: [[fallthrough]];
+    case KC_NONUS_HASH: return 0x002b;
     case KC_Z: return 0x002c;
     case KC_X: return 0x002d;
     case KC_C: return 0x002e;
@@ -154,9 +154,8 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_LEFT_GUI: return 0xe05b;
     case KC_RIGHT_GUI: return 0xe05c;
     case KC_APPLICATION: return 0xe05d;
-    case KC_SYSTEM_POWER:
-    case KC_KB_POWER:
-      return 0xe05e;
+    case KC_SYSTEM_POWER: [[fallthrough]];
+    case KC_KB_POWER: return 0xe05e;
     case KC_SYSTEM_SLEEP: return 0xe05f;
     case KC_SYSTEM_WAKE: return 0xe063;
     case KC_WWW_SEARCH: return 0xe065;
