@@ -5,7 +5,7 @@
  * @file scancode.cpp
  * @brief PS/2 Set1 スキャンコード
  */
-#include <array>
+#include "scancode.hpp"
 
 extern "C" {
 #include <keycode.h>
@@ -168,6 +168,7 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_MAIL: return 0xe06c;
     case KC_MEDIA_SELECT: return 0xe06d;
     case KC_PAUSE: return 0xe11d;
+    default: break;
   }
   return 0;
 }

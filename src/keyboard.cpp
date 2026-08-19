@@ -44,11 +44,16 @@ static constexpr Key NO_REPEAT = Key{KEY_COUNT};  ///< キーリピートして�
 
 Key repeat_key_ = NO_REPEAT;  ///< リピートしているキー
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+
 inline void matrix_set(keypos_t keypos) noexcept {
+  if (keypos.row >= MATRIX_ROWS) return;
   raw_matrix[keypos.row] |= static_cast<matrix_row_t>(1) << keypos.col;
 }
 
 inline void matrix_reset(keypos_t keypos) noexcept {
+  if (keypos.row >= MATRIX_ROWS) return;
   raw_matrix[keypos.row] &= ~(static_cast<matrix_row_t>(1) << keypos.col);
 }
 
@@ -57,6 +62,8 @@ inline void matrix_clear() noexcept {
     raw_matrix[i] = 0;
   }
 }
+
+#pragma clang diagnostic pop
 
 /**
  * @brief KeyboardEventのvisitor
@@ -117,6 +124,7 @@ public:
         send_to_sink(SinkSignal::RESET);
         break;
       }
+      default: break;
     }
   }
 

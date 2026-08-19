@@ -85,15 +85,10 @@ public:
 
   void operator()(SinkSignal signal) noexcept {
     switch (signal) {
-      case SinkSignal::KEY_REPEAT:
-        sender_.send_key_repeat();
-        break;
-      case SinkSignal::KEY_REPEAT_END:
-        sender_.clear_key_repeat();
-        break;
-      case SinkSignal::RESET:
-        sender_.reset();
-        break;
+      case SinkSignal::KEY_REPEAT: sender_.send_key_repeat(); break;
+      case SinkSignal::KEY_REPEAT_END: sender_.clear_key_repeat(); break;
+      case SinkSignal::RESET: sender_.reset(); break;
+      default: break;
     }
   }
 
@@ -107,16 +102,16 @@ private:
 
     // キーイベントを送信する
     released_keyset.scan([](auto pos) {  // 非修飾キーを離す
-      sender_.send_key_release(pos.index());
+      sender_.send_key_release(static_cast<uint8_t>(pos.index()));
     });
     released_mod_keyset.scan([](auto pos) {  // 修飾キーを離す
-      sender_.send_key_release(KC_LEFT_CTRL + pos.index());
+      sender_.send_key_release(KC_LEFT_CTRL + static_cast<uint8_t>(pos.index()));
     });
     pressed_mod_keyset.scan([](auto pos) {  // 修飾キーを押す
-      sender_.send_key_press(KC_LEFT_CTRL + pos.index());
+      sender_.send_key_press(KC_LEFT_CTRL + static_cast<uint8_t>(pos.index()));
     });
     pressed_keyset.scan([](auto pos) {  // 非修飾キーを押す
-      sender_.send_key_press(pos.index());
+      sender_.send_key_press(static_cast<uint8_t>(pos.index()));
     });
   }
 

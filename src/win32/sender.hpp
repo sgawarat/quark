@@ -9,10 +9,9 @@
 
 #include <Windows.h>
 #include "injected.hpp"
+#include "scancode.hpp"
 
 namespace tmk_desktop::inline win32 {
-uint16_t keycode_to_scancode(uint8_t keycode) noexcept;
-
 struct Input final : INPUT {
   constexpr Input() noexcept : INPUT{.type = INPUT_HARDWARE} {}
 
@@ -45,7 +44,7 @@ struct Input final : INPUT {
 
   void send_tap() noexcept {
     if (is_valid()) {
-      ki.dwFlags &= ~KEYEVENTF_KEYUP;
+      ki.dwFlags &= ~DWORD{KEYEVENTF_KEYUP};
       SendInput(1, this, sizeof(INPUT));
       ki.dwFlags |= KEYEVENTF_KEYUP;
       SendInput(1, this, sizeof(INPUT));

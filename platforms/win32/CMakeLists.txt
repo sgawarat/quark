@@ -5,6 +5,10 @@ add_executable(tmk_desktop WIN32
     main.cpp
     main.rc
 )
+target_compile_options(tmk_desktop PRIVATE
+    -Wno-exit-time-destructors
+    -Wno-global-constructors
+)
 target_link_libraries(tmk_desktop PRIVATE
     config
     engine

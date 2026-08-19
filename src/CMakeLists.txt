@@ -5,7 +5,7 @@ if(WIN32)
     add_subdirectory(win32)
 endif()
 
-add_library(engine STATIC
+add_library(quantum STATIC
     ${QMK_SOURCE_DIR}/quantum/action.c
     ${QMK_SOURCE_DIR}/quantum/action_layer.c
     ${QMK_SOURCE_DIR}/quantum/action_tapping.c
@@ -34,15 +34,44 @@ add_library(engine STATIC
     ${QMK_SOURCE_DIR}/tmk_core/protocol/host.c
     ${QMK_SOURCE_DIR}/tmk_core/protocol/report.c
     ${QMK_SOURCE_DIR}/tmk_core/protocol/usb_device_state.c
-
-    source.cpp
-    keyboard.cpp
-    sink.cpp
     timer.cpp
     wait.cpp
 )
-target_link_libraries(engine PRIVATE
+target_compile_options(quantum PRIVATE
+    -Wno-vla
+    -Wno-missing-prototypes
+    -Wno-sign-conversion
+    -Wno-unused-macros
+    -Wno-switch-default
+    -Wno-unsafe-buffer-usage
+    -Wno-declaration-after-statement
+    -Wno-implicit-int-conversion
+    -Wno-missing-variable-declarations
+    -Wno-gnu-union-cast
+    -Wno-shadow
+    -Wno-documentation
+    -Wno-used-but-marked-unused
+    -Wno-extra-semi
+    -Wno-cast-qual
+    -Wno-include-next-absolute-path
+)
+target_link_libraries(quantum PRIVATE
     config
     keyboard
+)
+
+add_library(engine STATIC
+    source.cpp
+    keyboard.cpp
+    sink.cpp
+)
+target_compile_options(engine PRIVATE
+    -Wno-exit-time-destructors
+    -Wno-global-constructors
+    -Wno-ctad-maybe-unsupported
+)
+target_link_libraries(engine PRIVATE
+    config
+    quantum
     engine_impl
 )

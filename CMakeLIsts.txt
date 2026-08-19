@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 project(tmk_desktop)
 
 set(TMK_CORE_DIR "" CACHE PATH "Path to the tmk_core directory")
@@ -37,45 +37,46 @@ endif()
 
 add_library(config INTERFACE)
 target_precompile_headers(config INTERFACE
-    ./include/tmk_desktop/stable.h
     ${TMK_DESKTOP_KEYMAP_DIR}/config.h
+    ./include/tmk_desktop/stable.h
 )
+target_compile_options(config INTERFACE
+    -Wall
+    -Wextra
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_compile_options(config INTERFACE
-        /W3
-        /source-charset:utf-8
-    )
-else()
-    target_compile_options(config INTERFACE
-        # -Wall
-        # -Wextra
-        -Wno-unused-parameter
-        -Wno-c++98-compat
-        -Wno-c++98-compat-pedantic
-        -Wno-pre-c23-compat
-        -Wno-pre-c11-compat
-    )
-endif()
+    # -Werror
+    -Wno-c++98-compat
+    -Wno-c++98-compat-pedantic
+    -Wno-pre-c++17-compat
+    -Wno-pre-c++20-compat
 
+    -Wno-reserved-identifier
+    -Wno-unused-parameter
+    -Wno-gnu-include-next
+    -Wno-gnu-anonymous-struct
+    -Wno-gnu-zero-variadic-macro-arguments
+    -Wno-gnu-folding-constant
+    -Wno-pre-c11-compat
+    -Wno-c23-extensions
+    -Wno-c2y-extensions
+
+    -Wno-missing-designated-field-initializers
+    -Wno-covered-switch-default
+
+    -Wno-padded
+)
 target_compile_features(config INTERFACE
     cxx_std_23
     c_std_23
 )
 target_compile_definitions(config INTERFACE
-    # NO_DEBUG
-    # NO_PRINT
-    IGNORE_ATOMIC_BLOCK
-    LAYER_STATE_32BIT
     KEYMAP_C="keymap.h"
 
-    _CRT_SECURE_NO_WARNINGS
+    # Win32
     WIN32_LEAN_AND_MEAN
     NOMINMAX
     UNICODE
-
-    # アクションで定義される修飾キー入力が次のアクションに影響を与えないようにする
-    TMK_DESKTOP_FIX_WEAK_MODS
+    _UNICODE
 )
 target_include_directories(config INTERFACE
     ${TMK_CORE_DIR}/quantum

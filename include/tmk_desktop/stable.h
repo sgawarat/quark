@@ -31,6 +31,31 @@ void wait_us(uintptr_t us);
 #define EEPROM_CUSTOM
 #define EEPROM_SIZE 0
 
+// joystick
+#ifndef JOYSTICK_ENABLE
+#define JOYSTICK_AXIS_RESOLUTION 8
+#define JOYSTICK_AXIS_COUNT 2
+#define JOYSTICK_BUTTON_COUNT 8
+#endif
+
+// keycode_string
+#ifndef KEYCODE_STRING_ENABLE
+#define KEYCODE_STRING_ENABLE 0
+#endif
+
+// eeconfig
+#ifndef EECONFIG_KB_DATA_SIZE
+#define EECONFIG_KB_DATA_SIZE 0
+#endif
+#ifndef EECONFIG_USER_DATA_SIZE
+#define EECONFIG_USER_DATA_SIZE 0
+#endif
+
+// quantum
+#ifndef SHUTDOWN_DELAY
+#define SHUTDOWN_DELAY 0
+#endif
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

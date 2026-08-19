@@ -4,6 +4,9 @@
 add_library(layout STATIC
     oadg109.cpp
 )
+target_compile_options(layout PRIVATE
+    -Wno-switch-enum
+)
 target_include_directories(layout PUBLIC
     .
 )

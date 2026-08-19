@@ -231,7 +231,7 @@ public:
   friend constexpr Bitset binary_op(const Bitset& lhs, const Bitset& rhs, Op op) noexcept {
     Bitset result;
     for (size_t i = 0; i < result.values_.size(); ++i) {
-      result.values_[i] = op(lhs.values_[i], rhs.values_[i]);
+      result.values_[i] = static_cast<ValueT>(op(lhs.values_[i], rhs.values_[i]));
     }
     return result;
   }

@@ -27,7 +27,7 @@ inline bool add_notify_icon(HWND wnd, UINT id, UINT callback_message, HICON icon
       .cbSize = sizeof(NOTIFYICONDATA),
       .hWnd = wnd,
       .uID = id,
-      .uFlags = (UINT)NIF_MESSAGE | NIF_SHOWTIP | (icon ? NIF_ICON : 0) | (title ? NIF_TIP : 0),
+      .uFlags = static_cast<UINT>(NIF_MESSAGE) | NIF_SHOWTIP | (icon ? NIF_ICON : 0) | (title ? NIF_TIP : 0),
       .uCallbackMessage = callback_message,
       .hIcon = icon,
       .szTip = {},

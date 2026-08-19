@@ -8,10 +8,6 @@
 #include <array>
 #include <tmk_desktop/key.hpp>
 
-extern "C" {
-#include <keyboard.h>
-}  // extern "C"
-
 #include "oadg109.h"
 
 namespace tmk_desktop {
@@ -61,6 +57,7 @@ bool is_tapping_key(enum Key key) noexcept {
     case K_HANKAKU_ZENKAKU: [[fallthrough]];
     case K_CAPS_LOCK: [[fallthrough]];
     case K_KATAKANA_HIRAGANA: return true;
+    default: break;
   }
 #endif
   return false;

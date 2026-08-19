@@ -21,7 +21,7 @@ public:
    */
   void enable() noexcept {
     thread_id_ = GetCurrentThreadId();
-    hook_ = SetWindowsHookEx(WH_KEYBOARD_LL, hook_proc, GetModuleHandle(NULL), 0);
+    hook_ = SetWindowsHookEx(WH_KEYBOARD_LL, hook_proc, GetModuleHandle(nullptr), 0);
   }
 
   /**
@@ -31,7 +31,7 @@ public:
     if (hook_) {
       UnhookWindowsHookEx(hook_);
       thread_id_ = 0;
-      hook_ = NULL;
+      hook_ = nullptr;
     }
   }
 
@@ -42,7 +42,7 @@ public:
    */
   void poll() noexcept {
     MSG msg;
-    GetMessage(&msg, NULL, 0, 0);
+    GetMessage(&msg, nullptr, 0, 0);
   }
 
   /**
@@ -78,13 +78,14 @@ private:
         }
         return TRUE;
       }
+      default: break;
     }
 
     // 素通りさせたキー入力を下流に流す
-    return CallNextHookEx(NULL, code, wparam, lparam);
+    return CallNextHookEx(nullptr, code, wparam, lparam);
   }
 
-  HHOOK hook_ = NULL;    ///< フックのハンドル
-  DWORD thread_id_ = 0;  ///< スレッドID
+  HHOOK hook_ = nullptr;  ///< フックのハンドル
+  DWORD thread_id_ = 0;   ///< スレッドID
 };
 }  // namespace tmk_desktop::inline win32

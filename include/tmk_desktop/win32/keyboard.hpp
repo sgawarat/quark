@@ -9,7 +9,7 @@
 
 #include <cstdint>
 #include <Windows.h>
-#include "key.hpp"
+#include "../win32/key.hpp"
 
 namespace tmk_desktop::inline win32 {
 /**
@@ -31,8 +31,8 @@ public:
   }
 
 private:
-  [[maybe_unused]] WORD vk_ = 0;
-  WORD sc_ = 0;
+  [[maybe_unused]] DWORD vk_ = 0;
+  DWORD sc_ = 0;
   DWORD flags_ = 0;
 };
 }  // namespace tmk_desktop::inline win32
