@@ -5,24 +5,57 @@ cmake_minimum_required(VERSION 3.18)
 project(quark)
 
 set(QMK_FIRMWARE_DIR "" CACHE PATH "Path to the qmk_firmware directory")
-set(QUARK_LAYOUT_DIR "" CACHE PATH "Path to the layout directory")
-set(QUARK_KEYMAP_DIR "" CACHE PATH "Path to the keymap directory")
+set(QUARK_KEYBOARD "" CACHE STRING "Keyboard name")
+set(QUARK_KEYMAP "" CACHE STRING "Keymap name")
 
 if(NOT IS_DIRECTORY ${QMK_FIRMWARE_DIR})
     message(FATAL_ERROR "QMK Firmware Directory '${QMK_FIRMWARE_DIR}' NOT FOUND")
 endif()
 
-if(NOT IS_DIRECTORY ${QUARK_LAYOUT_DIR})
-    message(FATAL_ERROR "Layout Directory '${QUARK_LAYOUT_DIR}' NOT FOUND")
+set(QUARK_CONFIG_HEADERS "")
+
+# Keyboard
+set(QUARK_KEYBOARD_DIR "${CMAKE_SOURCE_DIR}/keyboards/${QUARK_KEYBOARD}")
+
+if(NOT EXISTS "${QUARK_KEYBOARD_DIR}/keymap.h")
+    message(FATAL_ERROR "Keyboard '${QUARK_KEYBOARD}' NOT FOUND")
 endif()
 
-if(NOT IS_DIRECTORY ${QUARK_KEYMAP_DIR})
-    message(FATAL_ERROR "Keymap Directory '${QUARK_KEYMAP_DIR}' NOT FOUND")
+if(EXISTS "${QUARK_KEYBOARD_DIR}/config.h")
+    list(APPEND QUARK_CONFIG_HEADERS ${QUARK_KEYBOARD_DIR}/config.h)
 endif()
 
+if(EXISTS "${QUARK_KEYBOARD_DIR}/CMakeLists.txt")
+    add_subdirectory(${QUARK_KEYBOARD_DIR})
+endif()
+
+if(NOT TARGET keyboard)
+    add_library(keyboard INTERFACE)
+endif()
+
+# Keymap
+set(QUARK_KEYMAP_DIR "${QUARK_KEYBOARD_DIR}/keymaps/${QUARK_KEYMAP}")
+
+if(NOT EXISTS "${QUARK_KEYMAP_DIR}/keymap.c")
+    message(FATAL_ERROR "Keymap '${QUARK_KEYBOARD}' of the Keyboard '${QUARK_KEYBOARD}' NOT FOUND")
+endif()
+
+if(EXISTS "${QUARK_KEYMAP_DIR}/config.h")
+    list(APPEND QUARK_CONFIG_HEADERS ${QUARK_KEYMAP_DIR}/config.h)
+endif()
+
+if(EXISTS "${QUARK_KEYMAP_DIR}/CMakeLists.txt")
+    add_subdirectory(${QUARK_KEYMAP_DIR})
+endif()
+
+if(NOT TARGET keymap)
+    add_library(keymap INTERFACE)
+endif()
+
+# config
 add_library(config INTERFACE)
 target_precompile_headers(config INTERFACE
-    ${QUARK_KEYMAP_DIR}/config.h
+    ${QUARK_CONFIG_HEADERS}
     ./include/quark/stable.h
 )
 target_compile_options(config INTERFACE
@@ -53,9 +86,6 @@ target_compile_features(config INTERFACE
     cxx_std_20
 )
 target_compile_definitions(config INTERFACE
-    KEYMAP_C="keymap.h"
-
-    # Win32
     WIN32_LEAN_AND_MEAN
     NOMINMAX
     UNICODE
@@ -76,7 +106,5 @@ target_include_directories(config INTERFACE
 )
 
 add_subdirectory(src)
-add_subdirectory(${QUARK_LAYOUT_DIR})
-add_subdirectory(${QUARK_KEYMAP_DIR})
 add_subdirectory(platforms)
 add_subdirectory(tools/key_test)

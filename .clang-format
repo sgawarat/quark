@@ -1,12 +1,38 @@
 BasedOnStyle: Google
-
 ---
 Language: Cpp
 Standard: c++20
-ColumnLimit: 1200  # 0にすると行末空白を取り除かなくなったので、大きな値にしてある
-SortIncludes: false  # includeを並び替えない
-AccessModifierOffset: -2  # クラス内のアクセス修飾子のインデントを1つ下に合わせる
-AlignEscapedNewlines: DontAlign  # 行継続を示す\を整列させない
-AllowShortFunctionsOnASingleLine: Empty  # 中身のある関数を1行にしない
-AllowShortCaseLabelsOnASingleLine: true  # 短いcaseラベルを1行にする
+
+# 1行の長さを制限する
+ColumnLimit: 120
+
+# クラス内のアクセス修飾子のインデントを1つ下に合わせる
+AccessModifierOffset: -2
+
+# 行継続を示す\を整列させない
+AlignEscapedNewlines: DontAlign
+
+# 空の関数のみを1行にする
+AllowShortFunctionsOnASingleLine: Empty
+
+# 短いcaseラベルを1行にまとめる
+AllowShortCaseLabelsOnASingleLine: true
+
+# 仮引数を一行にまとめない
+BinPackArguments: false
+
+# 構造に意味のあるコメントをフォーマットしない
+CommentPragmas: '\*|@|TODO|HACK|FIXME|BUG'
+
+# template以下のrequires節をインデントする
+IndentRequiresClause: true
+
+# ファイル終端に改行を加える
+InsertNewlineAtEOF: true
+
+# requires式を外側のスコープでインデントする
+RequiresExpressionIndentation: OuterScope
+
+# includeのまとまりの中でソートする
+IncludeBlocks: Preserve
 ---

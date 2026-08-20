@@ -19,14 +19,6 @@
 extern "C" {
 #endif
 
-// timer
-#define FAST_TIMER_T_SIZE 32
-
-// wait
-void wait_ms(uintptr_t ms);
-void wait_us(uintptr_t us);
-#define waitInputPinDelay(...) ((void)0)
-
 // platforms/eeprom
 #define EEPROM_CUSTOM
 #define EEPROM_SIZE 0

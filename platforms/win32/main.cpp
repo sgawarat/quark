@@ -5,16 +5,16 @@
  * @file main.cpp
  * @brief Win32アプリケーション
  */
-#include <thread>
-#include <utility>
-#include <cstdio>
 #include <Windows.h>
 #include <WtsApi32.h>
-#include <quark/source.hpp>
+#include <cstdio>
 #include <quark/keyboard.hpp>
 #include <quark/sink.hpp>
-#include "utility.hpp"
+#include <quark/source.hpp>
+#include <thread>
+#include <utility>
 #include "resource.h"
+#include "utility.hpp"
 
 extern "C" {
 #include <debug.h>
@@ -175,11 +175,6 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   freopen_s(&conout_fp, "CONOUT$", "w", stderr);
 #endif
 
-#ifndef NO_DEBUG
-  // QMKのデバッグ機能を有効化する
-  debug_config = {.enable = true, .matrix = true, .keyboard = true, .mouse = true};
-#endif
-
   // 重複起動を防止する
   if (FindWindow(CLASS_NAME, WINDOW_NAME) != nullptr) return 0;
 
@@ -200,14 +195,33 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
 
   // ウィンドウクラス
   const ATOM cls = [&] {
-    const WNDCLASS wc{0, window_proc, 0, 0, instance, nullptr, LoadCursor(nullptr, IDC_ARROW), HBRUSH(COLOR_WINDOW + 1), nullptr, CLASS_NAME};
+    const WNDCLASS wc{0,
+                      window_proc,
+                      0,
+                      0,
+                      instance,
+                      nullptr,
+                      LoadCursor(nullptr, IDC_ARROW),
+                      HBRUSH(COLOR_WINDOW + 1),
+                      nullptr,
+                      CLASS_NAME};
     return RegisterClass(&wc);
   }();
   if (cls == 0) return EXIT_FAILURE;
   const Scoped cls_dtor{[&] { UnregisterClass(MAKEINTATOM(cls), instance); }};
 
   // ウィンドウ
-  const HWND wnd = CreateWindow(MAKEINTATOM(cls), WINDOW_NAME, WS_OVERLAPPED, CW_USEDEFAULT, CW_USEDEFAULT, 1, 1, nullptr, nullptr, instance, nullptr);
+  const HWND wnd = CreateWindow(MAKEINTATOM(cls),
+                                WINDOW_NAME,
+                                WS_OVERLAPPED,
+                                CW_USEDEFAULT,
+                                CW_USEDEFAULT,
+                                1,
+                                1,
+                                nullptr,
+                                nullptr,
+                                instance,
+                                nullptr);
   if (!wnd) return EXIT_FAILURE;
   const Scoped wnd_dtor{[&] { DestroyWindow(wnd); }};
 
