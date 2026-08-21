@@ -15,7 +15,7 @@
 #endif
 
 // リリース時にQMKのデバッグ機能をオフにする
-#ifndef NDEBUG
+#ifdef NDEBUG
 #define NO_DEBUG
 #define NO_PRINT
 #endif
