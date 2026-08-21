@@ -14,6 +14,12 @@
 #undef KEY_EVENT
 #endif
 
+// リリース時にQMKのデバッグ機能をオフにする
+#ifndef NDEBUG
+#define NO_DEBUG
+#define NO_PRINT
+#endif
+
 // QMKが必要とする宣言や定義
 #ifdef __cplusplus
 extern "C" {

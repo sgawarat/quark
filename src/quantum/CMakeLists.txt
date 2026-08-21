@@ -1,18 +1,6 @@
 # SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-set(QMK_FIRMWARE_OPTIONAL_SOURCES "")
-set(QMK_FIRMWARE_OPTIONAL_DEFINITIONS "")
-
-if(${KEY_OVERRIDE_ENABLE})
-    list(APPEND QMK_FIRMWARE_OPTIONAL_SOURCES
-        ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_key_override.c
-    )
-    list(APPEND QMK_FIRMWARE_OPTIONAL_DEFINITIONS
-        "KEY_OVERRIDE_ENABLE"
-    )
-endif()
-
 add_library(quantum STATIC
     ${QMK_FIRMWARE_DIR}/quantum/action.c
     ${QMK_FIRMWARE_DIR}/quantum/action_layer.c
@@ -42,7 +30,6 @@ add_library(quantum STATIC
     ${QMK_FIRMWARE_DIR}/tmk_core/protocol/host.c
     ${QMK_FIRMWARE_DIR}/tmk_core/protocol/report.c
     ${QMK_FIRMWARE_DIR}/tmk_core/protocol/usb_device_state.c
-    ${QMK_FIRMWARE_OPTIONAL_SOURCES}
     timer.cpp
     wait.cpp
 )
@@ -64,11 +51,11 @@ target_compile_options(quantum PRIVATE
     -Wno-cast-qual
     -Wno-include-next-absolute-path
     -Wno-language-extension-token
+    -Wno-extra-semi-stmt
 )
 target_compile_definitions(quantum PRIVATE
     KEYMAP_C="${QUARK_KEYMAP_DIR}/keymap.c"
     QMK_KEYBOARD_H="${QUARK_KEYBOARD_DIR}/keymap.h"
-    ${QMK_FIRMWARE_OPTIONAL_DEFINITIONS}
 )
 target_link_libraries(quantum PRIVATE
     config
@@ -81,7 +68,6 @@ add_library(keymap_impl STATIC
 )
 target_compile_definitions(keymap_impl PRIVATE
     QMK_KEYBOARD_H="${QUARK_KEYBOARD_DIR}/keymap.h"
-    ${QMK_FIRMWARE_OPTIONAL_DEFINITIONS}
 )
 target_link_libraries(keymap_impl PRIVATE
     config

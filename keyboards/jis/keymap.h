@@ -7,15 +7,10 @@
  */
 #pragma once
 
-#include <stdint.h>
-#include <progmem.h>
-#include <action_layer.h>
-#include <quantum_keycodes.h>
-#include <keymap_japanese.h>
+#include <keymap.h>
 
-#ifdef KEY_OVERRIDE_ENABLE
-#include <process_key_override.h>
-#endif
+#include <keymap_japanese.h>
+#include <quantum_keycodes.h>
 
 /* clang-format off */
 
