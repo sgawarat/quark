@@ -5,14 +5,15 @@
  * @file sink.cpp
  * @brief Sink
  */
-#include <quark/sink.hpp>
 #include <atomic>
-#include <deque>
-#include <mutex>
 #include <condition_variable>
+#include <deque>
 #include <exception>
+#include <mutex>
 #include <thread>
+
 #include <quark/bitset.hpp>
+#include <quark/sink.hpp>
 
 extern "C" {
 #include <action.h>
@@ -32,6 +33,51 @@ std::deque<SinkEvent> event_queue_;       ///< イベントキュー
 std::mutex event_queue_mtx_;              ///< イベントキューのためのMutex
 std::condition_variable event_queue_cv_;  ///< イベントキューのためのCV
 EventSender sender_;                      ///< OSに入力イベントを送るためのクラス
+
+constexpr uint8_t to_keycode(const report_extra_t& report) noexcept {
+  switch (report.report_id) {
+    case REPORT_ID_SYSTEM:
+      switch (report.usage) {
+        case SYSTEM_POWER_DOWN: return KC_SYSTEM_POWER;
+        case SYSTEM_SLEEP: return KC_SYSTEM_SLEEP;
+        case SYSTEM_WAKE_UP: return KC_SYSTEM_WAKE;
+        default: break;
+      }
+      break;
+    case REPORT_ID_CONSUMER:
+      switch (report.usage) {
+        case AUDIO_MUTE: return KC_AUDIO_MUTE;
+        case AUDIO_VOL_UP: return KC_AUDIO_VOL_UP;
+        case AUDIO_VOL_DOWN: return KC_AUDIO_VOL_DOWN;
+        case TRANSPORT_NEXT_TRACK: return KC_MEDIA_NEXT_TRACK;
+        case TRANSPORT_PREV_TRACK: return KC_MEDIA_PREV_TRACK;
+        case TRANSPORT_STOP: return KC_MEDIA_STOP;
+        case TRANSPORT_STOP_EJECT: return KC_MEDIA_EJECT;
+        case TRANSPORT_PLAY_PAUSE: return KC_MEDIA_PLAY_PAUSE;
+        case AL_CC_CONFIG: return KC_MEDIA_SELECT;
+        case AL_EMAIL: return KC_MAIL;
+        case AL_CALCULATOR: return KC_CALCULATOR;
+        case AL_LOCAL_BROWSER: return KC_MY_COMPUTER;
+        case AC_SEARCH: return KC_WWW_SEARCH;
+        case AC_HOME: return KC_WWW_HOME;
+        case AC_BACK: return KC_WWW_BACK;
+        case AC_FORWARD: return KC_WWW_FORWARD;
+        case AC_STOP: return KC_WWW_STOP;
+        case AC_REFRESH: return KC_WWW_REFRESH;
+        case AC_BOOKMARKS: return KC_WWW_FAVORITES;
+        case TRANSPORT_FAST_FORWARD: return KC_MEDIA_FAST_FORWARD;
+        case TRANSPORT_REWIND: return KC_MEDIA_REWIND;
+        case BRIGHTNESS_UP: return KC_BRIGHTNESS_UP;
+        case BRIGHTNESS_DOWN: return KC_BRIGHTNESS_DOWN;
+        case AL_CONTROL_PANEL: return KC_CONTROL_PANEL;
+        case AL_ASSISTANT: return KC_ASSISTANT;
+        default: break;
+      }
+      break;
+    default: break;
+  }
+  return KC_NO;
+}
 
 /**
  * @brief SinkEventのvisitor
@@ -76,7 +122,8 @@ public:
   }
 
   void operator()(const report_extra_t& report) noexcept {
-    // TODO: send_extraを実装する
+    const auto keycode = to_keycode(report);
+    if (keycode != KC_NO) sender_.send_key_tap(keycode);
   }
 
   void operator()(const NativeSinkEvent& event) noexcept {
@@ -151,7 +198,8 @@ bool start_sink() {
         {
           std::unique_lock lock{event_queue_mtx_};
           if (event_queue_.empty()) {
-            event_queue_cv_.wait(lock, [] { return !event_queue_.empty() || stop_requested_.load(std::memory_order_acquire); });
+            event_queue_cv_.wait(
+                lock, [] { return !event_queue_.empty() || stop_requested_.load(std::memory_order_acquire); });
             if (stop_requested_.load(std::memory_order_acquire)) break;
             if (event_queue_.empty()) continue;
           }

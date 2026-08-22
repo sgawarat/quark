@@ -4,55 +4,85 @@
 cmake_minimum_required(VERSION 3.18)
 project(quark)
 
+# options
 set(QMK_FIRMWARE_DIR "" CACHE PATH "Path to the qmk_firmware directory")
 set(QUARK_KEYBOARD "" CACHE STRING "Keyboard name")
 set(QUARK_KEYMAP "" CACHE STRING "Keymap name")
 
+set(QUARK_KEYBOARD_DIR "${CMAKE_SOURCE_DIR}/keyboards/${QUARK_KEYBOARD}")
+set(QUARK_KEYMAP_DIR "${QUARK_KEYBOARD_DIR}/keymaps/${QUARK_KEYMAP}")
+
+# 必須環境の確認
 if(NOT IS_DIRECTORY ${QMK_FIRMWARE_DIR})
     message(FATAL_ERROR "QMK Firmware Directory '${QMK_FIRMWARE_DIR}' NOT FOUND")
 endif()
-
-set(QUARK_CONFIG_HEADERS "")
-
-# Keyboard
-set(QUARK_KEYBOARD_DIR "${CMAKE_SOURCE_DIR}/keyboards/${QUARK_KEYBOARD}")
 
 if(NOT EXISTS "${QUARK_KEYBOARD_DIR}/keymap.h")
     message(FATAL_ERROR "Keyboard '${QUARK_KEYBOARD}' NOT FOUND")
 endif()
 
-if(EXISTS "${QUARK_KEYBOARD_DIR}/config.h")
-    list(APPEND QUARK_CONFIG_HEADERS ${QUARK_KEYBOARD_DIR}/config.h)
-endif()
-
-if(EXISTS "${QUARK_KEYBOARD_DIR}/CMakeLists.txt")
-    add_subdirectory(${QUARK_KEYBOARD_DIR})
-endif()
-
-if(NOT TARGET keyboard)
-    add_library(keyboard INTERFACE)
-endif()
-
-# Keymap
-set(QUARK_KEYMAP_DIR "${QUARK_KEYBOARD_DIR}/keymaps/${QUARK_KEYMAP}")
-
 if(NOT EXISTS "${QUARK_KEYMAP_DIR}/keymap.c")
     message(FATAL_ERROR "Keymap '${QUARK_KEYBOARD}' of the Keyboard '${QUARK_KEYBOARD}' NOT FOUND")
 endif()
 
-if(EXISTS "${QUARK_KEYMAP_DIR}/config.h")
-    list(APPEND QUARK_CONFIG_HEADERS ${QUARK_KEYMAP_DIR}/config.h)
+# rules
+if(EXISTS "${QUARK_KEYBOARD_DIR}/CMakeLists.txt")
+    add_subdirectory(${QUARK_KEYBOARD_DIR})
 endif()
 
 if(EXISTS "${QUARK_KEYMAP_DIR}/CMakeLists.txt")
     add_subdirectory(${QUARK_KEYMAP_DIR})
 endif()
 
-if(NOT TARGET keymap)
-    add_library(keymap INTERFACE)
+# config.h
+set(QUARK_CONFIG_HEADERS "")
+
+if(EXISTS "${QUARK_KEYBOARD_DIR}/config.h")
+    list(APPEND QUARK_CONFIG_HEADERS ${QUARK_KEYBOARD_DIR}/config.h)
 endif()
 
-# config
+if(EXISTS "${QUARK_KEYMAP_DIR}/config.h")
+    list(APPEND QUARK_CONFIG_HEADERS ${QUARK_KEYMAP_DIR}/config.h)
+endif()
+
+if(EXISTS "${QUARK_KEYBOARD_DIR}/post_config.h")
+    list(APPEND QUARK_CONFIG_HEADERS ${QUARK_KEYBOARD_DIR}/post_config.h)
+endif()
+
+# Feature Options
+set(QUARK_FEATURE_NAMES
+    MAGIC_ENABLE
+    BOOTMAGIC_ENABLE
+    MOUSEKEY_ENABLE
+    EXTRAKEY_ENABLE
+    CONSOLE_ENABLE
+    COMMAND_ENABLE
+    COMBO_ENABLE
+    NKRO_ENABLE
+    AUDIO_ENABLE
+    KEY_OVERRIDE_ENABLE
+    RGBLIGHT_ENABLE
+    LEADER_ENABLE
+    MIDI_ENABLE
+    UNICODE_ENABLE
+    BLUETOOTH_ENABLE
+    SPLIT_KEYBOARD
+    CUSTOM_MATRIX
+    DEBOUNCE_TYPE
+    USB_WAIT_FOR_ENUMERATION
+    NO_USB_STARTUP_CHECK
+    DEFERRED_EXEC_ENABLE
+    DYNAMIC_TAPPING_TERM_ENABLE
+)
+set(QUARK_FEATURE_OPTIONS "")
+
+foreach(QUARK_FEATURE_NAME ${QUARK_FEATURE_NAMES})
+    if(${QUARK_FEATURE_NAME})
+        list(APPEND QUARK_FEATURE_OPTIONS ${QUARK_FEATURE_NAME})
+    endif()
+endforeach()
+
+# 共通設定
 add_library(config INTERFACE)
 target_precompile_headers(config INTERFACE
     ${QUARK_CONFIG_HEADERS}
@@ -90,6 +120,7 @@ target_compile_definitions(config INTERFACE
     NOMINMAX
     UNICODE
     _UNICODE
+    ${QUARK_FEATURE_OPTIONS}
 )
 target_include_directories(config INTERFACE
     ${QMK_FIRMWARE_DIR}/quantum

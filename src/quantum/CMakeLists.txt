@@ -1,6 +1,16 @@
 # SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+set(QUARK_KEYBOARD_LIBRARIES "")
+
+if(TARGET keymap)
+    list(APPEND QUARK_KEYBOARD_LIBRARIES keymap)
+endif()
+
+if(TARGET keyboard)
+    list(APPEND QUARK_KEYBOARD_LIBRARIES keyboard)
+endif()
+
 add_library(quantum STATIC
     ${QMK_FIRMWARE_DIR}/quantum/action.c
     ${QMK_FIRMWARE_DIR}/quantum/action_layer.c
@@ -59,10 +69,10 @@ target_compile_definitions(quantum PRIVATE
 )
 target_link_libraries(quantum PRIVATE
     config
-    keyboard
-    keymap
+    ${QUARK_KEYBOARD_LIBRARIES}
 )
 
+# keymap.cだけでお試しビルドする用
 add_library(keymap_impl STATIC
     ${QUARK_KEYMAP_DIR}/keymap.c
 )
@@ -71,5 +81,5 @@ target_compile_definitions(keymap_impl PRIVATE
 )
 target_link_libraries(keymap_impl PRIVATE
     config
-    keymap
+    ${QUARK_KEYBOARD_LIBRARIES}
 )

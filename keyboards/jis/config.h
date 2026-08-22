@@ -19,4 +19,4 @@
  *
  * matrix_row_tの配列の大きさを決定するのに使われる。
  */
-#define MATRIX_ROWS 6
+#define MATRIX_ROWS (6 + QUARK_KEYBOARD_JIS_EXTRA_ROWS)

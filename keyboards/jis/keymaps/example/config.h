@@ -7,9 +7,8 @@
  */
 #pragma once
 
-/**
- * @brief Nキーロールオーバーを有効化するマクロ
- *
- * これを定義すると、（ハードウェアが対応していれば）すべてのキーを同時押しできるようになる。
- */
-#define NKRO_ENABLE
+// Nキーロールオーバーをデフォルトで有効化
+#define NKRO_DEFAULT_ON true
+
+// マルチメディアキーのために1行追加
+#define QUARK_KEYBOARD_JIS_EXTRA_ROWS 1

@@ -178,4 +178,16 @@ enum Key : uint16_t {
   K_MAIL = 0x16c,
   K_MEDIA_SELECT = 0x16d,
 };
+
+/**
+ * @brief Win32スキャンコードをキー番号に変換する
+ *
+ * @param scancode Win32スキャンコード
+ * @param extended EXTENDEDフラグがONか
+ * @return Key 対応するキー番号
+ */
+constexpr Key make_key(uint16_t scancode, bool extended) noexcept {
+  // TODO: 0xff以上のスキャンコードは現れる？
+  return static_cast<Key>((scancode & 0xff) | (extended ? 0x100u : 0x000u));
+}
 }  // namespace quark::inline win32

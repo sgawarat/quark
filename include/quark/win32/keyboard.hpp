@@ -8,7 +8,9 @@
 #pragma once
 
 #include <cstdint>
+
 #include <Windows.h>
+
 #include "../win32/key.hpp"
 
 namespace quark::inline win32 {
@@ -22,8 +24,7 @@ public:
   KeyEvent(const KBDLLHOOKSTRUCT& info) noexcept : vk_(info.vkCode), sc_(info.scanCode), flags_(info.flags) {}
 
   Key key() const noexcept {
-    // HACK: 8ビットより大きなスキャンコードが現れないことを前提としている
-    return static_cast<Key>(((flags_ & LLKHF_EXTENDED) ? 0x100 : 0) | (sc_ & 0xff));
+    return make_key(static_cast<uint16_t>(sc_), !!(flags_ & LLKHF_EXTENDED));
   }
 
   bool is_pressed() const noexcept {

@@ -6,25 +6,15 @@
  * @brief JIS配列
  */
 #include <array>
+
 #include <quark/key.hpp>
 
-namespace quark {
-namespace {
-// 言語固有のキー
-constexpr Key K_CIRCUMFLEX = K_EQUAL;
-constexpr Key K_AT = K_LEFT_BRACKET;
-constexpr Key K_LEFT_BRACKET = K_RIGHT_BRACKET;
-constexpr Key K_COLON = K_QUOTE;
-constexpr Key K_HANKAKU_ZENKAKU = K_GRAVE;
-constexpr Key K_RIGHT_BRACKET = K_BACKSLASH;
-constexpr Key K_KATAKANA_HIRAGANA = K_INTERNATIONAL_2;
-constexpr Key K_BACKSLASH = K_INTERNATIONAL_1;
-constexpr Key K_HENKAN = K_INTERNATIONAL_4;
-constexpr Key K_MUHENKAN = K_INTERNATIONAL_5;
-constexpr Key K_YEN = K_INTERNATIONAL_3;
+#include "jis.hpp"
 
+namespace quark::jis {
+namespace {
 // キー配置
-constexpr std::array<std::array<Key, MATRIX_COLS>, MATRIX_ROWS> keys{{
+constexpr std::array<std::array<Key, MATRIX_COLS>, MATRIX_ROWS - QUARK_KEYBOARD_JIS_EXTRA_ROWS> keys{{
     /* clang-format off */
     {K_ESCAPE, K_F1, K_F2, K_F3, K_F4, K_F5, K_F6, K_F7, K_F8, K_F9, K_F10, K_F11, K_F12, K_PRINT_SCREEN, K_SCROLL_LOCK, K_PAUSE},
     {K_HANKAKU_ZENKAKU, K_1, K_2, K_3, K_4, K_5, K_6, K_7, K_8, K_9, K_0, K_MINUS, K_CIRCUMFLEX, K_YEN, K_BACKSPACE, K_INSERT, K_HOME, K_PAGE_UP, K_NUM_LOCK, K_KP_SLASH, K_KP_ASTERISK, K_KP_MINUS},
@@ -48,6 +38,10 @@ constexpr std::array layout = []() constexpr {
   return t;
 }();
 }  // namespace
+}  // namespace quark::jis
+
+namespace quark {
+using namespace jis;
 
 bool is_tapping_key(enum Key key) noexcept {
 #ifdef _WIN32
@@ -61,7 +55,10 @@ bool is_tapping_key(enum Key key) noexcept {
   return false;
 }
 
-keypos_t key_to_keypos(enum Key key) noexcept {
+keypos_t key_to_keypos(Key key) noexcept {
+#if QUARK_KEYBOARD_JIS_EXTRA_ROWS > 0
+  if (const auto opt = extra_key_to_keypos(key); opt) return *opt;
+#endif
   return layout[key];
 }
 }  // namespace quark
