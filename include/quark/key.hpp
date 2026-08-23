@@ -31,6 +31,7 @@ bool is_tapping_key(enum Key key) noexcept;
  * レイアウトまたはキーマップによって実装される。
  *
  * @param key キー
+ * @return キーに対するmatrix上の位置。対応するキーがなければ、matrix範囲外の位置を返す。
  */
 keypos_t key_to_keypos(enum Key key) noexcept;
 }  // namespace quark

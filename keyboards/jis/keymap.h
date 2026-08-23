@@ -7,7 +7,7 @@
  */
 #pragma once
 
-#include <keymap.h>
+#include <quark/keymap.h>
 
 #include <keymap_japanese.h>
 #include <quantum_keycodes.h>
