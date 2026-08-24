@@ -15,7 +15,7 @@ constexpr keypos_t make_extra_keypos(uint8_t col, uint8_t extra_row) noexcept {
 }  // namespace
 
 // 追加の1行にマルチメディアキーを並べる
-std::optional<keypos_t> extra_key_to_keypos(Key key) noexcept {
+std::optional<keypos_t> get_extra_key_property(Key key, KeyPropertyTag<keypos_t>) {
   switch (key) {
     case K_AUDIO_MUTE: return make_extra_keypos(0, 0);
     case K_AUDIO_VOL_DOWN: return make_extra_keypos(1, 0);

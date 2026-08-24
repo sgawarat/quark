@@ -43,21 +43,22 @@ constexpr std::array layout = []() constexpr {
 namespace quark {
 using namespace jis;
 
-bool is_tapping_key(enum Key key) noexcept {
+NonHoldable get_key_property(Key key, KeyPropertyTag<NonHoldable>) {
 #ifdef _WIN32
+  // IMEを通るキーは離した時にキーイベントを発生させないので押した段階で離してもらう
   switch (key) {
     case K_HANKAKU_ZENKAKU: [[fallthrough]];
-    case K_CAPS_LOCK: [[fallthrough]];
-    case K_KATAKANA_HIRAGANA: return true;
+    case K_EISU: [[fallthrough]];
+    case K_KATAKANA_HIRAGANA: return NonHoldable{true};
     default: break;
   }
 #endif
-  return false;
+  return NonHoldable{false};
 }
 
-keypos_t key_to_keypos(Key key) noexcept {
+keypos_t get_key_property(Key key, KeyPropertyTag<keypos_t>) {
 #if QUARK_KEYBOARD_JIS_EXTRA_ROWS > 0
-  if (const auto opt = extra_key_to_keypos(key); opt) return *opt;
+  if (const auto opt = get_extra_key_property<keypos_t>(key); opt) return *opt;
 #endif
   return layout[key];
 }

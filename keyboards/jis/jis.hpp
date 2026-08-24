@@ -24,6 +24,7 @@ constexpr Key K_BACKSLASH = Key::K_INTERNATIONAL_1;
 constexpr Key K_HENKAN = Key::K_INTERNATIONAL_4;
 constexpr Key K_MUHENKAN = Key::K_INTERNATIONAL_5;
 constexpr Key K_YEN = Key::K_INTERNATIONAL_3;
+constexpr Key K_EISU = Key::K_CAPS_LOCK;
 
 #if QUARK_KEYBOARD_JIS_EXTRA_ROWS > 0
 /**
@@ -33,6 +34,18 @@ constexpr Key K_YEN = Key::K_INTERNATIONAL_3;
  *
  * @param key キー
  */
-std::optional<keypos_t> extra_key_to_keypos(Key key) noexcept;
+std::optional<keypos_t> get_extra_key_property(Key key, KeyPropertyTag<keypos_t>);
 #endif
+
+/**
+ * @brief 追加のキーに設定された情報を取得する
+ *
+ * @tparam T 設定された情報の型
+ * @param key キー
+ * @return std::optional<T> 設定された情報の値
+ */
+template <typename T>
+std::optional<T> get_extra_key_property(Key key) {
+  return get_extra_key_property(key, KeyPropertyTag<T>{});
+}
 }  // namespace quark::jis

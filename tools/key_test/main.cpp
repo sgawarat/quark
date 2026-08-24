@@ -5,12 +5,31 @@
  * @file main.cpp
  * @brief キーの値を確認するためのアプリケーション
  */
-#include <string_view>
+#include <array>
 #include <iostream>
+#include <string_view>
+
 #include <Windows.h>
+
 #include <quark/win32/keyboard.hpp>
 
 namespace quark {
+std::string_view get_vk_name(UINT vk) noexcept;
+std::string_view get_sc_name(DWORD sc) noexcept;
+
+static void print_key_event(DWORD vk, DWORD sc, DWORD flags) {
+  std::cout << "vk:" << get_vk_name(vk) << "(0x" << std::hex << vk << ")";
+  std::cout << "\tsc:" << get_sc_name(sc) << "(0x" << std::hex << sc << ")";
+  if (flags) {
+    std::cout << "\tflags:";
+    if (flags & LLKHF_EXTENDED) std::cout << "X";
+    if (flags & LLKHF_LOWER_IL_INJECTED) std::cout << "L";
+    if (flags & LLKHF_INJECTED) std::cout << "I";
+    if (flags & LLKHF_ALTDOWN) std::cout << "A";
+    if (flags & LLKHF_UP) std::cout << "U";
+  }
+}
+
 static LRESULT CALLBACK hook_proc(int code, WPARAM wparam, LPARAM lparam) noexcept {
   switch (code) {
     case HC_ACTION: {
@@ -19,10 +38,12 @@ static LRESULT CALLBACK hook_proc(int code, WPARAM wparam, LPARAM lparam) noexce
 
       // 押したキーの番号を表示する
       const auto event = KeyEvent{*info_ptr};
+      std::cout << "time:" << std::dec << info_ptr->time << "\t";
+      print_key_event(info_ptr->vkCode, info_ptr->scanCode, info_ptr->flags);
       if (event.is_pressed()) {
-        std::cout << "Press Key 0x" << std::hex << event.key() << '\n';
+        std::cout << "\tkey:0x" << std::hex << event.key() << '\n';
       } else {
-        std::cout << "Release Key 0x" << std::hex << event.key() << '\n';
+        std::cout << "\tkey:0x" << std::hex << event.key() << '\n';
       }
 
       return TRUE;
@@ -33,19 +54,20 @@ static LRESULT CALLBACK hook_proc(int code, WPARAM wparam, LPARAM lparam) noexce
   return CallNextHookEx(nullptr, code, wparam, lparam);
 }
 
-std::string_view get_vk_name(UINT vk) noexcept;
-
 extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   AllocConsole();
   [[maybe_unused]] FILE* conout_fp{};
   freopen_s(&conout_fp, "CONOUT$", "w", stdout);
   SetWindowPos(GetConsoleWindow(), nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-  SetConsoleOutputCP(CP_UTF8);
+  // SetConsoleOutputCP(CP_UTF8);
 
   // 有効なスキャンコードを列挙する
   for (uint32_t sc = 0x0000; sc <= 0xffff; ++sc) {
     const UINT vk = MapVirtualKey(sc, MAPVK_VSC_TO_VK_EX);
-    if (vk > 0) std::cout << "Scancode 0x" << std::hex << sc << " = " << get_vk_name(vk) << " (" << std::dec << vk << ")\n";
+    if (vk > 0) {
+      print_key_event(vk, sc, 0);
+      std::cout << '\n';
+    }
   }
 
   // 押したキーの番号を表示するため、キーイベントを覗き見る
@@ -63,6 +85,14 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
 
   system("PAUSE");
   return static_cast<int>(msg.wParam);
+}
+
+std::string_view get_sc_name(DWORD sc) noexcept {
+  static std::array<char, 256> buf{};
+  buf[0] = '\0';
+  const auto size = GetKeyNameTextA(static_cast<LONG>(sc << 16), buf.data(), buf.size());
+  if (size <= 0) return "Unknown";
+  return buf.data();
 }
 
 std::string_view get_vk_name(UINT vk) noexcept {

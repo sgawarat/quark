@@ -6,31 +6,30 @@
  * @brief Keyboard
  */
 #include <quark/keyboard.hpp>
+
 #include <atomic>
-#include <deque>
-#include <mutex>
 #include <condition_variable>
+#include <deque>
 #include <exception>
+#include <mutex>
 #include <thread>
+
 #include <quark/bitset.hpp>
+#include <quark/key.hpp>
 #include <quark/sink.hpp>
 
 extern "C" {
-#include <keyboard.h>
 #include <action.h>
 #include <action_layer.h>
-#include <matrix.h>
 #include <host.h>
+#include <keyboard.h>
+#include <matrix.h>
 #include <report.h>
 
 extern matrix_row_t raw_matrix[MATRIX_ROWS];
 }  // extern "C"
 
 namespace quark {
-// 変換表にアクセスする関数
-extern keypos_t key_to_keypos(Key key) noexcept;
-extern bool is_tapping_key(Key key) noexcept;
-
 namespace {
 std::thread thread_{};                     ///< スレッド
 std::atomic<bool> running_{false};         ///< スレッドが動作中かどうか
@@ -72,7 +71,7 @@ class KeyboardVisitor final {
 public:
   void operator()(const KeyEvent& event) noexcept {
     const auto key = event.key();
-    const auto keypos = key_to_keypos(key);
+    const auto keypos = get_key_property<keypos_t>(key);
     if (keypos.row < MATRIX_ROWS && keypos.col < MATRIX_COLS) {
       if (event.is_pressed()) {
         if (key == repeat_key_) {
@@ -84,7 +83,7 @@ public:
           keyboard_task();
 
           // 指定のキーはすぐに離す処理を行う
-          if (is_tapping_key(key)) {
+          if (get_key_property<NonHoldable>(key)) {
             send_to_sink(SinkSignal::KEY_REPEAT_END);
             repeat_key_ = NO_REPEAT;
             matrix_reset(keypos);
@@ -168,7 +167,11 @@ bool start_keyboard() {
       const struct ScopedInit {
         ScopedInit() {
           static host_driver_t driver{
-              keyboard_leds, send_keyboard, send_nkro, send_mouse, send_extra,
+              keyboard_leds,
+              send_keyboard,
+              send_nkro,
+              send_mouse,
+              send_extra,
           };
           host_set_driver(&driver);
           keyboard_setup();
@@ -185,7 +188,8 @@ bool start_keyboard() {
         {
           std::unique_lock lock{event_queue_mtx_};
           if (event_queue_.empty()) {
-            event_queue_cv_.wait(lock, [] { return !event_queue_.empty() || stop_requested_.load(std::memory_order_acquire); });
+            event_queue_cv_.wait(
+                lock, [] { return !event_queue_.empty() || stop_requested_.load(std::memory_order_acquire); });
             if (stop_requested_.load(std::memory_order_acquire)) break;
             if (event_queue_.empty()) continue;
           }
