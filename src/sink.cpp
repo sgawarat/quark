@@ -199,15 +199,21 @@ bool start_sink() {
         }
       } _init{};
 
-      while (!stop_requested_.load(std::memory_order_acquire)) {
+      while (true) {
         SinkEvent event;
         {
           std::unique_lock lock{event_queue_mtx_};
           if (event_queue_.empty()) {
+            // 既存分を処理し切ってから停止要求に答える
+            if (stop_requested_.load(std::memory_order_acquire)) break;
+
             event_queue_cv_.wait(
                 lock, [] { return !event_queue_.empty() || stop_requested_.load(std::memory_order_acquire); });
-            if (stop_requested_.load(std::memory_order_acquire)) break;
-            if (event_queue_.empty()) continue;
+            if (event_queue_.empty()) {
+              // 既存分を処理し切ってから停止要求に答える
+              if (stop_requested_.load(std::memory_order_acquire)) break;
+              continue;
+            }
           }
           event = event_queue_.front();
           event_queue_.pop_front();
