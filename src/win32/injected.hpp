@@ -11,18 +11,23 @@
 
 namespace quark::inline win32 {
 /**
+ * @brief EXTRA_INFO_INJECTEDの値をメモリアドレスで代用するためのオブジェクト
+ */
+extern volatile int extra_info_injected;
+
+/**
  * @brief 自前のINJECTEDフラグ
  *
  * IMEの状態遷移を含むキー入力をSendInputすると、INJECTEDフラグを持たない補助的なキー入力を発生させることがある。それらはフックプロシージャ内で区別できないので、このフラグを使って無理矢理に識別できるようにする。
  */
-static constexpr ULONG_PTR EXTRA_INFO_INJECTED = 0xfffffffc;
+inline const ULONG_PTR EXTRA_INFO_INJECTED = reinterpret_cast<ULONG_PTR>(&extra_info_injected);
 
 /**
  * @brief INJECTEDフラグを追加する
  *
  * @param ki キー入力情報
  */
-constexpr void add_injected(KEYBDINPUT& ki) noexcept {
+inline void add_injected(KEYBDINPUT& ki) noexcept {
   // HACK: 用途外の方法で自前のINJECTEDフラグを立てる
   ki.dwExtraInfo = EXTRA_INFO_INJECTED;
 }
@@ -34,9 +39,9 @@ constexpr void add_injected(KEYBDINPUT& ki) noexcept {
  * @return true 除去に成功
  * @return false INJECTEDされていなかった
  */
-constexpr bool remove_injected(KBDLLHOOKSTRUCT& info) noexcept {
+inline bool remove_injected(KBDLLHOOKSTRUCT& info) noexcept {
   if (info.dwExtraInfo != EXTRA_INFO_INJECTED) return false;
-  info.flags |= LLMHF_INJECTED;
+  info.flags |= LLKHF_INJECTED;
   info.dwExtraInfo = 0;
   return true;
 }
