@@ -24,11 +24,14 @@ EventReceiver receiver_;                   ///< OSから入力イベントを受
 }  // namespace
 
 bool start_source() {
-  if (thread_.joinable()) return false;
+  // スレッドがすでに動作中であれば何もしない
+  if (running_.load(std::memory_order_acquire)) return false;
 
-  // 状態を初期化する
+  // スレッドを完全に停止させる
+  if (thread_.joinable()) thread_.join();
+
+  // 新しくスレッドを生成する
   stop_requested_.store(false, std::memory_order_release);
-
   thread_ = std::thread([] {
     const struct ScopedRunning {
       ScopedRunning() {
@@ -61,30 +64,27 @@ bool start_source() {
   return true;
 }
 
-bool stop_source() {
-  // すでにスレッドが停止しているかを確認する
-  if (!thread_.joinable()) return false;
+void stop_source() {
+  // すでにスレッドが完全に停止していれば何もしない
+  if (!thread_.joinable()) return;
 
-  // すでにスレッドが実行終了しているかを確認する
-  if (!running_.load(std::memory_order_acquire)) return false;
+  // スレッドが動作中であれば、停止を要求する
+  if (running_.load(std::memory_order_acquire)) {
+    stop_requested_.store(true, std::memory_order_release);
+    receiver_.notify();
+  }
 
-  // スレッドに停止要求を出す
-  stop_requested_.store(true, std::memory_order_release);
-  receiver_.notify();
-
-  // スレッドが停止するのを待つ
+  // スレッドが完全に停止するのを待つ
   thread_.join();
-
-  return true;
 }
 
 SourceStatus get_source_status() noexcept {
-  if (running_.load(std::memory_order_acquire)) {
-    if (stop_requested_.load(std::memory_order_acquire)) return SourceStatus::STOPPING;
-    return SourceStatus::RUNNING;
-  } else {
-    if (thread_.joinable()) return SourceStatus::STOPPED;
-    return SourceStatus::RESET;
+  if (!running_.load(std::memory_order_acquire)) {
+    return SourceStatus::STOPPED;
   }
+  if (stop_requested_.load(std::memory_order_acquire)) {
+    return SourceStatus::STOP_REQUESTED;
+  }
+  return SourceStatus::RUNNING;
 }
 }  // namespace quark

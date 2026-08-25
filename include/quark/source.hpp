@@ -14,10 +14,9 @@ namespace quark {
  * @brief Sourceの状態
  */
 enum class SourceStatus {
-  RESET,     ///< リセット済み
-  RUNNING,   ///< 動作中
-  STOPPING,  ///< 停止しようとしている
-  STOPPED,   ///< 停止した
+  STOPPED,         ///< 停止中
+  RUNNING,         ///< 動作中
+  STOP_REQUESTED,  ///< 停止要求済
 };
 
 /**
@@ -32,11 +31,9 @@ bool start_source();
 /**
  * @brief Sourceを停止させる
  *
- * @retval true 停止に成功
- * @retval false すでに停止しているか、停止しようとしている
  * @exception system_error スレッドのjoinに失敗
  */
-bool stop_source();
+void stop_source();
 
 /**
  * @brief Sourceの状態を取得する

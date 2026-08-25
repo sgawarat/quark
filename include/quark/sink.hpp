@@ -25,10 +25,9 @@ namespace quark {
  * @brief Sinkの状態
  */
 enum class SinkStatus {
-  RESET,     ///< リセット済み
-  RUNNING,   ///< 動作中
-  STOPPING,  ///< 停止しようとしている
-  STOPPED,   ///< 停止した
+  STOPPED,         ///< 停止中
+  RUNNING,         ///< 動作中
+  STOP_REQUESTED,  ///< 停止要求済
 };
 
 /**
@@ -57,11 +56,9 @@ bool start_sink();
 /**
  * @brief Sinkを停止させる
  *
- * @retval true 停止に成功
- * @retval false すでに停止しているか、停止しようとしている
  * @exception system_error スレッドのjoinに失敗
  */
-bool stop_sink();
+void stop_sink();
 
 /**
  * @brief Sinkにイベントを送る
