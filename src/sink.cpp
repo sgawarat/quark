@@ -133,11 +133,17 @@ public:
   void operator()(SinkSignal signal) noexcept {
     switch (signal) {
       case SinkSignal::KEY_REPEAT: sender_.send_key_repeat(); break;
-      case SinkSignal::RESET:
+      case SinkSignal::RESET: {
+        keyset_.scan([](auto pos) {  // 非修飾キーを離す
+          sender_.send_key_release(static_cast<uint8_t>(pos.index()));
+        });
+        mod_keyset_.scan([](auto pos) {  // 修飾キーを離す
+          sender_.send_key_release(KC_LEFT_CTRL + static_cast<uint8_t>(pos.index()));
+        });
         keyset_.clear();
         mod_keyset_.clear();
-        sender_.reset();
         break;
+      }
       default: break;
     }
   }

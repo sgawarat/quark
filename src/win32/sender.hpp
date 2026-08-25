@@ -27,7 +27,11 @@ struct Input final : INPUT {
                 .dwFlags = static_cast<DWORD>(KEYEVENTF_SCANCODE),
             },
         } {
-    if (ki.wScan > 0xff) ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;  // この関係性が本当に正しいかは不明
+    if (ki.wScan > 0xff) {
+      // この関係性が本当に正しいかは不明
+      ki.wScan &= 0xff;
+      ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+    }
     add_injected(ki);
   }
 
@@ -101,18 +105,10 @@ public:
   }
 
   /**
-   * @brief すべての状態を初期値に戻す
+   * @brief 状態を初期値に戻す
    */
   void reset() noexcept {
     last_key_ = KC_NO;
-    INPUT input{.type = INPUT_KEYBOARD, .ki{}};
-    for (WORD i = 1; i < 255; ++i) {
-      input.ki.wVk = i;
-      input.ki.dwFlags = KEYEVENTF_KEYUP;
-      SendInput(1, &input, sizeof(INPUT));
-      input.ki.dwFlags = KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY;
-      SendInput(1, &input, sizeof(INPUT));
-    }
   }
 
 private:
