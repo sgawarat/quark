@@ -45,8 +45,10 @@ public:
    */
   void poll() {
     MSG msg;
-    GetMessage(&msg, nullptr, 0, 0);
-    if (msg.message != WM_NULL) throw std::exception("failed");
+    if (GetMessage(&msg, nullptr, 0, 0) == 0) {
+      // WM_QUITを受け取ったら、エラー扱いにして返す
+      throw std::exception("failed");
+    }
   }
 
   /**
@@ -79,7 +81,8 @@ private:
           send_to_keyboard(*info_ptr);
         } catch (const std::exception& e) {
           on_source_error(e);
-          PostQuitMessage(0);
+          PostQuitMessage(0);  // 失敗でpollを抜けるよう通知する
+          break;
         }
         return TRUE;
       }
