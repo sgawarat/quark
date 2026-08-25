@@ -9,15 +9,16 @@
 
 #include <exception>
 #include <variant>
-#include <cstdint>
 
-#ifdef _WIN32
-#include "win32/sink.hpp"
-#endif
+#include <cstdint>
 
 extern "C" {
 #include <report.h>
 }  // extern "C"
+
+#ifdef _WIN32
+#include "win32/sink.hpp"
+#endif
 
 namespace quark {
 /**
@@ -34,15 +35,15 @@ enum class SinkStatus {
  * @brief シグナルの値
  */
 enum class SinkSignal {
-  KEY_REPEAT,      ///< キーリピート
-  KEY_REPEAT_END,  ///< キーリピートが途切れた
-  RESET,           ///< 状態をリセットする
+  KEY_REPEAT,  ///< キーリピート
+  RESET,       ///< 初期状態に戻す
 };
 
 /**
  * @brief Sinkに渡されるイベントを格納するクラス
  */
-using SinkEvent = std::variant<report_keyboard_t, report_nkro_t, report_mouse_t, report_extra_t, NativeSinkEvent, SinkSignal>;
+using SinkEvent =
+    std::variant<report_keyboard_t, report_nkro_t, report_mouse_t, report_extra_t, NativeSinkEvent, SinkSignal>;
 
 /**
  * @brief Sinkを始動させる

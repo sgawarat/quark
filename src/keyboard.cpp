@@ -39,9 +39,7 @@ std::deque<KeyboardEvent> event_queue_;   ///< イベントキュー
 std::mutex event_queue_mtx_;              ///< イベントキューのためのMutex
 std::condition_variable event_queue_cv_;  ///< イベントキューのためのCV
 
-static constexpr Key NO_REPEAT = Key{KEY_COUNT};  ///< キーリピートしていないことを示す値
-
-Key repeat_key_ = NO_REPEAT;  ///< リピートしているキー
+Key last_key_ = Key{KEY_COUNT};  ///< 最後に押したキー
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
@@ -74,27 +72,24 @@ public:
     const auto keypos = get_key_property<keypos_t>(key);
     if (keypos.row < MATRIX_ROWS && keypos.col < MATRIX_COLS) {
       if (event.is_pressed()) {
-        if (key == repeat_key_) {
+        if (key == last_key_) {
+          // 直前と同じキーが押されたら、キーリピートとして扱う
           send_to_sink(SinkSignal::KEY_REPEAT);
         } else {
-          send_to_sink(SinkSignal::KEY_REPEAT_END);
-          repeat_key_ = key;
+          // 直前と違うキーが押されたら、実際のキー入力として扱う
           matrix_set(keypos);
           keyboard_task();
+          last_key_ = key;
 
-          // 指定のキーはすぐに離す処理を行う
+          // キーがNonHoldableなら、すぐに離す処理を行う
           if (get_key_property<NonHoldable>(key)) {
-            send_to_sink(SinkSignal::KEY_REPEAT_END);
-            repeat_key_ = NO_REPEAT;
             matrix_reset(keypos);
             keyboard_task();
           }
         }
       } else {
-        if (key == repeat_key_) {
-          send_to_sink(SinkSignal::KEY_REPEAT_END);
-          repeat_key_ = NO_REPEAT;
-        }
+        // 直前と同じキーが離されたら、キーリピートを終了する
+        if (key == last_key_) last_key_ = Key{KEY_COUNT};
         matrix_reset(keypos);
         keyboard_task();
       }
@@ -103,23 +98,19 @@ public:
 
   void operator()(KeyboardSignal signal) noexcept {
     switch (signal) {
+      // すべてのキーを離した扱いにする
       case KeyboardSignal::CLEAR: {
-        if (repeat_key_ != NO_REPEAT) {
-          send_to_sink(SinkSignal::KEY_REPEAT_END);
-          repeat_key_ = NO_REPEAT;
-        }
         matrix_clear();
-        clear_keyboard();
+        keyboard_task();
         break;
       }
+
+      // 内部状態を初期値に戻す
       case KeyboardSignal::RESET: {
-        if (repeat_key_ != NO_REPEAT) {
-          send_to_sink(SinkSignal::KEY_REPEAT_END);
-          repeat_key_ = NO_REPEAT;
-        }
         matrix_clear();
         clear_keyboard();
         layer_clear();
+        last_key_ = Key{KEY_COUNT};
         send_to_sink(SinkSignal::RESET);
         break;
       }
@@ -178,6 +169,7 @@ bool start_keyboard() {
           keyboard_init();
         }
         ~ScopedInit() {
+          matrix_clear();
           clear_keyboard();
           host_set_driver(nullptr);
         }

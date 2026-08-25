@@ -9,6 +9,7 @@
 
 #include <array>
 #include <span>
+
 #include <cstdint>
 
 namespace quark {

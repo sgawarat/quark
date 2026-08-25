@@ -7,8 +7,6 @@
  */
 #pragma once
 
-#include <cstdint>
-
 #include <Windows.h>
 
 #include "../win32/key.hpp"
@@ -21,19 +19,20 @@ class KeyEvent final {
 public:
   KeyEvent() = default;
 
-  KeyEvent(const KBDLLHOOKSTRUCT& info) noexcept : vk_(info.vkCode), sc_(info.scanCode), flags_(info.flags) {}
+  KeyEvent(const KBDLLHOOKSTRUCT& info) noexcept
+      : key_{make_key(static_cast<uint16_t>(info.scanCode), !!(info.flags & LLKHF_EXTENDED))},
+        pressed_{!(info.flags & LLKHF_UP)} {}
 
   Key key() const noexcept {
-    return make_key(static_cast<uint16_t>(sc_), !!(flags_ & LLKHF_EXTENDED));
+    return key_;
   }
 
   bool is_pressed() const noexcept {
-    return !(flags_ & LLKHF_UP);
+    return pressed_;
   }
 
 private:
-  [[maybe_unused]] DWORD vk_ = 0;
-  DWORD sc_ = 0;
-  DWORD flags_ = 0;
+  Key key_{};
+  bool pressed_{};
 };
 }  // namespace quark::inline win32

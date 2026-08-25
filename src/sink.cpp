@@ -96,7 +96,7 @@ public:
     keyset_.clear();
     for (auto key : std::span(report.keys)) {
       if (key >= KC_LEFT_CTRL && key <= KC_RIGHT_GUI) continue;
-      if (key != 0) keyset_.set(key);
+      if (key != KC_NO) keyset_.set(key);
     }
     mod_keyset_ = ModKeyset{report.mods};
 
@@ -133,8 +133,11 @@ public:
   void operator()(SinkSignal signal) noexcept {
     switch (signal) {
       case SinkSignal::KEY_REPEAT: sender_.send_key_repeat(); break;
-      case SinkSignal::KEY_REPEAT_END: sender_.clear_key_repeat(); break;
-      case SinkSignal::RESET: sender_.reset(); break;
+      case SinkSignal::RESET:
+        keyset_.clear();
+        mod_keyset_.clear();
+        sender_.reset();
+        break;
       default: break;
     }
   }
