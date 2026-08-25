@@ -45,12 +45,12 @@ Key last_key_ = Key{KEY_COUNT};  ///< 最後に押したキー
 #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
 
 inline void matrix_set(keypos_t keypos) noexcept {
-  if (keypos.row >= MATRIX_ROWS) return;
+  if (keypos.col >= MATRIX_COLS || keypos.row >= MATRIX_ROWS) return;
   raw_matrix[keypos.row] |= static_cast<matrix_row_t>(1) << keypos.col;
 }
 
 inline void matrix_reset(keypos_t keypos) noexcept {
-  if (keypos.row >= MATRIX_ROWS) return;
+  if (keypos.col >= MATRIX_COLS || keypos.row >= MATRIX_ROWS) return;
   raw_matrix[keypos.row] &= ~(static_cast<matrix_row_t>(1) << keypos.col);
 }
 
