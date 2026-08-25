@@ -6,6 +6,7 @@
  * @brief Source
  */
 #include <quark/source.hpp>
+
 #include <atomic>
 #include <exception>
 #include <thread>
@@ -52,7 +53,7 @@ bool start_source() {
         receiver_.poll();
         std::this_thread::yield();
       }
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       on_source_error(e);
     }
   });

@@ -5,14 +5,18 @@
  * @file main.cpp
  * @brief Win32アプリケーション
  */
+#include <thread>
+#include <utility>
+
+#include <cstdio>
+
 #include <Windows.h>
 #include <WtsApi32.h>
-#include <cstdio>
+
 #include <quark/keyboard.hpp>
 #include <quark/sink.hpp>
 #include <quark/source.hpp>
-#include <thread>
-#include <utility>
+
 #include "resource.h"
 #include "utility.hpp"
 
@@ -90,7 +94,12 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
         }
         // すべてのキーを離す
         case ID_RESET: {
-          send_to_keyboard(KeyboardSignal::RESET);
+          try {
+            send_to_keyboard(KeyboardSignal::RESET);
+          } catch (...) {
+            main_ep_ = std::current_exception();
+            PostQuitMessage(0);
+          }
           break;
         }
         default: break;
@@ -136,7 +145,12 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
         case WTS_SESSION_LOCK: [[fallthrough]];
         case WTS_SESSION_UNLOCK: {
           // 誤動作を防ぐためにキーをすべて離す
-          send_to_keyboard(KeyboardSignal::CLEAR);
+          try {
+            send_to_keyboard(KeyboardSignal::CLEAR);
+          } catch (...) {
+            main_ep_ = std::current_exception();
+            PostQuitMessage(0);
+          }
           break;
         }
         default: break;
@@ -148,18 +162,18 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
 }
 }  // namespace
 
-void on_source_error(std::exception&) noexcept {
-  source_ep_ = std::current_exception();
+void on_source_error(const std::exception&) noexcept {
+  if (!source_ep_) source_ep_ = std::current_exception();
   if (main_thread_id_ > 0) PostThreadMessage(main_thread_id_, WM_QUIT, 0, 0);
 }
 
-void on_keyboard_error(std::exception&) noexcept {
-  keyboard_ep_ = std::current_exception();
+void on_keyboard_error(const std::exception&) noexcept {
+  if (!keyboard_ep_) keyboard_ep_ = std::current_exception();
   if (main_thread_id_ > 0) PostThreadMessage(main_thread_id_, WM_QUIT, 0, 0);
 }
 
-void on_sink_error(std::exception&) noexcept {
-  sink_ep_ = std::current_exception();
+void on_sink_error(const std::exception&) noexcept {
+  if (!sink_ep_) sink_ep_ = std::current_exception();
   if (main_thread_id_ > 0) PostThreadMessage(main_thread_id_, WM_QUIT, 0, 0);
 }
 

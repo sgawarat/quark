@@ -8,9 +8,12 @@
 #pragma once
 
 #include <exception>
+
 #include <Windows.h>
-#include <quark/source.hpp>
+
 #include <quark/keyboard.hpp>
+#include <quark/source.hpp>
+
 #include "injected.hpp"
 
 namespace quark::inline win32 {
@@ -40,9 +43,10 @@ public:
    *
    * notify()を受けたり異常停止したりしない限りリターンされない。
    */
-  void poll() noexcept {
+  void poll() {
     MSG msg;
     GetMessage(&msg, nullptr, 0, 0);
+    if (msg.message != WM_NULL) throw std::exception("failed");
   }
 
   /**
@@ -73,8 +77,9 @@ private:
         // キー入力を奪ってエンジンに横流しする
         try {
           send_to_keyboard(*info_ptr);
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
           on_source_error(e);
+          PostQuitMessage(0);
         }
         return TRUE;
       }

@@ -203,7 +203,7 @@ bool start_keyboard() {
         // CPUを明け渡す
         std::this_thread::yield();
       }
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       on_keyboard_error(e);
     }
   });

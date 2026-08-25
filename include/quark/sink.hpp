@@ -83,5 +83,5 @@ SinkStatus get_sink_status() noexcept;
  *
  * アプリケーション側で実装される。
  */
-void on_sink_error(std::exception& e) noexcept;
+void on_sink_error(const std::exception& e) noexcept;
 }  // namespace quark

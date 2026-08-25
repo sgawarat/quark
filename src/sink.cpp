@@ -213,7 +213,7 @@ bool start_sink() {
         // CPUを明け渡す
         std::this_thread::yield();
       }
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       on_sink_error(e);
     }
   });

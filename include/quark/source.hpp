@@ -50,5 +50,5 @@ SourceStatus get_source_status() noexcept;
  *
  * アプリケーション側で実装される。
  */
-void on_source_error(std::exception& e) noexcept;
+void on_source_error(const std::exception& e) noexcept;
 }  // namespace quark

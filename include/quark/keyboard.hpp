@@ -77,5 +77,5 @@ KeyboardStatus get_keyboard_status() noexcept;
  *
  * アプリケーション側で実装される。
  */
-void on_keyboard_error(std::exception& e) noexcept;
+void on_keyboard_error(const std::exception& e) noexcept;
 }  // namespace quark
