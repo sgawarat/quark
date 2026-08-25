@@ -59,6 +59,11 @@ private:
 template <typename Dtor>
 Scoped(Dtor) -> Scoped<Dtor>;
 
+bool can_start() noexcept {
+  return get_source_status() == SourceStatus::STOPPED && get_keyboard_status() == KeyboardStatus::STOPPED &&
+         get_sink_status() == SinkStatus::STOPPED;
+}
+
 /**
  * @brief ウィンドウプロシージャ
  */
@@ -75,7 +80,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
         // 有効無効の切り替え
         case ID_ENABLE_DISABLE: {
           try {
-            if (get_source_status() == SourceStatus::RESET) {
+            if (can_start()) {
               start_sink();
               start_keyboard();
               start_source();
@@ -111,7 +116,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
         // オンオフを切り替える
         case WM_LBUTTONDOWN: {
           try {
-            if (get_source_status() == SourceStatus::RESET) {
+            if (can_start()) {
               start_sink();
               start_keyboard();
               start_source();
