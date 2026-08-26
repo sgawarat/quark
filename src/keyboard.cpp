@@ -8,6 +8,7 @@
 #include <quark/keyboard.hpp>
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <deque>
 #include <exception>
@@ -17,6 +18,7 @@
 #include <quark/bitset.hpp>
 #include <quark/key.hpp>
 #include <quark/sink.hpp>
+#include <quark/tick.hpp>
 
 extern "C" {
 #include <action.h>
@@ -31,6 +33,13 @@ extern matrix_row_t raw_matrix[MATRIX_ROWS];
 
 namespace quark {
 namespace {
+using TickClock = std::chrono::steady_clock;
+
+constexpr auto FAST_TICK_INTERVAL =
+    std::chrono::duration_cast<TickClock::duration>(std::chrono::seconds(1)) / QUARK_TICK_FAST_RATE;
+constexpr auto SLOW_TICK_INTERVAL =
+    std::chrono::duration_cast<TickClock::duration>(std::chrono::seconds(1)) / QUARK_TICK_SLOW_RATE;
+
 std::thread thread_{};                     ///< スレッド
 std::atomic<bool> running_{false};         ///< スレッドが動作中かどうか
 std::atomic<bool> stop_requested_{false};  ///< スレッドに対する停止要求
@@ -38,7 +47,7 @@ std::atomic<bool> stop_requested_{false};  ///< スレッドに対する停止�
 std::deque<KeyboardEvent> event_queue_;   ///< イベントキュー
 std::mutex event_queue_mtx_;              ///< イベントキューのためのMutex
 std::condition_variable event_queue_cv_;  ///< イベントキューのためのCV
-
+auto tick_timeout_tp_ = TickClock::now();
 Key last_key_ = Key{KEY_COUNT};  ///< 最後に押したキー
 
 #pragma clang diagnostic push
@@ -186,8 +195,12 @@ bool start_keyboard() {
             // 既存分を処理し切ってから停止要求に答える
             if (stop_requested_.load(std::memory_order_acquire)) break;
 
-            event_queue_cv_.wait(
-                lock, [] { return !event_queue_.empty() || stop_requested_.load(std::memory_order_acquire); });
+            // 次のイベントをtick間隔の分だけ待つ
+            const bool fast_mode = TickClock::now() < tick_timeout_tp_;
+            event_queue_cv_.wait_for(lock, fast_mode ? FAST_TICK_INTERVAL : SLOW_TICK_INTERVAL, [] {
+              return !event_queue_.empty() || stop_requested_.load(std::memory_order_acquire);
+            });
+
             if (event_queue_.empty()) {
               // 既存分を処理し切ってから停止要求に答える
               if (stop_requested_.load(std::memory_order_acquire)) break;
@@ -200,6 +213,9 @@ bool start_keyboard() {
 
         // イベントの中身に応じて処理を行う
         std::visit(visitor_, event);
+
+        // イベント処理後はFASTモードに戻る
+        tick_timeout_tp_ = TickClock::now() + QUARK_TICK_FAST_TIME;
 
         // CPUを明け渡す
         std::this_thread::yield();
