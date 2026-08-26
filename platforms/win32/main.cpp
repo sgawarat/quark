@@ -26,10 +26,9 @@ extern "C" {
 
 namespace quark {
 namespace {
-const WCHAR* const TITLE = L"Quark";                // アプリケーション名
-const WCHAR* const CLASS_NAME = L"Quark WNDCLASS";  // ウィンドウクラス名
-const WCHAR* const WINDOW_NAME = L"Quark WINDOW";   // ウィンドウ名
-constexpr UINT WM_APP_NOTIFY_ICON = WM_APP + 1;     // 通知アイコンのメッセージID
+const WCHAR* const TITLE = L"Quark";                          // タイトル名
+const WCHAR* const CLASS_NAME = L"Quark: Keyboard Emulator";  // ウィンドウクラス名
+constexpr UINT WM_APP_NOTIFY_ICON = WM_APP + 1;               // 通知アイコンのメッセージID
 
 HMENU context_menu_{};  // コンテキストメニュー
 HICON keyboard_on_icon_{};
@@ -195,7 +194,10 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
 #endif
 
   // 重複起動を防止する
-  if (FindWindow(CLASS_NAME, WINDOW_NAME) != nullptr) return 0;
+  const HANDLE mutex = CreateMutex(nullptr, TRUE, CLASS_NAME);
+  if (mutex == nullptr) return EXIT_FAILURE;
+  const Scoped mutex_dtor{[&] { CloseHandle(mutex); }};
+  if (GetLastError() == ERROR_ALREADY_EXISTS) return EXIT_SUCCESS;
 
   main_thread_id_ = GetCurrentThreadId();
 
@@ -223,24 +225,15 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
                       LoadCursor(nullptr, IDC_ARROW),
                       HBRUSH(COLOR_WINDOW + 1),
                       nullptr,
-                      CLASS_NAME};
+                      L"Quark WNDCLASS"};
     return RegisterClass(&wc);
   }();
   if (cls == 0) return EXIT_FAILURE;
   const Scoped cls_dtor{[&] { UnregisterClass(MAKEINTATOM(cls), instance); }};
 
   // ウィンドウ
-  const HWND wnd = CreateWindow(MAKEINTATOM(cls),
-                                WINDOW_NAME,
-                                WS_OVERLAPPED,
-                                CW_USEDEFAULT,
-                                CW_USEDEFAULT,
-                                1,
-                                1,
-                                nullptr,
-                                nullptr,
-                                instance,
-                                nullptr);
+  const HWND wnd = CreateWindow(
+      MAKEINTATOM(cls), TITLE, WS_OVERLAPPED, CW_USEDEFAULT, CW_USEDEFAULT, 1, 1, nullptr, nullptr, instance, nullptr);
   if (!wnd) return EXIT_FAILURE;
   const Scoped wnd_dtor{[&] { DestroyWindow(wnd); }};
 
