@@ -86,7 +86,7 @@ public:
    */
   template <size_t SIZE>
   constexpr explicit Bitset(std::span<const ValueT, SIZE> values) noexcept {
-    if constexpr (SIZE >= N) {
+    if constexpr (SIZE >= VALUE_COUNT) {
       for (size_t i = 0; i < VALUE_COUNT; ++i) {
         values_[i] = values[i];
       }
