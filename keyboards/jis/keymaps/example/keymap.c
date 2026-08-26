@@ -157,6 +157,11 @@ static void process_unshifted_key(bool pressed, uint16_t keycode) {
 }
 
 /**
+ * @brief MOD_系からMOD_BIT_系へ変換するためのマクロ
+ */
+#define MOD2MOD_BIT(mod) (((mod) & 0x10) ? (((mod) & 0xf) << 4) : ((mod) & 0xf))
+
+/**
  * @brief 独自のキーコードを処理する
  *
  * @param keycode キーコード
@@ -174,7 +179,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     // いずれかのShiftを押している間だけレイヤーをONにする
     case LM_LSFT:  // fallthrough
     case LM_RSFT: {
-      const uint8_t mods = MOD_BIT(keycode - LM_LCTL);
+      const uint8_t mods = MOD2MOD_BIT(keycode);
       if (pressed) {
         // 最初であれば、レイヤーをONにする
         if ((get_mods() & MOD_MASK_SHIFT) == 0) {
@@ -212,7 +217,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     case LM_RCTL:  // fallthrough
     case LM_RALT:  // fallthrough
     case LM_RGUI: {
-      const uint8_t mods = MOD_BIT(keycode - LM_LCTL);
+      const uint8_t mods = MOD2MOD_BIT(keycode);
       if (pressed) {
         // 最初であれば、レイヤーをONにする
         if ((get_mods() & MOD_MASK_CAG) == 0) {
