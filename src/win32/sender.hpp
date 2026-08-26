@@ -19,21 +19,28 @@ namespace quark::inline win32 {
 struct Input final : INPUT {
   constexpr Input() noexcept : INPUT{.type = INPUT_HARDWARE} {}
 
-  explicit Input(uint8_t keycode) noexcept
+  explicit Input(uint16_t scancode, DWORD flags) noexcept
       : INPUT{
             .type = INPUT_KEYBOARD,
             .ki{
-                .wScan = keycode_to_scancode(keycode),
-                .dwFlags = static_cast<DWORD>(KEYEVENTF_SCANCODE),
+                .wScan = static_cast<uint8_t>(scancode & 0xff),
+                .dwFlags = flags | KEYEVENTF_SCANCODE,
             },
         } {
-    if (ki.wScan > 0xff) {
-      // この関係性が本当に正しいかは不明
-      ki.wScan &= 0xff;
-      ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-    }
+    if (scancode > 0xff) ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
     add_injected(ki);
+
+    // Pauseは正確なスキャンコードが分からないためVKで送る
+    if (scancode == 0x45) {
+      ki.wVk = VK_PAUSE;
+      ki.dwFlags &= ~static_cast<DWORD>(KEYEVENTF_SCANCODE);
+    } else if (scancode == 0xe045) {
+      ki.wVk = VK_NUMLOCK;
+      ki.dwFlags &= ~static_cast<DWORD>(KEYEVENTF_SCANCODE);
+    }
   }
+
+  explicit Input(uint8_t keycode) noexcept : Input{keycode_to_scancode(keycode), 0} {}
 
   void send_keydown() noexcept {
     if (ki.wScan == 0) return;

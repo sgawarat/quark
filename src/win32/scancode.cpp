@@ -83,7 +83,7 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_F8: return 0x0042;
     case KC_F9: return 0x0043;
     case KC_F10: return 0x0044;
-    case KC_NUM_LOCK: return 0x0045;
+    case KC_PAUSE: return 0x0045;
     case KC_SCROLL_LOCK: return 0x0046;
     case KC_KP_7: return 0x0047;
     case KC_KP_8: return 0x0048;
@@ -98,6 +98,7 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_KP_3: return 0x0051;
     case KC_KP_0: return 0x0052;
     case KC_KP_DOT: return 0x0053;
+    case KC_SYSTEM_REQUEST: return 0x0054;
     case KC_NONUS_BACKSLASH: return 0x0056;
     case KC_F11: return 0x0057;
     case KC_F12: return 0x0058;
@@ -140,6 +141,7 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_KP_SLASH: return 0xe035;
     case KC_PRINT_SCREEN: return 0xe037;
     case KC_RIGHT_ALT: return 0xe038;
+    case KC_NUM_LOCK: return 0xe045;
     case KC_CANCEL: return 0xe046;
     case KC_HOME: return 0xe047;
     case KC_UP: return 0xe048;
@@ -167,7 +169,6 @@ uint16_t keycode_to_scancode(uint8_t keycode) noexcept {
     case KC_MY_COMPUTER: return 0xe06b;
     case KC_MAIL: return 0xe06c;
     case KC_MEDIA_SELECT: return 0xe06d;
-    case KC_PAUSE: return 0xe11d;
     default: break;
   }
   return 0;

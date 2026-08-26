@@ -15,11 +15,11 @@
 
 namespace quark {
 std::string_view get_vk_name(UINT vk) noexcept;
-std::string_view get_sc_name(DWORD sc) noexcept;
+std::string_view get_sc_name(DWORD sc, bool extended) noexcept;
 
 static void print_key_event(DWORD vk, DWORD sc, DWORD flags) {
   std::cout << "vk:" << get_vk_name(vk) << "(0x" << std::hex << vk << ")";
-  std::cout << "\tsc:" << get_sc_name(sc) << "(0x" << std::hex << sc << ")";
+  std::cout << "\tsc:" << get_sc_name(sc, !!(flags & LLKHF_EXTENDED)) << "(0x" << std::hex << sc << ")";
   if (flags) {
     std::cout << "\tflags:";
     if (flags & LLKHF_EXTENDED) std::cout << "X";
@@ -62,6 +62,17 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   // SetConsoleOutputCP(CP_UTF8);
 
   // 有効なスキャンコードを列挙する
+  std::cout << "----- VK -----\n";
+  for (uint32_t vk = 0x00; vk <= 0xff; ++vk) {
+    const UINT sc = MapVirtualKey(vk, MAPVK_VK_TO_VSC_EX);
+    if (sc > 0) {
+      print_key_event(vk, sc, 0);
+      std::cout << '\n';
+    }
+  }
+  std::cout << "----- -- -----\n";
+
+  std::cout << "----- SC -----\n";
   for (uint32_t sc = 0x0000; sc <= 0xffff; ++sc) {
     const UINT vk = MapVirtualKey(sc, MAPVK_VSC_TO_VK_EX);
     if (vk > 0) {
@@ -69,6 +80,7 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
       std::cout << '\n';
     }
   }
+  std::cout << "----- -- -----\n";
 
   // 押したキーの番号を表示するため、キーイベントを覗き見る
   const HHOOK hook = SetWindowsHookEx(WH_KEYBOARD_LL, hook_proc, instance, 0);
@@ -87,10 +99,11 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   return static_cast<int>(msg.wParam);
 }
 
-std::string_view get_sc_name(DWORD sc) noexcept {
+std::string_view get_sc_name(DWORD sc, bool extended) noexcept {
   static std::array<char, 256> buf{};
   buf[0] = '\0';
-  const auto size = GetKeyNameTextA(static_cast<LONG>(sc << 16), buf.data(), buf.size());
+  extended = extended || (sc > 0xff);
+  const auto size = GetKeyNameTextA(static_cast<LONG>(sc << 16) | (extended ? (1 << 24) : 0), buf.data(), buf.size());
   if (size <= 0) return "Unknown";
   return buf.data();
 }
