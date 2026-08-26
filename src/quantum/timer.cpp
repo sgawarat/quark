@@ -14,24 +14,18 @@ extern "C" {
 }  // extern "C"
 
 namespace {
-using Clock = std::chrono::high_resolution_clock;
-
-Clock::time_point zero_tp_{};  // 始点となるtime_point
+using Clock = std::chrono::steady_clock;
 
 template <typename T>
 inline auto get_elapsed_time() noexcept {
-  return std::chrono::duration_cast<std::chrono::duration<T, std::milli>>(Clock::now() - zero_tp_);
+  return std::chrono::duration_cast<std::chrono::duration<T, std::milli>>(Clock::now().time_since_epoch());
 }
 }  // namespace
 
 extern "C" {
-void timer_init() {
-  zero_tp_ = Clock::now();
-}
+void timer_init() {}
 
-void timer_clear() {
-  zero_tp_ = Clock::now();
-}
+void timer_clear() {}
 
 uint16_t timer_read() {
   return get_elapsed_time<uint16_t>().count();
@@ -42,10 +36,20 @@ uint32_t timer_read32() {
 }
 
 uint16_t timer_elapsed(uint16_t last) {
-  return get_elapsed_time<uint16_t>().count() - last;
+  const auto now = get_elapsed_time<uint16_t>().count();
+  if (now < last) {
+    // タイマーがオーバーフローしたら、それ込みで差分を取る
+    return uint16_t{0xffff} - last + now + 1;
+  }
+  return now - last;
 }
 
 uint32_t timer_elapsed32(uint32_t last) {
-  return get_elapsed_time<uint32_t>().count() - last;
+  const auto now = get_elapsed_time<uint32_t>().count();
+  if (now < last) {
+    // タイマーがオーバーフローしたら、それ込みで差分を取る
+    return uint32_t{0xffffffff} - last + now + 1;
+  }
+  return now - last;
 }
 }  // extern "C"
