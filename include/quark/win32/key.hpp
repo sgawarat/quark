@@ -9,6 +9,8 @@
 
 #include <cstdint>
 
+#include <Windows.h>
+
 namespace quark::inline win32 {
 
 /**
@@ -20,11 +22,6 @@ static constexpr size_t KEY_COUNT = 0x200;
  * @brief キーを表す値の型
  *
  * 値を連続させるためにExtendedキーを0x100以降に並べている。
- *
- * 内容は基本的にはPS/2 Set1コードと同じだが、
- * - PauseキーがNumLockの値(0x45)に割り当てられる
- * - NumLockキーがExtendedキーになっている
- * - RShiftキーがExtendedキーになっている
  */
 enum Key : uint16_t {
   K_ESCAPE = 0x1,
@@ -81,6 +78,7 @@ enum Key : uint16_t {
   K_COMMA = 0x33,
   K_DOT = 0x34,
   K_SLASH = 0x35,
+  K_RIGHT_SHIFT = 0x36,
   K_KP_ASTERISK = 0x37,
   K_LEFT_ALT = 0x38,
   K_SPACE = 0x39,
@@ -110,6 +108,7 @@ enum Key : uint16_t {
   K_KP_3 = 0x51,
   K_KP_0 = 0x52,
   K_KP_DOT = 0x53,
+  K_SYSTEM_REQUEST = 0x54,  // K_PRINT_SCREENに統合される
   K_F11 = 0x57,
   K_F12 = 0x58,
   K_KP_EQUAL = 0x59,
@@ -149,11 +148,11 @@ enum Key : uint16_t {
   K_AUDIO_VOL_UP = 0x130,
   K_WWW_HOME = 0x132,
   K_KP_SLASH = 0x135,
-  K_RIGHT_SHIFT = 0x136,
+  K_RIGHT_SHIFT_EXTENDED = 0x136,  // K_RIGHT_SHIFTに統合される
   K_PRINT_SCREEN = 0x137,
   K_RIGHT_ALT = 0x138,
   K_NUM_LOCK = 0x145,
-  K_CANCEL = 0x146,
+  K_CANCEL = 0x146,  // K_PAUSEに統合される
   K_HOME = 0x147,
   K_UP = 0x148,
   K_PAGE_UP = 0x149,
@@ -182,12 +181,36 @@ enum Key : uint16_t {
 /**
  * @brief Win32スキャンコードをキー番号に変換する
  *
- * @param scancode Win32スキャンコード
- * @param extended EXTENDEDフラグがONか
+ * @param vk Win32仮想キーコード
+ * @param sc Win32スキャンコード
+ * @param flags LLKHFフラグ
  * @return Key 対応するキー番号
  */
-constexpr Key make_key(uint16_t scancode, bool extended) noexcept {
-  // TODO: 0xff以上のスキャンコードは現れる？
-  return static_cast<Key>((scancode & 0xff) | (extended ? 0x100u : 0x000u));
+inline Key make_key(DWORD vk, DWORD sc, DWORD flags) noexcept {
+  // スキャンコードが不明な場合には仮想キーコードから復元を試みる
+  if (sc == 0) sc = MapVirtualKey(vk, MAPVK_VK_TO_VSC_EX);
+
+  const uint8_t scancode = static_cast<uint8_t>(sc & 0xff);
+  const bool extended = !!(flags & LLKHF_EXTENDED) || (sc > 0xff);
+  if (extended) {
+    switch (scancode) {
+      // RShiftがEXTENDEDありになることがあるので、EXTENDEDなしに統合する
+      case 0x36: return K_RIGHT_SHIFT;
+
+      // Break(0xe046)はCtrl+PauseなのでPauseに統合する
+      case 0x46: return K_PAUSE;
+
+      // その他
+      default: return static_cast<Key>(uint16_t{scancode} | 0x100);
+    }
+  } else {
+    switch (scancode) {
+      // SysRq(0x54)はAlt+PrtScなのでPrtScに統合する
+      case 0x54: return K_PRINT_SCREEN;
+
+      // その他
+      default: return static_cast<Key>(uint16_t{scancode});
+    }
+  }
 }
 }  // namespace quark::inline win32

@@ -19,20 +19,19 @@ class KeyEvent final {
 public:
   KeyEvent() = default;
 
-  KeyEvent(const KBDLLHOOKSTRUCT& info) noexcept
-      : key_{make_key(static_cast<uint16_t>(info.scanCode), !!(info.flags & LLKHF_EXTENDED))},
-        pressed_{!(info.flags & LLKHF_UP)} {}
+  KeyEvent(const KBDLLHOOKSTRUCT& info) noexcept : vk_{info.vkCode}, sc_{info.scanCode}, flags_{info.flags} {}
 
   Key key() const noexcept {
-    return key_;
+    return make_key(vk_, sc_, flags_);
   }
 
   bool is_pressed() const noexcept {
-    return pressed_;
+    return !(flags_ & LLKHF_UP);
   }
 
 private:
-  Key key_{};
-  bool pressed_{};
+  DWORD vk_{};
+  DWORD sc_{};
+  DWORD flags_{};
 };
 }  // namespace quark::inline win32
