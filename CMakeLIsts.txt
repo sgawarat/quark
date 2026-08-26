@@ -22,7 +22,7 @@ if(NOT EXISTS "${QUARK_KEYBOARD_DIR}/keymap.h")
 endif()
 
 if(NOT EXISTS "${QUARK_KEYMAP_DIR}/keymap.c")
-    message(FATAL_ERROR "Keymap '${QUARK_KEYBOARD}' of the Keyboard '${QUARK_KEYBOARD}' NOT FOUND")
+    message(FATAL_ERROR "Keymap '${QUARK_KEYMAP}' of the Keyboard '${QUARK_KEYBOARD}' NOT FOUND")
 endif()
 
 # rules

@@ -56,7 +56,7 @@ set(NKRO_ENABLE yes PARENT_SCOPE)
 add_library(keymap STATIC
     keymap.cpp
 )
-target_link_libraries(keyboard PRIVATE
+target_link_libraries(keymap PRIVATE
     config  # 共通設定をまとめたライブラリ
 )
 ```

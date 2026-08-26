@@ -23,7 +23,7 @@ T get_key_property(Key key) {
 ### keypos_tプロパティ
 
 `keypos_t`プロパティはOSのキー表現からQMKのキー表現への変換を定義します。
-fcdde
+
 QuarkはOSのキー表現を連続的に再配置した`Key`型（[key.hpp](../include/quark/key.hpp)）としてキー入力を表現する一方、QMKはキーをMatrixという二次元配列上の位置（`keypos_t`型）として表現します。各キーのMatrix上における配置は*キーボード*によって定義されるので、`Key`型と`keypos_t`型の対応関係もまた*キーボード*によって定義されなければなりません。
 
 ### NonHoldableプロパティ
