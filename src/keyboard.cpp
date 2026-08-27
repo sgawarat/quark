@@ -100,6 +100,7 @@ public:
 
           // キーがNonHoldableなら、すぐに離す処理を行う
           if (get_key_property<NonHoldable>(key)) {
+            last_key_ = Key{KEY_COUNT};
             matrix_reset(keypos);
             keyboard_task();
           }
