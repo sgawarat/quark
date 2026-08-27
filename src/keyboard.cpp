@@ -45,11 +45,12 @@ std::atomic<bool> running_{false};         ///< スレッドが動作中かど�
 std::atomic<bool> stop_requested_{false};  ///< スレッドに対する停止要求
 std::promise<void> promise_{};             ///< スレッドからの戻り値
 
-std::deque<KeyboardEvent> event_queue_;   ///< イベントキュー
-std::mutex event_queue_mtx_;              ///< イベントキューのためのMutex
-std::condition_variable event_queue_cv_;  ///< イベントキューのためのCV
-auto tick_timeout_tp_ = TickClock::now();
-Key last_key_ = Key{KEY_COUNT};  ///< 最後に押したキー
+std::deque<KeyboardEvent> event_queue_;         ///< イベントキュー
+std::mutex event_queue_mtx_;                    ///< イベントキューのためのMutex
+std::condition_variable event_queue_cv_;        ///< イベントキューのためのCV
+TickClock::time_point next_tick_tp_{};          ///< 次のtickの開始時間
+TickClock::time_point fast_tick_timeout_tp_{};  ///< 高速モードの終了時間
+Key last_key_ = Key{KEY_COUNT};                 ///< 最後に押したキー
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
@@ -77,6 +78,11 @@ inline void matrix_clear() noexcept {
  */
 class KeyboardVisitor final {
 public:
+  void operator()(std::monostate) noexcept {
+    // tick eventを処理する
+    keyboard_task();
+  }
+
   void operator()(const KeyEvent& event) noexcept {
     const auto key = event.key();
     const auto keypos = get_key_property<keypos_t>(key);
@@ -196,31 +202,42 @@ std::future<void> start_keyboard() {
         KeyboardEvent event;
         {
           std::unique_lock lock{event_queue_mtx_};
+
+          // 確認
           if (event_queue_.empty()) {
-            // 既存分を処理し切ってから停止要求に答える
+            // 既存分を処理し終えていたら、停止要求に答える
             if (stop_requested_.load(std::memory_order_acquire)) break;
 
-            // 次のイベントをtick間隔の分だけ待つ
-            const bool fast_mode = TickClock::now() < tick_timeout_tp_;
-            event_queue_cv_.wait_for(lock, fast_mode ? FAST_TICK_INTERVAL : SLOW_TICK_INTERVAL, [] {
+            // 次のtickまでイベントを待つ
+            event_queue_cv_.wait_until(lock, next_tick_tp_, [] {
               return !event_queue_.empty() || stop_requested_.load(std::memory_order_acquire);
             });
-
-            if (event_queue_.empty()) {
-              // 既存分を処理し切ってから停止要求に答える
-              if (stop_requested_.load(std::memory_order_acquire)) break;
-              continue;
-            }
           }
-          event = event_queue_.front();
-          event_queue_.pop_front();
+
+          // 本番
+          if (event_queue_.empty()) {
+            // イベントが来ぬまま停止要求が来たら、それに答える
+            if (stop_requested_.load(std::memory_order_acquire)) break;
+
+            // イベントがないので、次のtickに備える
+            const auto now = TickClock::now();
+            if (now < fast_tick_timeout_tp_) {
+              next_tick_tp_ = now + FAST_TICK_INTERVAL;
+            } else {
+              next_tick_tp_ = now + SLOW_TICK_INTERVAL;
+            }
+          } else {
+            // イベントが来たので、それを取得する
+            event = event_queue_.front();
+            event_queue_.pop_front();
+
+            // イベントが来たので、高速モードに戻す
+            fast_tick_timeout_tp_ = TickClock::now() + QUARK_TICK_FAST_TIME;
+          }
         }
 
         // イベントの中身に応じて処理を行う
         std::visit(visitor_, event);
-
-        // イベント処理後はFASTモードに戻る
-        tick_timeout_tp_ = TickClock::now() + QUARK_TICK_FAST_TIME;
 
         // CPUを明け渡す
         std::this_thread::yield();

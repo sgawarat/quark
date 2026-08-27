@@ -36,7 +36,7 @@ enum class KeyboardSignal {
 /**
  * @brief Keyboardに渡されるイベントを格納するクラス
  */
-using KeyboardEvent = std::variant<KeyEvent, KeyboardSignal>;
+using KeyboardEvent = std::variant<std::monostate, KeyEvent, KeyboardSignal>;
 
 /**
  * @brief Keyboardを始動させる
