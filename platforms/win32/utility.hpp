@@ -95,18 +95,4 @@ inline void modify_notify_icon(HWND wnd, UINT id, HICON icon) noexcept {
   };
   Shell_NotifyIcon(NIM_MODIFY, &nid);
 }
-
-/**
- * @brief IMEの状態を取得する
- *
- * かなり古い仕様を無理矢理に使っているので、今後とも上手く動いてくれるかは分からない。
- */
-inline bool get_im_status() noexcept {
-  GUITHREADINFO gui_thread_info{
-      .cbSize = sizeof(GUITHREADINFO),
-  };
-  GetGUIThreadInfo(0, &gui_thread_info);
-  const HWND hwnd = ImmGetDefaultIMEWnd(gui_thread_info.hwndFocus);
-  return SendMessage(hwnd, WM_IME_CONTROL, 5 /*IMC_GETOPENSTATUS*/, 0) != 0;
-}
 }  // namespace quark::inline win32
