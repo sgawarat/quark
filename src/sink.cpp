@@ -87,6 +87,7 @@ class SinkEventVisitor final {
 public:
   using Keyset = Bitset<256, uint8_t>;
   using ModKeyset = Bitset<8, uint8_t>;
+  using MouseButtonSet = Bitset<5, uint8_t>;
 
   void operator()(const report_keyboard_t& report) noexcept {
     // 前回のキー状態を保存する
@@ -119,7 +120,15 @@ public:
   }
 
   void operator()(const report_mouse_t& report) noexcept {
-    // TODO: send_mouseを実装する
+    // ボタンの状態を更新する
+    const auto prev_mouse_button_set = mouse_button_set_;
+    mouse_button_set_ = MouseButtonSet{report.buttons};
+
+    // マウスイベントを送信する
+    sender_.send_mouse_buttons_release(set_to_reset(prev_mouse_button_set, mouse_button_set_));
+    sender_.send_mouse_buttons_press(reset_to_set(prev_mouse_button_set, mouse_button_set_));
+    sender_.send_mouse_wheel_move(report.v, report.h);
+    sender_.send_mouse_move(report.x, report.y);
   }
 
   void operator()(const report_extra_t& report) noexcept {
@@ -141,8 +150,10 @@ public:
         mod_keyset_.scan([](auto pos) {  // 修飾キーを離す
           sender_.send_key_release(KC_LEFT_CTRL + static_cast<uint8_t>(pos.index()));
         });
+        sender_.send_mouse_buttons_release(mouse_button_set_);
         keyset_.clear();
         mod_keyset_.clear();
+        mouse_button_set_.clear();
         break;
       }
       default: break;
@@ -172,8 +183,9 @@ private:
     });
   }
 
-  Keyset keyset_{};         ///< 最新のキー状態
-  ModKeyset mod_keyset_{};  ///< 最新の修飾キー状態
+  Keyset keyset_{};                    ///< 最新のキー状態
+  ModKeyset mod_keyset_{};             ///< 最新の修飾キー状態
+  MouseButtonSet mouse_button_set_{};  ///< マウスのボタンの状態
 } visitor_;
 }  // namespace
 

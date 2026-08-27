@@ -4,6 +4,9 @@
 # マルチメディアキーを有効化
 set(EXTRAKEY_ENABLE yes PARENT_SCOPE)
 
+# マウスキーを有効化
+set(MOUSEKEY_ENABLE yes PARENT_SCOPE)
+
 # Nキーロールオーバーを有効化
 set(NKRO_ENABLE yes PARENT_SCOPE)
 

@@ -82,6 +82,10 @@ foreach(QUARK_FEATURE_NAME ${QUARK_FEATURE_NAMES})
     endif()
 endforeach()
 
+if(${MOUSEKEY_ENABLE})
+    list(APPEND QUARK_FEATURE_OPTIONS "MOUSE_ENABLE")
+endif()
+
 # 共通設定
 add_library(config INTERFACE)
 target_precompile_headers(config INTERFACE

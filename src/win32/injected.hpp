@@ -33,6 +33,16 @@ inline void add_injected(KEYBDINPUT& ki) noexcept {
 }
 
 /**
+ * @brief INJECTEDフラグを追加する
+ *
+ * @param mi マウス入力情報
+ */
+inline void add_injected(MOUSEINPUT& mi) noexcept {
+  // HACK: 用途外の方法で自前のINJECTEDフラグを立てる
+  mi.dwExtraInfo = EXTRA_INFO_INJECTED;
+}
+
+/**
  * @brief INJECTEDフラグを取り除いて無害化する
  *
  * @param info キー入力イベント

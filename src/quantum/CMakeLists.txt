@@ -11,6 +11,12 @@ if(TARGET keyboard)
     list(APPEND QUARK_KEYBOARD_LIBRARIES keyboard)
 endif()
 
+set(QMK_FIRMWARE_OPTIONAL_SOURCES "")
+
+if(${MOUSEKEY_ENABLE})
+    list(APPEND QMK_FIRMWARE_OPTIONAL_SOURCES "${QMK_FIRMWARE_DIR}/quantum/mousekey.c")
+endif()
+
 add_library(quantum STATIC
     ${QMK_FIRMWARE_DIR}/quantum/action.c
     ${QMK_FIRMWARE_DIR}/quantum/action_layer.c
@@ -40,6 +46,7 @@ add_library(quantum STATIC
     ${QMK_FIRMWARE_DIR}/tmk_core/protocol/host.c
     ${QMK_FIRMWARE_DIR}/tmk_core/protocol/report.c
     ${QMK_FIRMWARE_DIR}/tmk_core/protocol/usb_device_state.c
+    ${QMK_FIRMWARE_OPTIONAL_SOURCES}
     timer.cpp
     wait.cpp
 )

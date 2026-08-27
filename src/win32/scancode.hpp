@@ -8,5 +8,7 @@
 #include <cstdint>
 
 namespace quark::inline win32 {
-uint16_t keycode_to_scancode(uint8_t keycode) noexcept;
+enum class Scancode : uint16_t {};
+
+Scancode keycode_to_scancode(uint8_t keycode) noexcept;
 }  // namespace quark::inline win32
