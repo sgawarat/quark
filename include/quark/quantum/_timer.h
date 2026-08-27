@@ -7,4 +7,7 @@
  */
 #pragma once
 
+/**
+ * @brief タイマー型のビット数を決めるマクロ
+ */
 #define FAST_TIMER_T_SIZE 32

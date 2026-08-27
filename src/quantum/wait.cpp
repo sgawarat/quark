@@ -9,10 +9,6 @@
 
 extern "C" {
 void wait_ms(uintptr_t ms) {
-  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-}
-
-void wait_us(uintptr_t us) {
-  std::this_thread::sleep_for(std::chrono::microseconds(us));
+  if (ms > 0) std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
 }  // extern "C"

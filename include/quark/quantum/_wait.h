@@ -9,6 +9,22 @@
 
 #include <stdint.h>
 
+#include <intrin.h>
+
+/**
+ * @brief ミリ秒単位で待機する
+ *
+ * @param ms 待機する秒数（ミリ秒）
+ */
 void wait_ms(uintptr_t ms);
-void wait_us(uintptr_t us);
+
+/**
+ * @brief マイクロ秒単位で待機する
+ *
+ * OSの構造上、マイクロ秒単位で細かく待機することが難しいので、ミリ秒以下は事実上待機しないと解釈する。
+ *
+ * @param us 待機する秒数（マイクロ秒）
+ */
+#define wait_us(us) wait_ms(us / 1000)
+
 #define waitInputPinDelay(...) ((void)0)
