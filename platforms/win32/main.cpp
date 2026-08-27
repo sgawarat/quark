@@ -12,6 +12,7 @@
 
 #include <Windows.h>
 #include <WtsApi32.h>
+#include <windowsx.h>
 
 #include <quark/keyboard.hpp>
 #include <quark/sink.hpp>
@@ -135,7 +136,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
         // コンテキストメニューを表示させる
         case WM_CONTEXTMENU: {
           SetForegroundWindow(hwnd);
-          TrackPopupMenuEx(context_menu_, TPM_RIGHTBUTTON, LOWORD(wparam), HIWORD(wparam), hwnd, nullptr);
+          TrackPopupMenuEx(context_menu_, TPM_RIGHTBUTTON, GET_X_LPARAM(wparam), GET_Y_LPARAM(wparam), hwnd, nullptr);
           PostMessage(hwnd, WM_NULL, 0, 0);
           break;
         }
