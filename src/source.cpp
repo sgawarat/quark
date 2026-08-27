@@ -20,18 +20,22 @@ namespace {
 std::thread thread_;                       ///< スレッド
 std::atomic<bool> running_{false};         ///< スレッドが動作中かどうか
 std::atomic<bool> stop_requested_{false};  ///< スレッドに対する停止要求
+std::promise<void> promise_{};             ///< スレッドからの戻り値
 EventReceiver receiver_;                   ///< OSから入力イベントを受け取るためのクラス
 }  // namespace
 
-bool start_source() {
+std::future<void> start_source() {
   // スレッドがすでに動作中であれば何もしない
-  if (running_.load(std::memory_order_acquire)) return false;
+  if (running_.load(std::memory_order_acquire)) return {};
 
   // スレッドを完全に停止させる
   if (thread_.joinable()) thread_.join();
 
-  // 新しくスレッドを生成する
+  // 状態を初期化する
   stop_requested_.store(false, std::memory_order_release);
+  promise_ = {};
+
+  // 新しくスレッドを生成する
   thread_ = std::thread([] {
     const struct ScopedRunning {
       ScopedRunning() {
@@ -56,12 +60,15 @@ bool start_source() {
         receiver_.poll();
         std::this_thread::yield();
       }
-    } catch (const std::exception& e) {
-      on_source_error(e);
+
+      promise_.set_value();
+    } catch (...) {
+      promise_.set_exception(std::current_exception());
+      on_source_error();
     }
   });
 
-  return true;
+  return promise_.get_future();
 }
 
 void stop_source() {

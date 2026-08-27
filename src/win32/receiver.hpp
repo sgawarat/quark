@@ -2,17 +2,16 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
- * @file receiver.cpp
+ * @file receiver.hpp
  * @brief Win32の入力イベントを受け取るやつ
  */
 #pragma once
 
-#include <exception>
+#include <stdexcept>
 
 #include <Windows.h>
 
 #include <quark/keyboard.hpp>
-#include <quark/source.hpp>
 
 #include "injected.hpp"
 
@@ -41,13 +40,21 @@ public:
   /**
    * @brief イベントを受け取って処理する
    *
-   * notify()を受けたり異常停止したりしない限りリターンされない。
+   * 停止要求を受けたり異常終了したりしない限りリターンされない。
    */
   void poll() {
-    MSG msg;
-    if (GetMessage(&msg, nullptr, 0, 0) == 0) {
-      // WM_QUITを受け取ったら、エラー扱いにして返す
-      throw std::exception("failed");
+    MSG msg{};
+    while (true) {
+      const BOOL result = GetMessage(&msg, nullptr, 0, 0);
+      if (result < 0) throw std::runtime_error("Failed to GetMessage");
+      if (result == 0) {  // WM_QUITを受け取った
+        if (ep_) {
+          std::exception_ptr ep{};
+          std::swap(ep, ep_);
+          std::rethrow_exception(std::move(ep));
+        }
+        break;
+      }
     }
   }
 
@@ -55,7 +62,7 @@ public:
    * @brief pollを抜けるよう通知する
    */
   void notify() noexcept {
-    if (thread_id_ > 0) PostThreadMessage(thread_id_, WM_NULL, 0, 0);
+    if (thread_id_ > 0) PostThreadMessage(thread_id_, WM_QUIT, 0, 0);
   }
 
 private:
@@ -70,6 +77,9 @@ private:
         KBDLLHOOKSTRUCT* info_ptr = reinterpret_cast<KBDLLHOOKSTRUCT*>(lparam);
         if (!info_ptr) break;
 
+        // エラー発生中は正常に処理できない可能性があるので、安全のために素通りさせる
+        if (ep_) break;
+
         // ハードウェア由来でないキー入力を素通りさせる
         if (info_ptr->flags & (LLKHF_LOWER_IL_INJECTED | LLKHF_INJECTED)) break;
 
@@ -79,9 +89,9 @@ private:
         // キー入力を奪ってエンジンに横流しする
         try {
           send_to_keyboard(*info_ptr);
-        } catch (const std::exception& e) {
-          on_source_error(e);
-          PostQuitMessage(0);  // 失敗でpollを抜けるよう通知する
+        } catch (...) {
+          ep_ = std::current_exception();
+          PostQuitMessage(0);  // 失敗を伝える
           break;
         }
         return TRUE;
@@ -93,7 +103,8 @@ private:
     return CallNextHookEx(nullptr, code, wparam, lparam);
   }
 
-  HHOOK hook_ = nullptr;  ///< フックのハンドル
-  DWORD thread_id_ = 0;   ///< スレッドID
+  HHOOK hook_ = nullptr;                       ///< フックのハンドル
+  DWORD thread_id_ = 0;                        ///< スレッドID
+  static thread_local std::exception_ptr ep_;  ///< 例外ポインタの一時保管場所
 };
 }  // namespace quark::inline win32

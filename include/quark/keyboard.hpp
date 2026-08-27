@@ -8,6 +8,7 @@
 #pragma once
 
 #include <exception>
+#include <future>
 #include <variant>
 
 #ifdef _WIN32
@@ -40,11 +41,10 @@ using KeyboardEvent = std::variant<KeyEvent, KeyboardSignal>;
 /**
  * @brief Keyboardを始動させる
  *
- * @retval true 始動に成功
- * @retval false すでに始動している
+ * @return 処理結果を返すためのfutureを返す。スレッドがすでに起動済みなら空を返す。
  * @exception system_error スレッドの生成に失敗
  */
-bool start_keyboard();
+std::future<void> start_keyboard();
 
 /**
  * @brief Keyboardを停止させる
@@ -74,5 +74,5 @@ KeyboardStatus get_keyboard_status() noexcept;
  *
  * アプリケーション側で実装される。
  */
-void on_keyboard_error(const std::exception& e) noexcept;
+void on_keyboard_error() noexcept;
 }  // namespace quark

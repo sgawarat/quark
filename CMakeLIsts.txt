@@ -111,6 +111,9 @@ target_compile_options(config INTERFACE
     -Wno-covered-switch-default
 
     -Wno-padded
+
+    -Wno-exit-time-destructors
+    -Wno-global-constructors
 )
 target_compile_features(config INTERFACE
     cxx_std_20

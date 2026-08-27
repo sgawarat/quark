@@ -8,6 +8,7 @@
 #pragma once
 
 #include <exception>
+#include <future>
 
 namespace quark {
 /**
@@ -22,11 +23,10 @@ enum class SourceStatus {
 /**
  * @brief Sourceを始動させる
  *
- * @retval true 始動に成功
- * @retval false すでに始動している
+ * @return 処理結果を返すためのfutureを返す。スレッドがすでに起動済みなら空を返す。
  * @exception system_error スレッドの生成に失敗
  */
-bool start_source();
+std::future<void> start_source();
 
 /**
  * @brief Sourceを停止させる
@@ -47,5 +47,5 @@ SourceStatus get_source_status() noexcept;
  *
  * アプリケーション側で実装される。
  */
-void on_source_error(const std::exception& e) noexcept;
+void on_source_error() noexcept;
 }  // namespace quark

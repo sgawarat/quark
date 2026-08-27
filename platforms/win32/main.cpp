@@ -34,11 +34,11 @@ HMENU context_menu_{};  // コンテキストメニュー
 HICON keyboard_on_icon_{};
 HICON keyboard_off_icon_{};
 
-DWORD main_thread_id_ = 0;          ///< メインスレッドID
-std::exception_ptr main_ep_{};      ///< メインスレッドで投げられた例外
-std::exception_ptr source_ep_{};    ///< Sourceスレッドで投げられた例外
-std::exception_ptr keyboard_ep_{};  ///< Keyboardスレッドで投げられた例外
-std::exception_ptr sink_ep_{};      ///< Sinkスレッドで投げられた例外
+DWORD main_thread_id_ = 0;             ///< メインスレッドID
+std::exception_ptr main_ep_{};         ///< メインスレッドで投げられた例外
+std::future<void> source_future_{};    ///< Sourceスレッドの戻り値
+std::future<void> keyboard_future_{};  ///< Keyboardスレッドの戻り値
+std::future<void> sink_future_{};      ///< Sinkスレッドの戻り値
 
 /**
  * @brief スコープ終わりに関数を呼び出すクラス
@@ -80,9 +80,9 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
         case ID_ENABLE_DISABLE: {
           try {
             if (can_start()) {
-              start_sink();
-              start_keyboard();
-              start_source();
+              sink_future_ = start_sink();
+              keyboard_future_ = start_keyboard();
+              source_future_ = start_source();
               modify_notify_icon(hwnd, 0, keyboard_on_icon_);
             } else {
               stop_source();
@@ -116,9 +116,9 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
         case WM_LBUTTONDOWN: {
           try {
             if (can_start()) {
-              start_sink();
-              start_keyboard();
-              start_source();
+              sink_future_ = start_sink();
+              keyboard_future_ = start_keyboard();
+              source_future_ = start_source();
               modify_notify_icon(hwnd, 0, keyboard_on_icon_);
             } else {
               stop_source();
@@ -166,18 +166,15 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
 }
 }  // namespace
 
-void on_source_error(const std::exception&) noexcept {
-  if (!source_ep_) source_ep_ = std::current_exception();
+void on_source_error() noexcept {
   if (main_thread_id_ > 0) PostThreadMessage(main_thread_id_, WM_QUIT, 0, 0);
 }
 
-void on_keyboard_error(const std::exception&) noexcept {
-  if (!keyboard_ep_) keyboard_ep_ = std::current_exception();
+void on_keyboard_error() noexcept {
   if (main_thread_id_ > 0) PostThreadMessage(main_thread_id_, WM_QUIT, 0, 0);
 }
 
-void on_sink_error(const std::exception&) noexcept {
-  if (!sink_ep_) sink_ep_ = std::current_exception();
+void on_sink_error() noexcept {
   if (main_thread_id_ > 0) PostThreadMessage(main_thread_id_, WM_QUIT, 0, 0);
 }
 
@@ -205,12 +202,11 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   const Scoped error_handling{[] {
     try {
       if (main_ep_) std::rethrow_exception(main_ep_);
-      if (source_ep_) std::rethrow_exception(source_ep_);
-      if (keyboard_ep_) std::rethrow_exception(keyboard_ep_);
-      if (sink_ep_) std::rethrow_exception(sink_ep_);
+      sink_future_.get();
+      keyboard_future_.get();
+      source_future_.get();
     } catch ([[maybe_unused]] std::exception& e) {
       // TODO: 異常停止を安全にユーザーへ知らせる方法を考える
-      throw;
     }
   }};
 
@@ -265,15 +261,15 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   const Scoped session_notification_dtor{[&] { WTSUnRegisterSessionNotification(wnd); }};
 
   // Sink
-  start_sink();
+  sink_future_ = start_sink();
   const Scoped sink_dtor{[] { stop_sink(); }};
 
   // Keyboard
-  start_keyboard();
+  keyboard_future_ = start_keyboard();
   const Scoped keyboard_dtor{[] { stop_keyboard(); }};
 
   // Source
-  start_source();
+  source_future_ = start_source();
   const Scoped source_dtor{[] { stop_source(); }};
 
   // メッセージループ

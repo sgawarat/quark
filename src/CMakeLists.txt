@@ -13,8 +13,6 @@ add_library(engine STATIC
     sink.cpp
 )
 target_compile_options(engine PRIVATE
-    -Wno-exit-time-destructors
-    -Wno-global-constructors
     -Wno-ctad-maybe-unsupported
 )
 target_link_libraries(engine PRIVATE

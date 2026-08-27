@@ -43,6 +43,7 @@ constexpr auto SLOW_TICK_INTERVAL =
 std::thread thread_{};                     ///< スレッド
 std::atomic<bool> running_{false};         ///< スレッドが動作中かどうか
 std::atomic<bool> stop_requested_{false};  ///< スレッドに対する停止要求
+std::promise<void> promise_{};             ///< スレッドからの戻り値
 
 std::deque<KeyboardEvent> event_queue_;   ///< イベントキュー
 std::mutex event_queue_mtx_;              ///< イベントキューのためのMutex
@@ -83,6 +84,7 @@ public:
       if (event.is_pressed()) {
         if (key == last_key_) {
           // 直前と同じキーが押されたら、キーリピートとして扱う
+          // キーリピートはOSの仕様の範疇なので、ハードウェアレベルのQMKには送らない
           send_to_sink(SinkSignal::KEY_REPEAT);
         } else {
           // 直前と違うキーが押されたら、実際のキー入力として扱う
@@ -147,15 +149,18 @@ void send_extra(report_extra_t* report_ptr) noexcept {
 }
 }  // namespace
 
-bool start_keyboard() {
+std::future<void> start_keyboard() {
   // スレッドがすでに動作中であれば何もしない
-  if (running_.load(std::memory_order_acquire)) return false;
+  if (running_.load(std::memory_order_acquire)) return {};
 
   // スレッドを完全に停止させる
   if (thread_.joinable()) thread_.join();
 
-  // 新しくスレッドを生成する
+  // 状態を初期化する
   stop_requested_.store(false, std::memory_order_release);
+  promise_ = {};
+
+  // 新しくスレッドを生成する
   thread_ = std::thread([] {
     const struct ScopedRunning {
       ScopedRunning() {
@@ -220,12 +225,15 @@ bool start_keyboard() {
         // CPUを明け渡す
         std::this_thread::yield();
       }
-    } catch (const std::exception& e) {
-      on_keyboard_error(e);
+
+      promise_.set_value();
+    } catch (...) {
+      promise_.set_exception(std::current_exception());
+      on_keyboard_error();
     }
   });
 
-  return true;
+  return promise_.get_future();
 }
 
 void stop_keyboard() {

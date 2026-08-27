@@ -8,6 +8,7 @@
 #pragma once
 
 #include <exception>
+#include <future>
 #include <variant>
 
 #include <cstdint>
@@ -47,11 +48,10 @@ using SinkEvent =
 /**
  * @brief Sinkを始動させる
  *
- * @retval true 始動に成功
- * @retval false すでに始動している
+ * @return 処理結果を返すためのfutureを返す。スレッドがすでに起動済みなら空を返す。
  * @exception system_error スレッドの生成に失敗
  */
-bool start_sink();
+std::future<void> start_sink();
 
 /**
  * @brief Sinkを停止させる
@@ -81,5 +81,5 @@ SinkStatus get_sink_status() noexcept;
  *
  * アプリケーション側で実装される。
  */
-void on_sink_error(const std::exception& e) noexcept;
+void on_sink_error() noexcept;
 }  // namespace quark
