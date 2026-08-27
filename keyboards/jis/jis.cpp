@@ -32,7 +32,7 @@ constexpr std::array layout = []() constexpr {
   for (size_t y = 0; y < keys.size(); ++y) {
     const auto& row = keys[y];
     for (size_t x = 0; x < row.size(); ++x) {
-      t[row[x]] = keypos_t{static_cast<uint8_t>(x), static_cast<uint8_t>(y)};
+      if (row[x] != Key{}) t[row[x]] = keypos_t{static_cast<uint8_t>(x), static_cast<uint8_t>(y)};
     }
   }
   return t;
