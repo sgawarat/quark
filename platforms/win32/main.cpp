@@ -202,9 +202,9 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   const Scoped error_handling{[] {
     try {
       if (main_ep_) std::rethrow_exception(main_ep_);
-      sink_future_.get();
-      keyboard_future_.get();
-      source_future_.get();
+      if (sink_future_.valid()) sink_future_.get();
+      if (keyboard_future_.valid()) keyboard_future_.get();
+      if (source_future_.valid()) source_future_.get();
     } catch ([[maybe_unused]] std::exception& e) {
       // TODO: 異常停止を安全にユーザーへ知らせる方法を考える
     }
@@ -277,10 +277,13 @@ extern "C" int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int) {
   while (true) {
     const auto result = GetMessage(&msg, nullptr, 0, 0);
     if (result == 0) break;  // WM_QUITを受け取った
-    if (result > 0) {
-      TranslateMessage(&msg);
-      DispatchMessage(&msg);
+    if (result < 0) {
+      main_ep_ = std::make_exception_ptr(std::runtime_error("Failed to GetMessage"));
+      break;
     }
+
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
     std::this_thread::yield();
   }
 
