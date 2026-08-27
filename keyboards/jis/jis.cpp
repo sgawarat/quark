@@ -60,6 +60,7 @@ keypos_t get_key_property(Key key, KeyPropertyTag<keypos_t>) {
 #if QUARK_KEYBOARD_JIS_EXTRA_ROWS > 0
   if (const auto opt = get_extra_key_property<keypos_t>(key); opt) return *opt;
 #endif
+  if (key >= layout.size()) return {0xff, 0xff};
   return layout[key];
 }
 }  // namespace quark
