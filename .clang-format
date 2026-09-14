@@ -1,38 +1,40 @@
+# SPDX-License-Identifier: CC0-1.0
+
+# clang-format 22
 BasedOnStyle: Google
----
 Language: Cpp
-Standard: c++20
+Standard: c++23
 
 # 1行の長さを制限する
-ColumnLimit: 120
+ColumnLimit: 100
 
 # クラス内のアクセス修飾子のインデントを1つ下に合わせる
 AccessModifierOffset: -2
 
+# 括弧内を通常のインデントに合わせる
+AlignAfterOpenBracket: false
+
 # 行継続を示す\を整列させない
 AlignEscapedNewlines: DontAlign
-
-# 空の関数のみを1行にする
-AllowShortFunctionsOnASingleLine: Empty
 
 # 短いcaseラベルを1行にまとめる
 AllowShortCaseLabelsOnASingleLine: true
 
-# 仮引数を一行にまとめない
-BinPackArguments: false
+# 空の関数のみを1行にする
+AllowShortFunctionsOnASingleLine: Empty
+
+# 波括弧初期化子のインデントを通常に戻す
+BracedInitializerIndentWidth: 2
 
 # 構造に意味のあるコメントをフォーマットしない
 CommentPragmas: '\*|@|TODO|HACK|FIXME|BUG'
 
-# template以下のrequires節をインデントする
-IndentRequiresClause: true
-
-# ファイル終端に改行を加える
-InsertNewlineAtEOF: true
-
-# requires式を外側のスコープでインデントする
-RequiresExpressionIndentation: OuterScope
+# コンストラクタ初期化子のインデントを通常に戻す
+ConstructorInitializerIndentWidth: 2
 
 # includeのまとまりの中でソートする
 IncludeBlocks: Preserve
+
+# ファイル終端に改行を加える
+InsertNewlineAtEOF: true
 ---

@@ -7,8 +7,6 @@
  */
 #pragma once
 
-#include <quark/keymap.h>
-
 #include <keymap_japanese.h>
 #include <quantum_keycodes.h>
 
@@ -35,7 +33,7 @@
 
 /**
  * @brief キーマップレイヤーを定義するための便利マクロ
- * 
+ *
  * keychron/v6/isoの配列をJIS配列として流用できるようにするためのもの。
  * NUBS,F13,F14,F15,F16がバックスラッシュ、無変換、変換、カナ、円マークとして扱われる。
  */

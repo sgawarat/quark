@@ -18,7 +18,8 @@ using Clock = std::chrono::steady_clock;
 
 template <typename T>
 inline auto get_elapsed_time() noexcept {
-  return std::chrono::duration_cast<std::chrono::duration<T, std::milli>>(Clock::now().time_since_epoch());
+  using namespace std::chrono;
+  return duration_cast<duration<T, std::milli>>(Clock::now().time_since_epoch());
 }
 }  // namespace
 
@@ -37,19 +38,11 @@ uint32_t timer_read32() {
 
 uint16_t timer_elapsed(uint16_t last) {
   const auto now = get_elapsed_time<uint16_t>().count();
-  if (now < last) {
-    // タイマーがオーバーフローしたら、それ込みで差分を取る
-    return uint16_t{0xffff} - last + now + 1;
-  }
   return now - last;
 }
 
 uint32_t timer_elapsed32(uint32_t last) {
   const auto now = get_elapsed_time<uint32_t>().count();
-  if (now < last) {
-    // タイマーがオーバーフローしたら、それ込みで差分を取る
-    return uint32_t{0xffffffff} - last + now + 1;
-  }
   return now - last;
 }
 }  // extern "C"

@@ -11,20 +11,25 @@
 
 #include <quark/key.hpp>
 
+namespace quark::inline ascii {
+using enum Key;
+}  // namespace quark::inline ascii
+
 namespace quark::jis {
+
 // 言語固有のキー
-constexpr Key K_CIRCUMFLEX = Key::K_EQUAL;
-constexpr Key K_AT = Key::K_LEFT_BRACKET;
-constexpr Key K_LEFT_BRACKET = Key::K_RIGHT_BRACKET;
-constexpr Key K_COLON = Key::K_QUOTE;
-constexpr Key K_HANKAKU_ZENKAKU = Key::K_GRAVE;
-constexpr Key K_RIGHT_BRACKET = Key::K_BACKSLASH;
-constexpr Key K_KATAKANA_HIRAGANA = Key::K_INTERNATIONAL_2;
-constexpr Key K_BACKSLASH = Key::K_INTERNATIONAL_1;
-constexpr Key K_HENKAN = Key::K_INTERNATIONAL_4;
-constexpr Key K_MUHENKAN = Key::K_INTERNATIONAL_5;
-constexpr Key K_YEN = Key::K_INTERNATIONAL_3;
-constexpr Key K_EISU = Key::K_CAPS_LOCK;
+constexpr Key K_CIRCUMFLEX = K_EQUAL;
+constexpr Key K_AT = ascii::K_LEFT_BRACKET;
+constexpr Key K_LEFT_BRACKET = ascii::K_RIGHT_BRACKET;
+constexpr Key K_COLON = K_QUOTE;
+constexpr Key K_HANKAKU_ZENKAKU = K_GRAVE;
+constexpr Key K_RIGHT_BRACKET = ascii::K_BACKSLASH;
+constexpr Key K_KATAKANA_HIRAGANA = K_INTERNATIONAL_2;
+constexpr Key K_BACKSLASH = K_INTERNATIONAL_1;
+constexpr Key K_HENKAN = K_INTERNATIONAL_4;
+constexpr Key K_MUHENKAN = K_INTERNATIONAL_5;
+constexpr Key K_YEN = K_INTERNATIONAL_3;
+constexpr Key K_EISU = K_CAPS_LOCK;
 
 #if QUARK_KEYBOARD_JIS_EXTRA_ROWS > 0
 /**
@@ -34,7 +39,7 @@ constexpr Key K_EISU = Key::K_CAPS_LOCK;
  *
  * @param key キー
  */
-std::optional<keypos_t> get_extra_key_property(Key key, KeyPropertyTag<keypos_t>);
+extern std::optional<keypos_t> get_extra_key_property(Key key, KeyPropertyTag<keypos_t>);
 #endif
 
 /**

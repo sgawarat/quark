@@ -1,92 +1,119 @@
 # SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-set(QUARK_KEYBOARD_LIBRARIES "")
+# clang-tidyにQMKのソースファイルを解析させない
+set(TMP_CMAKE_C_CLANG_TIDY ${CMAKE_C_CLANG_TIDY})
+set(CMAKE_C_CLANG_TIDY "")
 
-if(TARGET keymap)
-    list(APPEND QUARK_KEYBOARD_LIBRARIES keymap)
+add_library(quantum_core STATIC
+  timer.cpp
+  wait.cpp
+)
+target_compile_options(quantum_core PRIVATE
+  -Wno-c23-extensions
+  -Wno-c2y-extensions
+  -Wno-cast-qual
+  -Wno-declaration-after-statement
+  -Wno-documentation
+  -Wno-extra-semi
+  -Wno-extra-semi-stmt
+  -Wno-gnu-folding-constant
+  -Wno-gnu-union-cast
+  -Wno-gnu-zero-variadic-macro-arguments
+  -Wno-implicit-int-conversion
+  -Wno-include-next-absolute-path
+  -Wno-language-extension-token
+  -Wno-missing-prototypes
+  -Wno-missing-variable-declarations
+  -Wno-pre-c11-compat
+  -Wno-shadow
+  -Wno-sign-conversion
+  -Wno-switch-default
+  -Wno-unsafe-buffer-usage
+  -Wno-unused-macros
+  -Wno-unused-parameter
+  -Wno-used-but-marked-unused
+  -Wno-vla
+)
+target_link_libraries(quantum_core PRIVATE
+  config
+  quantum_sources
+)
+
+add_library(quantum INTERFACE)
+
+if(QUARK_ENABLE_KEYMAP_LIBRARY)
+  # キーマップをライブラリ化するので、QMKには宣言のみを渡す
+  target_compile_definitions(quantum_core PRIVATE
+    KEYMAP_C="${CMAKE_SOURCE_DIR}/src/quantum/keymap.h"
+  )
+
+  if(EXISTS "${QUARK_KEYMAP_DIR}/keymap.h")
+    target_compile_definitions(quantum_core PRIVATE
+      QUARK_QUANTUM_KEYMAP_HEADER="${QUARK_KEYMAP_DIR}/keymap.h"
+    )
+  endif()
+
+  # keymap.cがあれば、それをライブラリ化する
+  if(EXISTS "${QUARK_KEYMAP_DIR}/keymap.c")
+    add_library(quantum_keymap STATIC
+      "${QUARK_KEYMAP_DIR}/keymap.c"
+    )
+    target_compile_definitions(quantum_keymap PRIVATE
+      QMK_KEYBOARD_H="${CMAKE_SOURCE_DIR}/src/quantum/keyboard.h"
+    )
+    target_link_libraries(quantum_keymap PRIVATE
+      config
+    )
+
+    if(EXISTS "${QUARK_KEYBOARD_DIR}/${QUARK_KEYBOARD_NAME}.h")
+      target_compile_definitions(quantum_keymap PRIVATE
+        QUARK_QUANTUM_KEYBOARD_HEADER="${QUARK_KEYBOARD_DIR}/${QUARK_KEYBOARD_NAME}.h"
+      )
+    endif()
+
+    target_link_libraries(quantum INTERFACE
+      quantum_keymap
+    )
+  endif()
+
+  # <keyboard>.cがあれば、それをライブラリ化する
+  if(EXISTS "${QUARK_KEYBOARD_DIR}/${QUARK_KEYBOARD_NAME}.c")
+    add_library(quantum_keyboard STATIC
+      "${QUARK_KEYBOARD_DIR}/${QUARK_KEYBOARD_NAME}.c"
+    )
+    target_link_libraries(quantum_keyboard PRIVATE
+      config
+    )
+
+    target_link_libraries(quantum INTERFACE
+      quantum_keyboard
+    )
+  endif()
+else()
+  # キーマップをライブラリ化しないので、QMKには実装を渡す
+  if(EXISTS "${QUARK_KEYBOARD_DIR}/${QUARK_KEYBOARD_NAME}.c")
+    target_sources(quantum_core PRIVATE
+      "${QUARK_KEYBOARD_DIR}/${QUARK_KEYBOARD_NAME}.c"
+    )
+  endif()
+
+  if(EXISTS "${QUARK_KEYMAP_DIR}/keymap.c")
+    if(EXISTS "${QUARK_KEYBOARD_DIR}/${QUARK_KEYBOARD_NAME}.h")
+      target_compile_definitions(quantum_core PRIVATE
+        QUARK_QUANTUM_KEYBOARD_HEADER="${QUARK_KEYBOARD_DIR}/${QUARK_KEYBOARD_NAME}.h"
+      )
+    endif()
+
+    target_compile_definitions(quantum_core PRIVATE
+      QMK_KEYBOARD_H="${CMAKE_SOURCE_DIR}/src/quantum/keyboard.h"
+      KEYMAP_C="${QUARK_KEYMAP_DIR}/keymap.c"
+    )
+  endif()
 endif()
 
-if(TARGET keyboard)
-    list(APPEND QUARK_KEYBOARD_LIBRARIES keyboard)
-endif()
-
-set(QMK_FIRMWARE_OPTIONAL_SOURCES "")
-
-if(${MOUSEKEY_ENABLE})
-    list(APPEND QMK_FIRMWARE_OPTIONAL_SOURCES "${QMK_FIRMWARE_DIR}/quantum/mousekey.c")
-endif()
-
-add_library(quantum STATIC
-    ${QMK_FIRMWARE_DIR}/quantum/action.c
-    ${QMK_FIRMWARE_DIR}/quantum/action_layer.c
-    ${QMK_FIRMWARE_DIR}/quantum/action_tapping.c
-    ${QMK_FIRMWARE_DIR}/quantum/action_util.c
-    ${QMK_FIRMWARE_DIR}/quantum/bitwise.c
-    ${QMK_FIRMWARE_DIR}/quantum/debounce/none.c
-    ${QMK_FIRMWARE_DIR}/quantum/eeconfig.c
-    ${QMK_FIRMWARE_DIR}/quantum/keycode_config.c
-    ${QMK_FIRMWARE_DIR}/quantum/keyboard.c
-    ${QMK_FIRMWARE_DIR}/quantum/keymap_common.c
-    ${QMK_FIRMWARE_DIR}/quantum/keymap_introspection.c
-    ${QMK_FIRMWARE_DIR}/quantum/led.c
-    ${QMK_FIRMWARE_DIR}/quantum/matrix_common.c
-    ${QMK_FIRMWARE_DIR}/quantum/nvm/eeprom/nvm_eeconfig.c
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_default_layer.c
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_oneshot.c
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_quantum.c
-    ${QMK_FIRMWARE_DIR}/quantum/quantum.c
-    ${QMK_FIRMWARE_DIR}/quantum/logging/debug.c
-    ${QMK_FIRMWARE_DIR}/quantum/logging/print.c
-    ${QMK_FIRMWARE_DIR}/quantum/logging/sendchar.c
-    ${QMK_FIRMWARE_DIR}/drivers/eeprom/eeprom_driver.c
-    ${QMK_FIRMWARE_DIR}/drivers/eeprom/eeprom_transient.c
-    ${QMK_FIRMWARE_DIR}/platforms/suspend.c
-    ${QMK_FIRMWARE_DIR}/platforms/test/bootloaders/none.c
-    ${QMK_FIRMWARE_DIR}/tmk_core/protocol/host.c
-    ${QMK_FIRMWARE_DIR}/tmk_core/protocol/report.c
-    ${QMK_FIRMWARE_DIR}/tmk_core/protocol/usb_device_state.c
-    ${QMK_FIRMWARE_OPTIONAL_SOURCES}
-    timer.cpp
-    wait.cpp
-)
-target_compile_options(quantum PRIVATE
-    -Wno-vla
-    -Wno-missing-prototypes
-    -Wno-sign-conversion
-    -Wno-unused-macros
-    -Wno-switch-default
-    -Wno-unsafe-buffer-usage
-    -Wno-declaration-after-statement
-    -Wno-implicit-int-conversion
-    -Wno-missing-variable-declarations
-    -Wno-gnu-union-cast
-    -Wno-shadow
-    -Wno-documentation
-    -Wno-used-but-marked-unused
-    -Wno-extra-semi
-    -Wno-cast-qual
-    -Wno-include-next-absolute-path
-    -Wno-language-extension-token
-    -Wno-extra-semi-stmt
-)
-target_compile_definitions(quantum PRIVATE
-    KEYMAP_C="${QUARK_KEYMAP_DIR}/keymap.c"
-    QMK_KEYBOARD_H="${QUARK_KEYBOARD_DIR}/keymap.h"
-)
-target_link_libraries(quantum PRIVATE
-    config
-    ${QUARK_KEYBOARD_LIBRARIES}
+target_link_libraries(quantum INTERFACE
+  quantum_core
 )
 
-# keymap.cだけでお試しビルドする用
-add_library(keymap_impl STATIC
-    ${QUARK_KEYMAP_DIR}/keymap.c
-)
-target_compile_definitions(keymap_impl PRIVATE
-    QMK_KEYBOARD_H="${QUARK_KEYBOARD_DIR}/keymap.h"
-)
-target_link_libraries(keymap_impl PRIVATE
-    config
-    ${QUARK_KEYBOARD_LIBRARIES}
-)
+set(CMAKE_C_CLANG_TIDY ${TMP_CMAKE_C_CLANG_TIDY})

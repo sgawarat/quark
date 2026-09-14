@@ -7,6 +7,7 @@
  */
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 #include <Windows.h>
@@ -14,18 +15,19 @@
 namespace quark::inline win32 {
 
 /**
- * @brief キーの個数
+ * @brief Win32のキーの個数
  */
 static constexpr size_t KEY_COUNT = 0x200;
 
 /**
- * @brief キーを表す値の型
+ * @brief Win32のキーを表す列挙型
  *
  * 値を連続させるためにExtendedキーを0x100以降に並べている。
  */
-enum Key : uint16_t {
+enum class Key : uint16_t {
+  K_NO = 0x0,
   K_ESCAPE = 0x1,
-  K_1 = 0x2,
+  K_1 = 0x2,  // NOLINT(misc-confusable-identifiers)
   K_2 = 0x3,
   K_3 = 0x4,
   K_4 = 0x5,
@@ -34,7 +36,7 @@ enum Key : uint16_t {
   K_7 = 0x8,
   K_8 = 0x9,
   K_9 = 0xa,
-  K_0 = 0xb,
+  K_0 = 0xb,  // NOLINT(misc-confusable-identifiers)
   K_MINUS = 0xc,
   K_EQUAL = 0xd,
   K_BACKSPACE = 0xe,
@@ -46,8 +48,8 @@ enum Key : uint16_t {
   K_T = 0x14,
   K_Y = 0x15,
   K_U = 0x16,
-  K_I = 0x17,
-  K_O = 0x18,
+  K_I = 0x17,  // NOLINT(misc-confusable-identifiers)
+  K_O = 0x18,  // NOLINT(misc-confusable-identifiers)
   K_P = 0x19,
   K_LEFT_BRACKET = 0x1a,
   K_RIGHT_BRACKET = 0x1b,
@@ -186,31 +188,26 @@ enum Key : uint16_t {
  * @param flags LLKHFフラグ
  * @return Key 対応するキー番号
  */
-inline Key make_key(DWORD vk, DWORD sc, DWORD flags) noexcept {
+inline Key make_key(DWORD vkcode, DWORD scancode, DWORD flags) noexcept {
   // スキャンコードが不明な場合には仮想キーコードから復元を試みる
-  if (sc == 0) sc = MapVirtualKey(vk, MAPVK_VK_TO_VSC_EX);
+  if (scancode == 0) scancode = MapVirtualKey(vkcode, MAPVK_VK_TO_VSC_EX);
 
-  const uint8_t scancode = static_cast<uint8_t>(sc & 0xff);
-  const bool extended = !!(flags & LLKHF_EXTENDED) || (sc > 0xff);
-  if (extended) {
-    switch (scancode) {
-      // RShiftがEXTENDEDありになることがあるので、EXTENDEDなしに統合する
-      case 0x36: return K_RIGHT_SHIFT;
+  const auto code = static_cast<uint8_t>(scancode & 0xff);
+  const bool extended = static_cast<bool>(flags & LLKHF_EXTENDED) || (scancode > 0xff);
+  const auto key = static_cast<Key>(uint16_t{code} | (extended ? 0x100 : 0));
 
-      // Break(0xe046)はCtrl+PauseなのでPauseに統合する
-      case 0x46: return K_PAUSE;
+  using enum Key;
 
-      // その他
-      default: return static_cast<Key>(uint16_t{scancode} | 0x100);
-    }
-  } else {
-    switch (scancode) {
-      // SysRq(0x54)はAlt+PrtScなのでPrtScに統合する
-      case 0x54: return K_PRINT_SCREEN;
+  // SysRq(0x54)はAlt+PrtScなのでPrtScに統合する
+  if (key == K_SYSTEM_REQUEST) return K_PRINT_SCREEN;
 
-      // その他
-      default: return static_cast<Key>(uint16_t{scancode});
-    }
-  }
+  // 右シフトが0xe036で来ることがあるのでRShift(0x36)に統合する
+  if (key == K_RIGHT_SHIFT_EXTENDED) return K_RIGHT_SHIFT;
+
+  // Break(0xe046)はCtrl+PauseなのでPauseに統合する
+  if (key == K_CANCEL) return K_PAUSE;
+
+  // それ以外はそのまま
+  return key;
 }
 }  // namespace quark::inline win32

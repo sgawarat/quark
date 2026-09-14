@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 add_library(keyboard STATIC
-    jis.cpp
+  jis.cpp
 )
 target_compile_options(keyboard PRIVATE
-    -Wno-switch-enum
+  -Wno-switch-enum
 )
 target_link_libraries(keyboard PRIVATE
-    config
+  config
 )

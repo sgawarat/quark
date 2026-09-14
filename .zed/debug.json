@@ -1,0 +1,16 @@
+[
+  {
+    "label": "quark",
+    "build": "Build",
+    "program": "./build/platforms/win32/quark.exe",
+    "request": "launch",
+    "adapter": "CodeLLDB",
+  },
+  {
+    "label": "key_test",
+    "build": "Build",
+    "program": "./build/tools/key_test/key_test.exe",
+    "request": "launch",
+    "adapter": "CodeLLDB",
+  },
+]

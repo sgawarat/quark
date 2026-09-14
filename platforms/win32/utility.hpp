@@ -7,6 +7,8 @@
  */
 #pragma once
 
+#include <span>
+
 #include <Windows.h>
 #include <shellapi.h>
 
@@ -22,21 +24,29 @@ namespace quark::inline win32 {
  * @retval true 登録に成功した
  * @retval false 登録に失敗した
  */
-inline bool add_notify_icon(HWND wnd, UINT id, UINT callback_message, HICON icon, LPCWSTR title = nullptr) noexcept {
+inline bool add_notify_icon(
+    HWND wnd, UINT id, UINT callback_message, HICON icon, LPCWSTR title = nullptr) noexcept {
   NOTIFYICONDATA nid{
-      .cbSize = sizeof(NOTIFYICONDATA),
-      .hWnd = wnd,
-      .uID = id,
-      .uFlags = static_cast<UINT>(NIF_MESSAGE) | NIF_SHOWTIP | (icon ? NIF_ICON : 0) | (title ? NIF_TIP : 0),
-      .uCallbackMessage = callback_message,
-      .hIcon = icon,
-      .szTip = {},
+    .cbSize = sizeof(NOTIFYICONDATA),
+    .hWnd = wnd,
+    .uID = id,
+    .uFlags = static_cast<UINT>(NIF_MESSAGE) | NIF_SHOWTIP | (icon ? NIF_ICON : 0) |
+              (title ? NIF_TIP : 0),
+    .uCallbackMessage = callback_message,
+    .hIcon = icon,
+    .szTip = {},
+    .uVersion = NOTIFYICON_VERSION_4,
   };
-  if (title) lstrcpyn(nid.szTip, title, sizeof(nid.szTip) / sizeof(*nid.szTip));
+
+  if (title) {
+    const auto tip_span = std::span{nid.szTip};
+    lstrcpyn(tip_span.data(), title, tip_span.size());
+  }
 
   // 高負荷などが原因で登録に失敗することがあるので何回か試みる
+  constexpr size_t ITERATION_COUNT = 5;
   bool result = false;
-  for (size_t i = 0; i < 5; ++i) {
+  for (size_t i = 0; i < ITERATION_COUNT; ++i) {
     if (Shell_NotifyIcon(NIM_ADD, &nid)) {
       result = true;
       break;
@@ -44,7 +54,8 @@ inline bool add_notify_icon(HWND wnd, UINT id, UINT callback_message, HICON icon
 
     // タイムアウトした場合、応答が返ってこなかっただけかもしれないので、少し待ってから上手くいっていたかどうかを確認する
     if (GetLastError() == ERROR_TIMEOUT) {
-      Sleep(100);
+      constexpr DWORD WAIT_MSEC = 100;
+      Sleep(WAIT_MSEC);
       if (Shell_NotifyIcon(NIM_MODIFY, &nid)) {
         result = true;
         break;
@@ -54,7 +65,6 @@ inline bool add_notify_icon(HWND wnd, UINT id, UINT callback_message, HICON icon
   if (!result) return false;
 
   // 新しいバージョンを用いる
-  nid.uVersion = NOTIFYICON_VERSION_4;
   if (!Shell_NotifyIcon(NIM_SETVERSION, &nid)) {
     Shell_NotifyIcon(NIM_DELETE, &nid);
     return false;
@@ -71,9 +81,9 @@ inline bool add_notify_icon(HWND wnd, UINT id, UINT callback_message, HICON icon
  */
 inline void remove_notify_icon(HWND wnd, UINT id) noexcept {
   NOTIFYICONDATA nid{
-      .cbSize = sizeof(NOTIFYICONDATA),
-      .hWnd = wnd,
-      .uID = id,
+    .cbSize = sizeof(NOTIFYICONDATA),
+    .hWnd = wnd,
+    .uID = id,
   };
   Shell_NotifyIcon(NIM_DELETE, &nid);
 }
@@ -87,11 +97,11 @@ inline void remove_notify_icon(HWND wnd, UINT id) noexcept {
  */
 inline void modify_notify_icon(HWND wnd, UINT id, HICON icon) noexcept {
   NOTIFYICONDATA nid{
-      .cbSize = sizeof(NOTIFYICONDATA),
-      .hWnd = wnd,
-      .uID = id,
-      .uFlags = NIF_SHOWTIP | NIF_ICON,
-      .hIcon = icon,
+    .cbSize = sizeof(NOTIFYICONDATA),
+    .hWnd = wnd,
+    .uID = id,
+    .uFlags = NIF_SHOWTIP | NIF_ICON,
+    .hIcon = icon,
   };
   Shell_NotifyIcon(NIM_MODIFY, &nid);
 }

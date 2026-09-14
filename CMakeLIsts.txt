@@ -1,148 +1,111 @@
 # SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-cmake_minimum_required(VERSION 3.18)
-project(quark)
+cmake_minimum_required(VERSION 3.28)
+project(quark VERSION 0.5)
 
-# options
-set(QMK_FIRMWARE_DIR "" CACHE PATH "Path to the qmk_firmware directory")
-set(QUARK_KEYBOARD "" CACHE STRING "Keyboard name")
-set(QUARK_KEYMAP "" CACHE STRING "Keymap name")
+# Options
+set(QMK_FIRMWARE_DIR "" CACHE PATH "Path to the QMK Firmware Directory")
+set(QUARK_KEYBOARD "" CACHE STRING "Keyboard Name")
+set(QUARK_KEYMAP "" CACHE STRING "Keymap Name")
+set(QUARK_ENABLE_KEYMAP_LIBRARY FALSE CACHE BOOL "Compiles Your Keymap as a Static Library")
 
+# QMK Firmware
+if(NOT(EXISTS "${QMK_FIRMWARE_DIR}" AND IS_DIRECTORY "${QMK_FIRMWARE_DIR}"))
+  message(FATAL_ERROR "QMK Firmware directory '${QMK_FIRMWARE_DIR}' is not found")
+endif()
+
+# # clang-tidyにQMKを解析させないようにする
+if(CMAKE_C_CLANG_TIDY)
+  list(APPEND CMAKE_C_CLANG_TIDY "--exclude-header-filter=${QMK_FIRMWARE_DIR}/.*")
+endif()
+
+if(CMAKE_CXX_CLANG_TIDY)
+  list(APPEND CMAKE_CXX_CLANG_TIDY "--exclude-header-filter=${QMK_FIRMWARE_DIR}/.*")
+endif()
+
+# Keyboard
 set(QUARK_KEYBOARD_DIR "${CMAKE_SOURCE_DIR}/keyboards/${QUARK_KEYBOARD}")
+cmake_path(ABSOLUTE_PATH QUARK_KEYBOARD_DIR NORMALIZE)
+cmake_path(GET QUARK_KEYBOARD_DIR FILENAME QUARK_KEYBOARD_NAME)
+
+if(NOT EXISTS "${QUARK_KEYBOARD_DIR}" OR NOT IS_DIRECTORY "${QUARK_KEYBOARD_DIR}")
+  message(FATAL_ERROR "Keyboard '${QUARK_KEYBOARD}' is not found")
+endif()
+
+# Keymap
 set(QUARK_KEYMAP_DIR "${QUARK_KEYBOARD_DIR}/keymaps/${QUARK_KEYMAP}")
+cmake_path(ABSOLUTE_PATH QUARK_KEYMAP_DIR NORMALIZE)
+cmake_path(GET QUARK_KEYMAP_DIR FILENAME QUARK_KEYMAP_NAME)
 
-# 必須環境の確認
-if(NOT IS_DIRECTORY ${QMK_FIRMWARE_DIR})
-    message(FATAL_ERROR "QMK Firmware Directory '${QMK_FIRMWARE_DIR}' NOT FOUND")
+if(NOT EXISTS "${QUARK_KEYMAP_DIR}" OR NOT IS_DIRECTORY "${QUARK_KEYMAP_DIR}")
+  message(FATAL_ERROR "Keymap '${QUARK_KEYMAP}' is not found")
 endif()
 
-if(NOT EXISTS "${QUARK_KEYBOARD_DIR}/keymap.h")
-    message(FATAL_ERROR "Keyboard '${QUARK_KEYBOARD}' NOT FOUND")
+# rulesを読み込む
+include("cmake/quantum_rules.cmake")
+
+# 共通設定ライブラリ
+add_library(config INTERFACE)
+target_precompile_headers(config INTERFACE
+  ./include/quark/stable.h
+)
+
+# # 個々のライブラリの-Wno-*より前に配置するため、警告フラグセットを全体オプションに直接追加する
+add_compile_options(-Wall -Wextra)
+
+if(MSVC)
+  target_compile_options(config INTERFACE
+    /source-charset:utf-8
+  )
 endif()
 
-if(NOT EXISTS "${QUARK_KEYMAP_DIR}/keymap.c")
-    message(FATAL_ERROR "Keymap '${QUARK_KEYMAP}' of the Keyboard '${QUARK_KEYBOARD}' NOT FOUND")
-endif()
+target_compile_options(config INTERFACE
 
-# rules
+  # C++98の下位互換性を放棄
+  -Wno-c++98-compat
+  -Wno-c++98-compat-pedantic
+
+  # QMKの_____マクロを許可
+  -Wno-reserved-identifier
+
+  # GNU拡張を許可
+  -Wno-gnu-include-next
+  -Wno-gnu-anonymous-struct
+
+  # switchにdefaultを付けない
+  -Wno-switch-default
+
+  # 指示付初期化にて指示子の省略を許可
+  -Wno-missing-designated-field-initializers
+
+  # アライメント境界でpaddingが行われても警告しない
+  -Wno-padded
+)
+target_compile_features(config INTERFACE
+  cxx_std_23
+)
+target_compile_definitions(config INTERFACE
+  WIN32_LEAN_AND_MEAN
+  NOMINMAX
+  UNICODE
+  _UNICODE
+)
+target_include_directories(config INTERFACE
+  ./include
+)
+target_link_libraries(config INTERFACE
+  quantum_config
+)
+
 if(EXISTS "${QUARK_KEYBOARD_DIR}/CMakeLists.txt")
-    add_subdirectory(${QUARK_KEYBOARD_DIR})
+  add_subdirectory("${QUARK_KEYBOARD_DIR}")
 endif()
 
 if(EXISTS "${QUARK_KEYMAP_DIR}/CMakeLists.txt")
-    add_subdirectory(${QUARK_KEYMAP_DIR})
+  add_subdirectory("${QUARK_KEYMAP_DIR}")
 endif()
-
-# config.h
-set(QUARK_CONFIG_HEADERS "")
-
-if(EXISTS "${QUARK_KEYBOARD_DIR}/config.h")
-    list(APPEND QUARK_CONFIG_HEADERS ${QUARK_KEYBOARD_DIR}/config.h)
-endif()
-
-if(EXISTS "${QUARK_KEYMAP_DIR}/config.h")
-    list(APPEND QUARK_CONFIG_HEADERS ${QUARK_KEYMAP_DIR}/config.h)
-endif()
-
-if(EXISTS "${QUARK_KEYBOARD_DIR}/post_config.h")
-    list(APPEND QUARK_CONFIG_HEADERS ${QUARK_KEYBOARD_DIR}/post_config.h)
-endif()
-
-# Feature Options
-set(QUARK_FEATURE_NAMES
-    MAGIC_ENABLE
-    BOOTMAGIC_ENABLE
-    MOUSEKEY_ENABLE
-    EXTRAKEY_ENABLE
-    CONSOLE_ENABLE
-    COMMAND_ENABLE
-    COMBO_ENABLE
-    NKRO_ENABLE
-    AUDIO_ENABLE
-    KEY_OVERRIDE_ENABLE
-    RGBLIGHT_ENABLE
-    LEADER_ENABLE
-    MIDI_ENABLE
-    UNICODE_ENABLE
-    BLUETOOTH_ENABLE
-    SPLIT_KEYBOARD
-    CUSTOM_MATRIX
-    DEBOUNCE_TYPE
-    USB_WAIT_FOR_ENUMERATION
-    NO_USB_STARTUP_CHECK
-    DEFERRED_EXEC_ENABLE
-    DYNAMIC_TAPPING_TERM_ENABLE
-)
-set(QUARK_FEATURE_OPTIONS "")
-
-foreach(QUARK_FEATURE_NAME ${QUARK_FEATURE_NAMES})
-    if(${QUARK_FEATURE_NAME})
-        list(APPEND QUARK_FEATURE_OPTIONS ${QUARK_FEATURE_NAME})
-    endif()
-endforeach()
-
-if(${MOUSEKEY_ENABLE})
-    list(APPEND QUARK_FEATURE_OPTIONS "MOUSE_ENABLE")
-endif()
-
-# 共通設定
-add_library(config INTERFACE)
-target_precompile_headers(config INTERFACE
-    ${QUARK_CONFIG_HEADERS}
-    ./include/quark/stable.h
-)
-target_compile_options(config INTERFACE
-    -Wall
-    -Wextra
-
-    -Wno-c++98-compat
-    -Wno-c++98-compat-pedantic
-    -Wno-pre-c++17-compat
-    -Wno-pre-c++20-compat
-
-    -Wno-reserved-identifier
-    -Wno-unused-parameter
-    -Wno-gnu-include-next
-    -Wno-gnu-anonymous-struct
-    -Wno-gnu-zero-variadic-macro-arguments
-    -Wno-gnu-folding-constant
-    -Wno-pre-c11-compat
-    -Wno-c23-extensions
-    -Wno-c2y-extensions
-
-    -Wno-missing-designated-field-initializers
-    -Wno-covered-switch-default
-
-    -Wno-padded
-
-    -Wno-exit-time-destructors
-    -Wno-global-constructors
-)
-target_compile_features(config INTERFACE
-    cxx_std_20
-)
-target_compile_definitions(config INTERFACE
-    WIN32_LEAN_AND_MEAN
-    NOMINMAX
-    UNICODE
-    _UNICODE
-    ${QUARK_FEATURE_OPTIONS}
-)
-target_include_directories(config INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum
-    ${QMK_FIRMWARE_DIR}/quantum/keymap_extras
-    ${QMK_FIRMWARE_DIR}/quantum/logging
-    ${QMK_FIRMWARE_DIR}/quantum/nvm
-    ${QMK_FIRMWARE_DIR}/quantum/nvm/eeprom
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode
-    ${QMK_FIRMWARE_DIR}/quantum/sequencer
-    ${QMK_FIRMWARE_DIR}/platforms
-    ${QMK_FIRMWARE_DIR}/tmk_core/protocol
-    ./include
-    ./include/quark/quantum
-)
 
 add_subdirectory(src)
 add_subdirectory(platforms)
-add_subdirectory(tools/key_test)
+add_subdirectory(tools)

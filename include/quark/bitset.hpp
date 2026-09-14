@@ -7,7 +7,11 @@
  */
 #pragma once
 
+#include <algorithm>
 #include <array>
+#include <bit>
+#include <concepts>
+#include <ranges>
 #include <span>
 
 #include <cstdint>
@@ -17,249 +21,135 @@ namespace quark {
  * @brief ビットセット
  *
  * @tparam N ビット数
- * @tparam ValueT ビット列を格納する値の型
+ * @tparam T ビット列を格納する値の型
  */
-template <size_t N, typename ValueT = uintmax_t>
-class Bitset {
+template <size_t N, std::unsigned_integral T = unsigned int>
+class BitSet {
 public:
   /**
-   * @brief ビット列を格納する値の型のビット幅
+   * @brief ビット列を格納する値の型
    */
-  static constexpr size_t VALUE_WIDTH = sizeof(ValueT) * 8;
+  using ValueType = T;
 
   /**
-   * @brief ビット列を格納するのに十分な値配列の長さ
+   * @brief 確保されたビット数
    */
-  static constexpr size_t VALUE_COUNT = (N + VALUE_WIDTH - 1) / VALUE_WIDTH;
+  static constexpr size_t BIT_SIZE = N;
 
   /**
-   * @brief ビット列における位置
+   * @brief 確保されたバイト数
    */
-  class Position {
-  public:
-    Position() = default;
+  static constexpr size_t BYTE_SIZE = (BIT_SIZE + 7) / 8;
 
-    constexpr Position(size_t index) noexcept : index_(index) {}
+  /**
+   * @brief 確保された値の数
+   */
+  static constexpr size_t VALUE_SIZE = (BYTE_SIZE + sizeof(T) - 1) / sizeof(T);
 
-    constexpr Position(size_t row, size_t col) noexcept : index_(row * VALUE_WIDTH + col) {}
-
-    constexpr bool is_valid() const noexcept {
-      return index_ < N;
-    }
-
-    constexpr size_t index() const noexcept {
-      return index_;
-    }
-
-    constexpr size_t row() const noexcept {
-      return index_ / VALUE_WIDTH;
-    }
-
-    constexpr size_t col() const noexcept {
-      return index_ % VALUE_WIDTH;
-    }
-
-  private:
-    size_t index_;
-  };
+  /**
+   * @brief 値のビット幅
+   */
+  static constexpr size_t BIT_WIDTH = sizeof(T) * 8;
 
   /**
    * @brief 全体を0で初期化する
    */
-  constexpr Bitset() noexcept : values_{} {}
+  constexpr BitSet() noexcept : values_{} {}
 
   /**
-   * @brief 単一の値で全体を初期化する
-   *
-   * @param default_value 初期値
+   * @brief 全体を既定値で初期化する
    */
-  constexpr explicit Bitset(ValueT default_value) noexcept {
+  constexpr explicit BitSet(T default_value) noexcept {
     for (auto& value : values_) {
       value = default_value;
     }
   }
 
   /**
-   * @brief ビット列をコピーする
+   * @brief バイト列をコピーする
    *
-   * @param values ビット列を格納する値の配列
+   * @param bytes バイト列
    */
   template <size_t SIZE>
-  constexpr explicit Bitset(std::span<const ValueT, SIZE> values) noexcept {
-    if constexpr (SIZE >= VALUE_COUNT) {
-      for (size_t i = 0; i < VALUE_COUNT; ++i) {
-        values_[i] = values[i];
-      }
+  constexpr explicit BitSet(std::span<const std::byte, SIZE> bytes) noexcept {
+    const auto dest = std::as_writable_bytes(std::span{values_});
+    if constexpr (SIZE >= BYTE_SIZE) {
+      std::ranges::copy(bytes.template subspan<0, BYTE_SIZE>(), dest.begin());
     } else {
-      for (size_t i = 0; i < SIZE; ++i) {
-        values_[i] = values[i];
-      }
-      for (size_t i = SIZE; i < VALUE_COUNT; ++i) {
-        values_[i] = 0;
+      const auto [_, mid] = std::ranges::copy(bytes, dest.begin());
+      std::ranges::fill(mid, dest.end(), std::byte{0});
+    }
+    if constexpr (std::endian::native == std::endian::big && sizeof(T) > 1) {
+      for (auto& value : values_) {
+        value = std::byteswap(value);
       }
     }
   }
 
   /**
-   * @brief ビット列をコピーする
+   * @brief 8ビット整数列をバイト列としてコピーする
    *
-   * @param values ビット列を格納する値の配列
+   * @param values バイト列
    */
   template <size_t SIZE>
-  constexpr explicit Bitset(const ValueT (&values)[SIZE]) noexcept : Bitset(std::span(values)) {}
-
-  /**
-   * @brief ビット列を格納する数値列を取得する
-   *
-   * @return 値の配列
-   */
-  constexpr std::span<const ValueT, VALUE_COUNT> values() const noexcept {
-    return values_;
-  }
-
-  /**
-   * @brief ビット列を格納する数値を取得する
-   *
-   * @return 値の配列
-   */
-  constexpr ValueT value(size_t i) const noexcept {
-    if (i >= values_.size()) return 0;
-    return values_[i];
-  }
-
-  /**
-   * @brief ビットの状態を返す
-   *
-   * @param pos ビット列における位置
-   * @retval true ビットが1
-   * @retval false ビットが0。または、posが範囲外
-   */
-  constexpr bool operator[](const Position& pos) const noexcept {
-    if (!pos.is_valid()) return false;
-    return !!(values_[pos.row()] & (static_cast<ValueT>(1) << pos.col()));
-  }
-
-  /**
-   * @brief ビット数を取得する
-   */
-  constexpr size_t size() const noexcept {
-    return N;
-  }
-
-  /**
-   * @brief ビットを更新する
-   *
-   * @param pos ビット列における位置
-   * @param flag trueなら1、falseなら0
-   */
-  constexpr void set(const Position& pos, bool flag) noexcept {
-    if (flag) {
-      set(pos);
-    } else {
-      reset(pos);
-    }
-  }
+  constexpr explicit BitSet(std::span<const uint8_t, SIZE> values) noexcept
+    : BitSet{std::as_bytes(values)} {}
 
   /**
    * @brief ビットを1にする
    *
-   * @param pos ビット列における位置
+   * @param position ビット列における位置
    */
-  constexpr void set(const Position& pos) noexcept {
-    if (!pos.is_valid()) return;
-    values_[pos.row()] |= static_cast<ValueT>(1) << pos.col();
-  }
-
-  /**
-   * @brief ビットを0にする
-   *
-   * @param pos ビット列における位置
-   */
-  constexpr void reset(const Position& pos) noexcept {
-    if (!pos.is_valid()) return;
-    values_[pos.row()] &= ~(static_cast<ValueT>(1) << pos.col());
-  }
-
-  /**
-   * @brief ビットを反転する
-   *
-   * @param pos ビット列における位置
-   */
-  constexpr void flip(const Position& pos) noexcept {
-    if (!pos.is_valid()) return;
-    values_[pos.row()] ^= static_cast<ValueT>(1) << pos.col();
-  }
-
-  /**
-   * @brief ビットをすべて0にする
-   */
-  constexpr void clear() noexcept {
-    for (auto& value : values_) {
-      value = 0;
+  constexpr void set(size_t position) noexcept {
+    if (position >= BIT_SIZE) return;
+    const auto index = position / BIT_WIDTH;
+    const auto offset = position % BIT_WIDTH;
+    if (index < values_.size()) {
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index,cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+      values_[index] |= static_cast<T>(1) << offset;
     }
   }
 
   /**
    * @brief 1になっているビットを列挙する
    *
-   * @param pred Positionを引数とする関数オブジェクト
+   * @param fn ビット位置を引数とする関数オブジェクト
    */
-  template <typename Pred>
-  constexpr void scan(Pred pred) const noexcept {
-    size_t index = 0;
-    for (auto value : values_) {
-      const auto next_index = index + VALUE_WIDTH;
+  constexpr void scan(std::invocable<size_t> auto fn) const noexcept(noexcept(fn(size_t{}))) {
+    for (size_t base = 0; auto value : values_) {
+      size_t index = base;
+      base += BIT_WIDTH;
       while (value != 0) {
-        if (value & 1) {
-          pred(Position{index});
-        }
-        value >>= 1;
-        index++;
+        // 連続する0をスキップする
+        const auto offset = std::countr_zero(value);
+        index += static_cast<size_t>(offset);
+        value >>= offset;
+
+        // ビットをすべて見たら終了する
+        if (index >= N) return;
+
+        // 見つかった1を報告して0にする
+        fn(index);
+        value &= ~T{1};
       }
-      index = next_index;
     }
   }
 
   /**
-   * @brief 二項演算を行う
+   * @brief AND NOT演算を行う
    *
-   * @param lhs 左辺のビットセット
-   * @param rhs 右辺のビットセット
-   * @param op ValueTの二項演算を行う関数オブジェクト
-   * @return opの演算結果を格納するビットセットを返す
+   * @param other NOTされるビットセット
+   * @return lhs & ~rhs
    */
-  template <typename Op>
-  friend constexpr Bitset binary_op(const Bitset& lhs, const Bitset& rhs, Op op) noexcept {
-    Bitset result;
-    for (size_t i = 0; i < result.values_.size(); ++i) {
-      result.values_[i] = static_cast<ValueT>(op(lhs.values_[i], rhs.values_[i]));
+  [[nodiscard]] constexpr BitSet and_not(const BitSet& other) const noexcept {
+    BitSet out;
+    for (auto&& [result, lhs, rhs] : std::views::zip(out.values_, values_, other.values_)) {
+      result = static_cast<T>(lhs & ~rhs);
     }
-    return result;
-  }
-
-  /**
-   * @brief 1から0に変化するビットを抽出する
-   *
-   * @param prev 以前のビットセット
-   * @param next 今回のビットセット
-   * @return 1から0に変化したビットを1にしたビットセットを返す
-   */
-  friend constexpr Bitset set_to_reset(const Bitset& prev, const Bitset& next) noexcept {
-    return binary_op(prev, next, [](auto lhs, auto rhs) { return lhs & ~rhs; });
-  }
-
-  /**
-   * @brief 0から1に変化するビットを抽出する
-   *
-   * @param prev 以前のビットセット
-   * @param next 今回のビットセット
-   * @return 0から1に変化したビットを1にしたビットセットを返す
-   */
-  friend constexpr Bitset reset_to_set(const Bitset& prev, const Bitset& next) noexcept {
-    return set_to_reset(next, prev);
+    return out;
   }
 
 private:
-  std::array<ValueT, VALUE_COUNT> values_;  ///< ビット列を格納する値の配列
+  std::array<T, VALUE_SIZE> values_;  ///< ビット列を格納する値の配列
 };
 }  // namespace quark

@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
- * @file keymap.h
+ * @file keymap.c
  * @brief キーマップ
  */
 #pragma once
 
-#include <stdint.h>
-
-#include <action_layer.h>
-#include <progmem.h>
+/**
+ * @brief このキーマップが定義するレイヤーの数
+ */
+#define QUARK_KEYMAP_LAYERS 7

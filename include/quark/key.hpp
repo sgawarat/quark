@@ -32,12 +32,15 @@ struct KeyPropertyTag {};
  * @param key キー
  * @return キーに対するmatrix上の位置。対応するキーがなければ、matrix範囲外の位置を返す。
  */
-keypos_t get_key_property(Key key, KeyPropertyTag<keypos_t>);
+extern keypos_t get_key_property(Key key, KeyPropertyTag<keypos_t>);
 
 /**
  * @brief 長押しできないキーのプロパティ値の型
  */
-enum NonHoldable : bool {};
+enum class NonHoldable : bool {
+  NO = false,
+  YES = true,
+};
 
 /**
  * @brief 長押しできないキーかを取得する。
@@ -46,7 +49,7 @@ enum NonHoldable : bool {};
  *
  * @param key キー
  */
-NonHoldable get_key_property(Key key, KeyPropertyTag<NonHoldable>);
+extern NonHoldable get_key_property(Key key, KeyPropertyTag<NonHoldable>);
 
 /**
  * @brief キーに設定された情報を取得する

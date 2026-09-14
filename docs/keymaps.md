@@ -10,18 +10,19 @@
             - `<keymap>/`
                 - `keymap.c`
                 - (`config.h`)
+                - (`rules.cmake`)
                 - (`CMakeLists.txt`)
 
 `<keyboard>`に対する*キーマップ*は`keyboards/<keyboard>/`内の`<keymap>/`に配置されます。`<keymap>`はキーマップ名を表す説明用の名前で、実際のキーマップ名には`/`を含めることができます。
 
 ### keymap.c
 
-*キーマップ*は`<keymap>/`直下に`keymap.c`を必要とします。この`keymap.c`はQMKとともにビルドされるため、QMKの必要とする`keymaps`変数を定義するのに適しています。`keymap.c`では、*キーボード*の`keymap.h`へのパスが`QMK_KEYBOARD_H`に定義され、これをインクルードすることによって必要最低限の準備が整う設計になっています。
+*キーマップ*は`<keymap>/`直下に`keymap.c`を必要とします。この`keymap.c`はQMKとともにビルドされるため、QMKの必要とする`keymaps`変数を定義するのに適しています。`keymap.c`では、*キーボード*のヘッダーファイルへのパスが`QMK_KEYBOARD_H`に定義され、これをインクルードすることによって必要最低限の準備が整う設計になっています。
 
 以下はその一例です。
 
 ```c:keymap.c
-#include QMK_KEYBOARD_H  // キーボードのkeymap.h
+#include QMK_KEYBOARD_H  // キーボードのヘッダーファイル
 
 // QMKで使われるkeymaps変数を定義する
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -42,16 +43,24 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #define NKRO_DEFAULT_ON true
 ```
 
+### rules.cmake
+
+`<keymap>/`直下に`rules.cmake`が存在する場合、それはビルドスクリプトで暗黙的にインクルードされます。`rules.cmake`は*キーボード*の`rules.cmake`の後かつ`post_rules.cmake`の前にインクルードされるので、*キーマップ*固有のビルドオプションを設定するのに適しています。
+
+以下はその一例です。
+
+```cmake:rules.cmake
+# ビルドオプションを定義できる
+set(NKRO_ENABLE yes)
+```
+
 ### CMakeLists.txt
 
-`<keymap>/`直下に`CMakeLists.txt`が存在する場合、そのディレクトリはビルド対象に含まれるようになります。そこでは、cmakeの変数としてQMKのビルドオプションを設定したり、`keymap`というライブラリを定義したりすることができます。この`keymap`ライブラリは、そのままQMKにリンクされるので、*キーマップ*固有の機能を実装するのに適しています。
+`<keymap>/`直下に`CMakeLists.txt`が存在する場合、そのディレクトリはビルド対象に含まれるようになります。そこで定義される`keymap`という名前のライブラリはキーボードエンジンにリンクされるので、*キーマップ*固有の機能を実装するのに適しています。
 
 以下はその一例です。
 
 ```cmake:CMakeLists.txt
-# ビルドオプションを設定できる
-set(NKRO_ENABLE yes PARENT_SCOPE)
-
 # keymapライブラリを定義できる
 add_library(keymap STATIC
     keymap.cpp

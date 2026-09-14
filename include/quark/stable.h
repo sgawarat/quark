@@ -57,3 +57,10 @@ extern "C" {
 #ifdef __cplusplus
 }  // extern "C"
 #endif
+
+// <print>と衝突するマクロを取り除く
+#ifdef __cplusplus
+#include <print.h>
+#undef print
+#undef println
+#endif

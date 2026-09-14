@@ -9,14 +9,12 @@
 
 #include <stdint.h>
 
-#include <intrin.h>
-
 /**
  * @brief ミリ秒単位で待機する
  *
  * @param ms 待機する秒数（ミリ秒）
  */
-void wait_ms(uintptr_t ms);
+void wait_ms(uintptr_t millisec);
 
 /**
  * @brief マイクロ秒単位で待機する
@@ -25,6 +23,13 @@ void wait_ms(uintptr_t ms);
  *
  * @param us 待機する秒数（マイクロ秒）
  */
-#define wait_us(us) wait_ms(us / 1000)
+#define wait_us(microsec) wait_ms((microsec) / 1000)
 
+/**
+ * @brief 入力ピンを切り替えるために待機する
+ *
+ * matric_common.cで使われている。
+ *
+ * ハードウェアに関連するものなので、ソフトウェア実装では必要ない。
+ */
 #define waitInputPinDelay(...) ((void)0)

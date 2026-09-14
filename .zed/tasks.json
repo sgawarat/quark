@@ -1,0 +1,37 @@
+[
+  {
+    "label": "Configure",
+    "command": "cmake",
+    "args": [
+      "--preset Debug",
+      "-DQMK_FIRMWARE_DIR='../qmk_firmware'",
+      "-DQUARK_KEYBOARD=jis",
+      "-DQUARK_KEYMAP=example",
+    ],
+    "save": "all",
+  },
+  {
+    "label": "Reconfigure",
+    "command": "cmake",
+    "args": [
+      "--preset Debug",
+      "--fresh",
+      "-DQMK_FIRMWARE_DIR='../qmk_firmware'",
+      "-DQUARK_KEYBOARD=jis",
+      "-DQUARK_KEYMAP=example",
+    ],
+    "save": "all",
+  },
+  {
+    "label": "Build",
+    "command": "cmake",
+    "args": ["--build", "--preset", "Debug"],
+    "save": "all",
+  },
+  {
+    "label": "Rebuild",
+    "command": "cmake",
+    "args": ["--build", "--preset", "Debug", "--clean-first"],
+    "save": "all",
+  },
+]

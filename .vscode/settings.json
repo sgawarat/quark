@@ -1,0 +1,22 @@
+{
+    "cmake.configureOnOpen": true,
+    "cmake.configureArgs": [
+        "-DQMK_FIRMWARE_DIR=../../qmk_firmware",
+        "-DQUARK_KEYBOARD=jis",
+        "-DQUARK_KEYMAP=example"
+    ],
+    "editor.formatOnSave": true,
+    "cmake.configureOnEdit": false,
+    "editor.tabSize": 2,
+    "doxdocgen.file.copyrightTag": [
+        "SPDX-FileCopyrightText:  Copyright {year} sgawarat <sgawarat@gmail.com>",
+        "SPDX-License-Identifier: GPL-2.0-or-later"
+    ],
+    "doxdocgen.generic.authorEmail": "sgawarat@gmail.com",
+    "doxdocgen.generic.authorName": "sgawarat",
+    "doxdocgen.file.fileOrder": [
+        "copyright",
+        "file",
+        "brief"
+    ],
+}

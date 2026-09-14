@@ -7,8 +7,6 @@
  */
 #include QMK_KEYBOARD_H
 
-#include <quantum.h>
-
 enum Layer {
   L_EN,        // 英語
   L_SHIFT_EN,  // シフト付き英語
@@ -34,14 +32,18 @@ enum Key {
   LT_LTHUMB = LT(L_LTHUMB, JP_MHEN),
   LT_RTHUMB = LT(L_RTHUMB, JP_HENK),
   LT_RRTHUMB = JP_KANA,  // 予備
+};
 
-  // シフト中でもシフトせずに入力したいキー
+// シフト中でもシフトせずに入力したいキー
+enum UnshiftedKey {
   JP_UNSHIFTED_AT = SAFE_RANGE,
   JP_UNSHIFTED_CIRC,
   JP_UNSHIFTED_COLN,
+};
 
-  // マクロ
-  M_YA,
+// マクロ
+enum MacroKey {
+  M_YA = SAFE_RANGE + 10,
   M_YU,
   M_YE,
   M_YO,
@@ -76,67 +78,53 @@ enum Key {
  * @brief キーマップ
  */
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    // 英語（調整版Colemak）
-    [L_EN] = LAYOUT_simple(
-        JP_GRV, JP_1, JP_2, JP_3, JP_4, JP_5, JP_6, JP_7, JP_8, JP_9, JP_0,
-        JP_LBRC, JP_RBRC, JP_YEN, JP_Q, JP_W, JP_F, JP_P, JP_G, JP_J, JP_L,
-        JP_U, JP_Y, JP_SCLN, JP_QUOT, JP_EQL, JP_A, JP_R, JP_S, JP_T, JP_D,
-        JP_H, JP_N, JP_E, JP_I, JP_O, JP_UNDS, KC_ENT, JP_Z, JP_X, JP_C, JP_V,
-        JP_B, JP_K, JP_M, JP_COMM, JP_DOT, JP_SLSH, LM_RSFT),
+  // 英語（調整版Colemak）
+  [L_EN] = LAYOUT_simple(JP_GRV, JP_1, JP_2, JP_3, JP_4, JP_5, JP_6, JP_7, JP_8, JP_9, JP_0,
+      JP_LBRC, JP_RBRC, JP_YEN, JP_Q, JP_W, JP_F, JP_P, JP_G, JP_J, JP_L, JP_U, JP_Y, JP_SCLN,
+      JP_QUOT, JP_EQL, JP_A, JP_R, JP_S, JP_T, JP_D, JP_H, JP_N, JP_E, JP_I, JP_O, JP_UNDS, KC_ENT,
+      JP_Z, JP_X, JP_C, JP_V, JP_B, JP_K, JP_M, JP_COMM, JP_DOT, JP_SLSH, LM_RSFT),
 
-    // シフト付き英語（調整版Colemak）
-    [L_SHIFT_EN] = LAYOUT_simple(
-        JP_TILD, JP_EXLM, JP_UNSHIFTED_AT, JP_HASH, JP_DLR, JP_PERC,
-        JP_UNSHIFTED_CIRC, JP_AMPR, JP_ASTR, JP_LPRN, JP_RPRN, JP_LBRC, JP_RBRC,
-        JP_PIPE, S(JP_Q), S(JP_W), S(JP_F), S(JP_P), S(JP_G), S(JP_J), S(JP_L),
-        S(JP_U), S(JP_Y), JP_UNSHIFTED_COLN, JP_DQUO, JP_PLUS, S(JP_A), S(JP_R),
-        S(JP_S), S(JP_T), S(JP_D), S(JP_H), S(JP_N), S(JP_E), S(JP_I), S(JP_O),
-        JP_EQL, S(KC_ENT), S(JP_Z), S(JP_X), S(JP_C), S(JP_V), S(JP_B), S(JP_K),
-        S(JP_M), JP_LABK, JP_RABK, JP_QUES, LM_RSFT),
+  // シフト付き英語（調整版Colemak）
+  [L_SHIFT_EN] = LAYOUT_simple(JP_TILD, JP_EXLM, JP_UNSHIFTED_AT, JP_HASH, JP_DLR, JP_PERC,
+      JP_UNSHIFTED_CIRC, JP_AMPR, JP_ASTR, JP_LPRN, JP_RPRN, JP_LBRC, JP_RBRC, JP_PIPE, S(JP_Q),
+      S(JP_W), S(JP_F), S(JP_P), S(JP_G), S(JP_J), S(JP_L), S(JP_U), S(JP_Y), JP_UNSHIFTED_COLN,
+      JP_DQUO, JP_PLUS, S(JP_A), S(JP_R), S(JP_S), S(JP_T), S(JP_D), S(JP_H), S(JP_N), S(JP_E),
+      S(JP_I), S(JP_O), JP_EQL, S(KC_ENT), S(JP_Z), S(JP_X), S(JP_C), S(JP_V), S(JP_B), S(JP_K),
+      S(JP_M), JP_LABK, JP_RABK, JP_QUES, LM_RSFT),
 
-    // 日本語（たちあおい v2.4.1）
-    [L_JA] = LAYOUT_simple(
-        JP_ZKHK, JP_1, JP_2, JP_3, JP_4, JP_5, JP_6, JP_7, JP_8, JP_9, JP_0,
-        JP_MINS, JP_CIRC, JP_YEN, JP_P, JP_R, JP_D, JP_G, JP_F, JP_L, M_YO,
-        JP_U, JP_O, JP_Q, JP_AT, JP_LBRC, JP_N, JP_S, JP_T, JP_K, JP_H, M_YU,
-        JP_A, JP_I, JP_E, JP_SCLN, JP_COLN, JP_RBRC, JP_W, JP_Z, JP_B, JP_M,
-        JP_V, M_YA, M_YE, JP_COMM, JP_DOT, JP_SLSH, JP_BSLS),
+  // 日本語（たちあおい v2.4.1）
+  [L_JA] = LAYOUT_simple(JP_ZKHK, JP_1, JP_2, JP_3, JP_4, JP_5, JP_6, JP_7, JP_8, JP_9, JP_0,
+      JP_MINS, JP_CIRC, JP_YEN, JP_P, JP_R, JP_D, JP_G, JP_F, JP_L, M_YO, JP_U, JP_O, JP_Q, JP_AT,
+      JP_LBRC, JP_N, JP_S, JP_T, JP_K, JP_H, M_YU, JP_A, JP_I, JP_E, JP_SCLN, JP_COLN, JP_RBRC,
+      JP_W, JP_Z, JP_B, JP_M, JP_V, M_YA, M_YE, JP_COMM, JP_DOT, JP_SLSH, JP_BSLS),
 
-    // シフト付き日本語（調整版Colemak）
-    [L_SHIFT_JA] = LAYOUT_simple(
-        JP_TILD, JP_EXLM, JP_UNSHIFTED_AT, JP_HASH, JP_DLR, JP_PERC,
-        JP_UNSHIFTED_CIRC, JP_AMPR, JP_ASTR, JP_LPRN, JP_RPRN, JP_LBRC, JP_RBRC,
-        JP_PIPE, S(JP_Q), S(JP_W), S(JP_F), S(JP_P), S(JP_G), S(JP_J), S(JP_L),
-        S(JP_U), S(JP_Y), JP_UNSHIFTED_COLN, JP_DQUO, JP_PLUS, S(JP_A), S(JP_R),
-        S(JP_S), S(JP_T), S(JP_D), S(JP_H), S(JP_N), S(JP_E), S(JP_I), S(JP_O),
-        JP_EQL, S(KC_ENT), S(JP_Z), S(JP_X), S(JP_C), S(JP_V), S(JP_B), S(JP_K),
-        S(JP_M), JP_LABK, JP_RABK, JP_QUES, LM_RSFT),
+  // シフト付き日本語（調整版Colemak）
+  [L_SHIFT_JA] = LAYOUT_simple(JP_TILD, JP_EXLM, JP_UNSHIFTED_AT, JP_HASH, JP_DLR, JP_PERC,
+      JP_UNSHIFTED_CIRC, JP_AMPR, JP_ASTR, JP_LPRN, JP_RPRN, JP_LBRC, JP_RBRC, JP_PIPE, S(JP_Q),
+      S(JP_W), S(JP_F), S(JP_P), S(JP_G), S(JP_J), S(JP_L), S(JP_U), S(JP_Y), JP_UNSHIFTED_COLN,
+      JP_DQUO, JP_PLUS, S(JP_A), S(JP_R), S(JP_S), S(JP_T), S(JP_D), S(JP_H), S(JP_N), S(JP_E),
+      S(JP_I), S(JP_O), JP_EQL, S(KC_ENT), S(JP_Z), S(JP_X), S(JP_C), S(JP_V), S(JP_B), S(JP_K),
+      S(JP_M), JP_LABK, JP_RABK, JP_QUES, LM_RSFT),
 
-    // QWERTY（Ctrl,Alt,Gui用）
-    [L_QWERTY] = LAYOUT_simple(
-        JP_ZKHK, JP_1, JP_2, JP_3, JP_4, JP_5, JP_6, JP_7, JP_8, JP_9, JP_0,
-        JP_MINS, JP_CIRC, JP_YEN, JP_Q, JP_W, JP_E, JP_R, JP_T, JP_Y, JP_U,
-        JP_I, JP_O, JP_P, JP_AT, JP_LBRC, JP_A, JP_S, JP_D, JP_F, JP_G, JP_H,
-        JP_J, JP_K, JP_L, JP_SCLN, JP_COLN, JP_RBRC, JP_Z, JP_X, JP_C, JP_V,
-        JP_B, JP_N, JP_M, JP_COMM, JP_DOT, JP_SLSH, JP_BSLS),
+  // QWERTY（Ctrl,Alt,Gui用）
+  [L_QWERTY] = LAYOUT_simple(JP_ZKHK, JP_1, JP_2, JP_3, JP_4, JP_5, JP_6, JP_7, JP_8, JP_9, JP_0,
+      JP_MINS, JP_CIRC, JP_YEN, JP_Q, JP_W, JP_E, JP_R, JP_T, JP_Y, JP_U, JP_I, JP_O, JP_P, JP_AT,
+      JP_LBRC, JP_A, JP_S, JP_D, JP_F, JP_G, JP_H, JP_J, JP_K, JP_L, JP_SCLN, JP_COLN, JP_RBRC,
+      JP_Z, JP_X, JP_C, JP_V, JP_B, JP_N, JP_M, JP_COMM, JP_DOT, JP_SLSH, JP_BSLS),
 
-    // 左親指（記号類）
-    [L_LTHUMB] = LAYOUT_simple(
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, JP_MINS, JP_PLUS, KC_NO, KC_NO,
-        KC_NO, KC_NO, JP_PIPE, JP_TILD, KC_NO, JP_GRV, KC_NO, JP_LBRC, JP_ASTR,
-        JP_LCBR, JP_LPRN, JP_HASH, JP_DLR, JP_RPRN, JP_RCBR, JP_AMPR, JP_RBRC,
-        M_RIGHT_DOUBLE_ARROW, KC_NO, KC_NO, JP_PERC, JP_EXLM, JP_BSLS, KC_NO,
-        KC_NO, JP_AT, JP_CIRC, M_RIGHT_ARROW, M_OPENING_BLOCK_COMMENT, KC_NO),
+  // 左親指（記号類）
+  [L_LTHUMB] = LAYOUT_simple(KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+      KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, JP_MINS, JP_PLUS, KC_NO, KC_NO, KC_NO, KC_NO, JP_PIPE,
+      JP_TILD, KC_NO, JP_GRV, KC_NO, JP_LBRC, JP_ASTR, JP_LCBR, JP_LPRN, JP_HASH, JP_DLR, JP_RPRN,
+      JP_RCBR, JP_AMPR, JP_RBRC, M_RIGHT_DOUBLE_ARROW, KC_NO, KC_NO, JP_PERC, JP_EXLM, JP_BSLS,
+      KC_NO, KC_NO, JP_AT, JP_CIRC, M_RIGHT_ARROW, M_OPENING_BLOCK_COMMENT, KC_NO),
 
-    // 右親指（記号類）
-    [L_RTHUMB] = LAYOUT_simple(
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, JP_MINS, JP_PLUS, KC_NO, KC_NO,
-        KC_NO, KC_NO, JP_PIPE, JP_TILD, KC_NO, JP_GRV, KC_NO, JP_LBRC, JP_ASTR,
-        JP_LCBR, JP_LPRN, JP_HASH, JP_DLR, JP_RPRN, JP_RCBR, JP_AMPR, JP_RBRC,
-        M_RIGHT_DOUBLE_ARROW, KC_NO, KC_NO, JP_PERC, JP_EXLM, JP_BSLS, KC_NO,
-        KC_NO, JP_AT, JP_CIRC, M_RIGHT_ARROW, M_OPENING_BLOCK_COMMENT, KC_NO),
+  // 右親指（記号類）
+  [L_RTHUMB] = LAYOUT_simple(KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+      KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, JP_MINS, JP_PLUS, KC_NO, KC_NO, KC_NO, KC_NO, JP_PIPE,
+      JP_TILD, KC_NO, JP_GRV, KC_NO, JP_LBRC, JP_ASTR, JP_LCBR, JP_LPRN, JP_HASH, JP_DLR, JP_RPRN,
+      JP_RCBR, JP_AMPR, JP_RBRC, M_RIGHT_DOUBLE_ARROW, KC_NO, KC_NO, JP_PERC, JP_EXLM, JP_BSLS,
+      KC_NO, KC_NO, JP_AT, JP_CIRC, M_RIGHT_ARROW, M_OPENING_BLOCK_COMMENT, KC_NO),
 };
 
 /**
@@ -156,10 +144,110 @@ static void process_unshifted_key(bool pressed, uint16_t keycode) {
   }
 }
 
+static void process_left_thumb(bool pressed, uint8_t tap_count) {
+  if (pressed) {
+    if (tap_count > 0) {
+      // 単打ならば、日本語レイヤーをOFFにしてキーを押す
+      layer_off(L_JA);
+      layer_off(L_SHIFT_JA);
+
+      register_code16(JP_MHEN);
+    } else {
+      // 複打ならば、親指レイヤーをONにする
+      layer_on(L_LTHUMB);
+    }
+  } else {
+    if (tap_count > 0) {
+      // 単打ならば、キーを離す
+      unregister_code16(JP_MHEN);
+    } else {
+      // 複打ならば、親指レイヤーをOFFにする
+      layer_off(L_LTHUMB);
+    }
+  }
+}
+
+static void process_right_thumb(bool pressed, uint8_t tap_count) {
+  if (pressed) {
+    if (tap_count > 0) {
+      // 単打ならば、日本語レイヤーをONにしてキーを押す
+      layer_on(L_JA);
+
+      // 英語レイヤーからシフト状態を移植する
+      if (layer_state_is(L_SHIFT_EN)) {
+        layer_on(L_SHIFT_JA);
+      }
+
+      register_code16(JP_HENK);
+    } else {
+      // 複打ならば、親指レイヤーをONにする
+      layer_on(L_RTHUMB);
+    }
+  } else {
+    if (tap_count > 0) {
+      // 単打ならば、キーを離す
+      unregister_code16(JP_HENK);
+    } else {
+      // 複打ならば、親指レイヤーをOFFにする
+      layer_off(L_RTHUMB);
+    }
+  }
+}
+
 /**
  * @brief MOD_系からMOD_BIT_系へ変換するためのマクロ
  */
 #define MOD2MOD_BIT(mod) (((mod) & 0x10) ? (((mod) & 0xf) << 4) : ((mod) & 0xf))
+
+static void process_shift(uint8_t keycode, bool pressed) {
+  const uint8_t mods = MOD2MOD_BIT(keycode);
+  if (pressed) {
+    // 最初であれば、レイヤーをONにする
+    if ((get_mods() & MOD_MASK_SHIFT) == 0) {
+      // 英語レイヤーは常に操作する
+      layer_on(L_SHIFT_EN);
+
+      // 日本語レイヤーは有効な場合のみ操作する
+      if (layer_state_is(L_JA)) {
+        layer_on(L_SHIFT_JA);
+      }
+    }
+
+    register_mods(mods);
+  } else {
+    unregister_mods(mods);
+
+    // 最後であれば、レイヤーをOFFにする
+    if ((get_mods() & MOD_MASK_SHIFT) == 0) {
+      // 英語レイヤーは常に操作する
+      layer_off(L_SHIFT_EN);
+
+      // 日本語レイヤーは有効な場合のみ操作する
+      if (layer_state_is(L_JA)) {
+        layer_off(L_SHIFT_JA);
+      }
+    }
+  }
+}
+
+static void process_cag(uint8_t keycode, bool pressed) {
+  const uint8_t mods = MOD2MOD_BIT(keycode);
+  if (pressed) {
+    // 最初であれば、レイヤーをONにする
+    if ((get_mods() & MOD_MASK_CAG) == 0) {
+      layer_on(L_QWERTY);
+    }
+
+    register_mods(mods);
+  } else {
+    unregister_mods(mods);
+
+    // 最後であれば、レイヤーをOFFにする
+    if ((get_mods() & MOD_MASK_CAG) == 0) {
+      layer_off(L_QWERTY);
+    }
+  }
+}
 
 /**
  * @brief 独自のキーコードを処理する
@@ -177,116 +265,32 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
 
   switch (keycode) {
     // いずれかのShiftを押している間だけレイヤーをONにする
-    case LM_LSFT:  // fallthrough
+    case LM_LSFT:
     case LM_RSFT: {
-      const uint8_t mods = MOD2MOD_BIT(keycode);
-      if (pressed) {
-        // 最初であれば、レイヤーをONにする
-        if ((get_mods() & MOD_MASK_SHIFT) == 0) {
-          // 英語レイヤーは常に操作する
-          layer_on(L_SHIFT_EN);
-
-          // 日本語レイヤーは有効な場合のみ操作する
-          if (layer_state_is(L_JA)) {
-            layer_on(L_SHIFT_JA);
-          }
-        }
-
-        register_mods(mods);
-      } else {
-        unregister_mods(mods);
-
-        // 最後であれば、レイヤーをOFFにする
-        if ((get_mods() & MOD_MASK_SHIFT) == 0) {
-          // 英語レイヤーは常に操作する
-          layer_off(L_SHIFT_EN);
-
-          // 日本語レイヤーは有効な場合のみ操作する
-          if (layer_state_is(L_JA)) {
-            layer_off(L_SHIFT_JA);
-          }
-        }
-      }
+      process_shift(keycode, pressed);
       return false;
     }
 
     // いずれかのCtrl,Alt,Guiを押している間だけレイヤーをONにする
-    case LM_LCTL:  // fallthrough
-    case LM_LALT:  // fallthrough
-    case LM_LGUI:  // fallthrough
-    case LM_RCTL:  // fallthrough
-    case LM_RALT:  // fallthrough
+    case LM_LCTL:
+    case LM_LALT:
+    case LM_LGUI:
+    case LM_RCTL:
+    case LM_RALT:
     case LM_RGUI: {
-      const uint8_t mods = MOD2MOD_BIT(keycode);
-      if (pressed) {
-        // 最初であれば、レイヤーをONにする
-        if ((get_mods() & MOD_MASK_CAG) == 0) {
-          layer_on(L_QWERTY);
-        }
-
-        register_mods(mods);
-      } else {
-        unregister_mods(mods);
-
-        // 最後であれば、レイヤーをOFFにする
-        if ((get_mods() & MOD_MASK_CAG) == 0) {
-          layer_off(L_QWERTY);
-        }
-      }
+      process_cag(keycode, pressed);
       return false;
     }
 
     // 左親指TAPキー
     case LT_LTHUMB: {
-      if (pressed) {
-        if (tap_count > 0) {
-          // 単打ならば、日本語レイヤーをOFFにしてキーを押す
-          layer_off(L_JA);
-          layer_off(L_SHIFT_JA);
-
-          register_code16(JP_MHEN);
-        } else {
-          // 複打ならば、親指レイヤーをONにする
-          layer_on(L_LTHUMB);
-        }
-      } else {
-        if (tap_count > 0) {
-          // 単打ならば、キーを離す
-          unregister_code16(JP_MHEN);
-        } else {
-          // 複打ならば、親指レイヤーをOFFにする
-          layer_off(L_LTHUMB);
-        }
-      }
+      process_left_thumb(pressed, tap_count);
       return false;
     }
 
     // 右親指TAPキー
     case LT_RTHUMB: {
-      if (pressed) {
-        if (tap_count > 0) {
-          // 単打ならば、日本語レイヤーをONにしてキーを押す
-          layer_on(L_JA);
-
-          // 英語レイヤーからシフト状態を移植する
-          if (layer_state_is(L_SHIFT_EN)) {
-            layer_on(L_SHIFT_JA);
-          }
-
-          register_code16(JP_HENK);
-        } else {
-          // 複打ならば、親指レイヤーをONにする
-          layer_on(L_RTHUMB);
-        }
-      } else {
-        if (tap_count > 0) {
-          // 単打ならば、キーを離す
-          unregister_code16(JP_HENK);
-        } else {
-          // 複打ならば、親指レイヤーをOFFにする
-          layer_off(L_RTHUMB);
-        }
-      }
+      process_right_thumb(pressed, tap_count);
       return false;
     }
 
@@ -387,8 +391,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
       return false;
     }
 
-    default:
-      break;
+    default: break;
   }
   return true;
 }

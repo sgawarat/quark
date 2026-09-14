@@ -1,0 +1,14 @@
+{
+  "languages": {
+    "C": {
+      "tab_size": 2,
+    },
+    "C++": {
+      "tab_size": 2,
+    },
+    "CMake": {
+      "tab_size": 2,
+      "preferred_line_length": 120,
+    },
+  },
+}

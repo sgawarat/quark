@@ -7,24 +7,23 @@
 - `keyboards/`
     - `<keyboard>/`
         - `keymaps/`
-        - `keymap.h`
+        - (`<keyboard>.h`)
+        - (`<keyboard>.c`)
         - (`config.h`)
         - (`post_config.h`)
+        - (`rules.cmake`)
         - (`CMakeLists.txt`)
 
 各*キーボード*は`keyboards/`内の`<keyboard>/`に配置されます。`<keyboard>`はキーボード名を表す説明用の名前で、実際のキーボード名には`/`を含めることができます。
 
-### keymap.h
+### \<keyboard\>.h
 
-*キーボード*は`<keyboard>/`直下に`keymap.h`を必要とします。この`keymap.h`は、*キーマップ*によって`QMK_KEYBOARD_H`マクロを介してインクルードされるため、キーマップを定義するのに必要なヘッダをインクルードしたり便利なマクロを定義したりするのに適しています。例えば、既存の実装から`keymap.c`を流用する場合、ここで`LAYOUT`マクロを定義すると良いでしょう。
+`<keyboard>/`直下に`<keyboard>.h`が存在する場合、それは*キーマップ*によって`QMK_KEYBOARD_H`マクロを介してインクルードされます。そのため、これはキーマップを定義するのに必要なヘッダをインクルードしたり便利なマクロを定義したりするのに適しています。
 
 以下はその一例です。
 
-```c:keymap.h
+```c:keboard.h
 #pragma once
-
-// 既定の共通定義
-#include <quark/keymap.h>
 
 // キーコードを定義するための便利なマクロ群
 #include <quantum_keycodes.h>
@@ -33,22 +32,12 @@
 #include <keymap_japanese.h>
 
 // キーの1次元配列を2次元に再配置するマクロ
-#define LAYOUT( \
-  ESCAPE, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, PRINT_SCREEN, SCROLL_LOCK, PAUSE, \
-  HANKAKU_ZENKAKU, _1, _2, _3, _4, _5, _6, _7, _8, _9, _0, MINUS, CIRCUMFLEX, YEN, BACKSPACE, INSERT, HOME, PAGE_UP, NUM_LOCK, KP_SLASH, KP_ASTERISK, KP_MINUS, \
-  TAB, Q, W, E, R, T, Y, U, I, O, P, AT, LEFT_BRACKET, DELETE, END, PAGE_DOWN, KP_7, KP_8, KP_9, \
-  CAPS_LOCK, A, S, D, F, G, H, J, K, L, SEMICOLON, COLON, RIGHT_BRACKET, ENTER, KP_4, KP_5, KP_6, KP_PLUS, \
-  LEFT_SHIFT, Z, X, C, V, B, N, M, COMMA, DOT, SLASH, BACKSLASH, RIGHT_SHIFT, UP, KP_1, KP_2, KP_3, \
-  LEFT_CTRL, LEFT_GUI, LEFT_ALT, MUHENKAN, SPACE, HENKAN, KATAKANA_HIRAGANA, RIGHT_ALT, RIGHT_GUI, APPLICATION, RIGHT_CTRL, LEFT, DOWN, RIGHT, KP_0, KP_DOT, KP_ENTER \
-) { \
-  {ESCAPE, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, PRINT_SCREEN, SCROLL_LOCK, PAUSE}, \
-  {HANKAKU_ZENKAKU, _1, _2, _3, _4, _5, _6, _7, _8, _9, _0, MINUS, CIRCUMFLEX, YEN, BACKSPACE, INSERT, HOME, PAGE_UP, NUM_LOCK, KP_SLASH, KP_ASTERISK, KP_MINUS}, \
-  {TAB, Q, W, E, R, T, Y, U, I, O, P, AT, LEFT_BRACKET, DELETE, END, PAGE_DOWN, KP_7, KP_8, KP_9}, \
-  {CAPS_LOCK, A, S, D, F, G, H, J, K, L, SEMICOLON, COLON, RIGHT_BRACKET, ENTER, KP_4, KP_5, KP_6, KP_PLUS}, \
-  {LEFT_SHIFT, Z, X, C, V, B, N, M, COMMA, DOT, SLASH, BACKSLASH, RIGHT_SHIFT, UP, KP_1, KP_2, KP_3}, \
-  {LEFT_CTRL, LEFT_GUI, LEFT_ALT, MUHENKAN, SPACE, HENKAN, KATAKANA_HIRAGANA, RIGHT_ALT, RIGHT_GUI, APPLICATION, RIGHT_CTRL, LEFT, DOWN, RIGHT, KP_0, KP_DOT, KP_ENTER}, \
-}
+#define LAYOUT(...) ...
 ```
+
+### \<keyboard\>.c
+
+`<keyboard>/`直下に`<keyboard>.c`が存在する場合、それはQMKの一部としてコンパイルされます。
 
 ### config.h と post_config.h
 
@@ -80,16 +69,31 @@
 #endif
 ```
 
+### rules.cmake と post_rules.cmake
+
+`<keyboard>/`直下に`rules.cmake`や`post_rules.cmake`が存在する場合、それらはビルドスクリプトで暗黙的にインクルードされます。`rules.cmake`は`post_rules.cmake`や*キーマップ*の`rules.cmake`の**前**にインクルードされるので、*キーマップ*ごとに変化しないビルドオプションを設定するのに適しています。一方の`post_rules.cmake`は*キーマップ*の`rules.cmake`の**後**にインクルードされるので、設定されたオプションに応じて関連するオプションを定義するのに適しています。
+
+以下はその一例です。
+
+```cmake:rules.cmake
+# ビルドオプションを定義できる
+set(NKRO_ENABLE yes)
+```
+
+```cmake:post_rules.cmake
+# 定義されたビルドオプションに応じて、追加のオプションを定義することもできる
+if(NKRO_ENABLE)
+  ...
+endif()
+```
+
 ### CMakeLists.txt
 
-`<keyboard>/`直下に`CMakeLists.txt`が存在する場合、そのディレクトリはビルド対象に含まれるようになります。そこでは、cmakeの変数としてQMKのビルドオプションを設定したり、`keyboard`というライブラリを定義したりすることができます。この`keyboard`ライブラリは、そのままQMKにリンクされるので、*キーマップ*ごとに変化しない機能を実装するのに適しています。
+`<keyboard>/`直下に`CMakeLists.txt`が存在する場合、そのディレクトリはビルド対象に含まれるようになります。そこで定義される`keyboard`という名前のライブラリはキーボードエンジンにリンクされるので、*キーボード*固有の機能を実装するのに適しています。
 
 以下はその一例です。
 
 ```cmake:CMakeLists.txt
-# ビルドオプションを設定できる
-set(NKRO_ENABLE yes PARENT_SCOPE)
-
 # keyboardライブラリを定義できる
 add_library(keyboard STATIC
     keyboard.cpp

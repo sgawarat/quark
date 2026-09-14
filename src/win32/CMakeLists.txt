@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 add_library(engine_impl STATIC
-    scancode.cpp
-    injected.cpp
-    receiver.cpp
+  injected.cpp
+  sink.cpp
+  source.cpp
 )
 target_link_libraries(engine_impl PRIVATE
-    config
+  config
 )
