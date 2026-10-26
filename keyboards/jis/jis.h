@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
- * @file keyboard.h
+ * @file jis.h
  * @brief JIS配列
  */
 #pragma once

@@ -11,4 +11,23 @@
       "preferred_line_length": 120,
     },
   },
+  "lsp": {
+    "clangd": {
+      "binary": {
+        "ignore_system_version": true,
+      },
+      "fetch": {
+        "pre_release": true,
+      },
+    },
+  },
+  "terminal": {
+    "env": {
+      "CMAKE_BUILD_TYPE": "Debug",
+      "QMK_FIRMWARE_DIR": "../qmk_firmware",
+      "QUARK_KEYBOARD": "jis",
+      "QUARK_KEYMAP": "example",
+      "QUARK_ENABLE_DEBUGGING_WORKAROUNDS": "yes",
+    },
+  },
 }

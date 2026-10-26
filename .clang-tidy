@@ -2,65 +2,63 @@
 ---
 Checks:
   - -*,
+
   - bugprone-*,
+  - -bugprone-switch-missing-default-case, # switchにdefaultがなくても良い（コンパイラに任せるため）
+
   - cert-*,
+  - -cert-dcl03-c, # 無理にassertをstatic_assertに直さなくても良い（実行時検査したい場合もあるため）
+
   - cppcoreguidelines-*,
+  - -cppcoreguidelines-macro-usage, # マクロを使っても良い
+  - -cppcoreguidelines-pro-type-vararg, # Cの可変長引数を使っても良い（ioctlとか）
+  - -cppcoreguidelines-special-member-functions, # 暗黙的に定義されるコンストラクタを明示しなくても良い（mixinで表現するため）
+
   - clang-analyzer-*,
+
   - clang-diagnostic-*,
+
   - misc-*,
+  - -misc-static-assert, # 無理にassertをstatic_assertに直さなくても良い（実行時検査したい場合もあるので）
+
   - modernize-*,
+  - -modernize-use-trailing-return-type, # 戻り値の型を後置で宣言しなくても良い
+
   - performance-*,
+  - -performance-enum-size, # enumのunderlying_type型を広く取っても良い
+
   - readability-*,
-
-  # switchにdefaultがなくても良い。
-  - -bugprone-switch-missing-default-case,
-
-  # マクロを使っても良い。
-  - -cppcoreguidelines-macro-usage,
-
-  # 暗黙的に定義されるコンストラクタを明示しなくても良い。
-  - -cppcoreguidelines-special-member-functions,
-
-  # 戻り値の型を後置で宣言しなくても良い。
-  - -modernize-use-trailing-return-type,
-
-  # enumのunderlying_type型を広く取っても良い。
-  - -performance-enum-size,
-
-  # 実引数に名前がなくても良い。
-  - -readability-named-parameter,
-
-  # 副作用のないメンバー関数をstaticにしなくても良い。
-  - -readability-convert-member-functions-to-static,
+  - -readability-convert-member-functions-to-static, # 副作用のないメンバー関数をstaticにしなくても良い
+  - -readability-named-parameter, # 実引数に名前がなくても良い
+  - -readability-use-std-min-max, # 無理にmin/maxを使わなくて良い
 
 CheckOptions:
-  # マクロでdo whileを使っても良い。
+  # マクロでdo whileを使っても良い
   - key: cppcoreguidelines-avoid-do-while.IgnoreMacros
     value: true
 
-  # 型エイリアスにマジックナンバーが含まれていても良い。
-  - key: cppcoreguidelines-avoid-magic-numbers.IgnoreTypeAliases
-    value: true
-  - key: readability-magic-numbers.IgnoreTypeAliases
-    value: true
+  # 暗黙的にインクルードされるヘッダは検査対象から除外する
+  # 他、偽陽性をオフにする（signal.hとか）
+  - key: misc-include-cleaner.IgnoreHeaders
+    value: "config.h;signal.h;sigset_t.h"
 
-  # 間接的にincludeされるシンボルを使っても良い
-  - key: misc-include-cleaner.MissingIncludes
-    value: false
-
-  # ごく短い文は括弧で囲わなくても良い。
+  # ごく短い文は括弧で囲わなくても良い
   - key: readability-braces-around-statements.ShortStatementLines
     value: 1
 
-  # よく使われる短縮名を許容する。
+  # Cognitive Complexityの計算にマクロの中身を含めない
+  - key: readability-function-cognitive-complexity.IgnoreMacros
+    value: true
+
+  # よく使われる短縮名を許容する
   - key: readability-identifier-length.IgnoredVariableNames
-    value: _|i|x|y|r|v|h|id|fn|os
+    value: _|i|x|y|v|h|id|fn|os|fd
   - key: readability-identifier-length.IgnoredParameterNames
-    value: _|i|x|y|v|h|id|fn|os
+    value: _|i|x|y|v|h|id|fn|os|fd
   - key: readability-identifier-length.IgnoredLoopCounterNames
     value: i|x|y
 
-  # ポインタの暗黙的なbool変換を許容する。
+  # ポインタの暗黙的なbool変換を許容する
   - key: readability-implicit-bool-conversion.AllowPointerConditions
     value: true
 ...

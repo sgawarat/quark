@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
- * @file keymap.c
+ * @file keymap.h
  * @brief キーマップ
  */
 #pragma once

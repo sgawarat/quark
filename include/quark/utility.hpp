@@ -10,8 +10,6 @@
 namespace quark {
 /**
  * @brief コピーを禁止するための基底クラス
- *
- * 適用したいクラスでprivate継承する。
  */
 struct MoveOnly {
   MoveOnly() = default;
@@ -24,15 +22,13 @@ struct MoveOnly {
 
 /**
  * @brief コピーとムーブを禁止するための基底クラス
- *
- * 適用したいクラスでprivate継承する。
  */
-struct Stationary {
-  Stationary() = default;
-  Stationary(const Stationary&) = delete;
-  Stationary(Stationary&&) = default;
-  Stationary& operator=(const Stationary&) = delete;
-  Stationary& operator=(Stationary&&) = default;
-  ~Stationary() = default;
+struct Pinned {
+  Pinned() = default;
+  Pinned(const Pinned&) = delete;
+  Pinned(Pinned&&) = delete;
+  Pinned& operator=(const Pinned&) = delete;
+  Pinned& operator=(Pinned&&) = delete;
+  ~Pinned() = default;
 };
 }  // namespace quark

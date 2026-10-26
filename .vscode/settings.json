@@ -1,9 +1,11 @@
 {
     "cmake.configureOnOpen": true,
     "cmake.configureArgs": [
+        "-DCMAKE_BUILD_TYPE=Debug",
         "-DQMK_FIRMWARE_DIR=../../qmk_firmware",
         "-DQUARK_KEYBOARD=jis",
-        "-DQUARK_KEYMAP=example"
+        "-DQUARK_KEYMAP=example",
+        "-DQUARK_ENABLE_DEBUGGING_WORKAROUNDS=yes",
     ],
     "editor.formatOnSave": true,
     "cmake.configureOnEdit": false,

@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # clang-format 22
+---
 BasedOnStyle: Google
 Language: Cpp
-Standard: c++23
+Standard: c++20
 
 # 1行の長さを制限する
 ColumnLimit: 100
@@ -32,9 +33,6 @@ CommentPragmas: '\*|@|TODO|HACK|FIXME|BUG'
 # コンストラクタ初期化子のインデントを通常に戻す
 ConstructorInitializerIndentWidth: 2
 
-# includeのまとまりの中でソートする
-IncludeBlocks: Preserve
-
 # ファイル終端に改行を加える
 InsertNewlineAtEOF: true
----
+...

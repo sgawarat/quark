@@ -13,7 +13,11 @@
 #include <print>
 #include <string_view>
 
+#ifdef _WIN32
 #include <debugapi.h>
+#elifdef __linux__
+#include <unistd.h>
+#endif
 
 namespace quark {
 /**
@@ -31,12 +35,26 @@ inline void log(
     const std::string_view severity, std::format_string<ArgsT...> fmt, ArgsT&&... args) noexcept {
   try {
     const auto message = std::format(fmt, std::forward<ArgsT>(args)...);
-    std::println(std::cerr, R"({{"timestamp":"{:%FT%TZ}","severity":{:?},"message":{:?}}},)",
+
+    // QMKのprintlnマクロが定義されていれば一時的に無効化しておく
+#pragma push_macro("println")
+#ifdef println
+#undef println
+#endif
+    std::println(std::cerr, R"({{"timestamp":"{:%FT%TZ}","severity":{:?},"message":{:?}}})",
         std::chrono::system_clock::now(), severity, message);
+#pragma pop_macro("println")
+
   } catch (const std::exception& e) {
+    // エラーの起こりにくい出力先に対して、最小限のログを出力する
 #ifdef _WIN32
-    OutputDebugStringA("[quark] Failed to log:");
+    OutputDebugStringA("[Quark] Failed to log: ");
     OutputDebugStringA(e.what());
+#else
+    const std::string_view head = "[Quark] Failed to log: ";
+    const std::string_view what = e.what();
+    write(STDERR_FILENO, head.data(), head.size());
+    write(STDERR_FILENO, what.data(), what.size());
 #endif
   }
 }

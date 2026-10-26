@@ -1,4 +1,5 @@
 {
+  "$schema": "https://gitlab.kitware.com/cmake/cmake/-/raw/master/Help/manual/presets/schema.json",
   "version": 8,
   "cmakeMinimumRequired": {
     "major": 3,
@@ -7,42 +8,73 @@
   },
   "configurePresets": [
     {
-      "name": "clang",
-      "hidden": true,
+      "name": "default",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_COLOR_DIAGNOSTICS": "ON",
+        "CMAKE_BUILD_TYPE": "$env{CMAKE_BUILD_TYPE}",
+        "QMK_FIRMWARE_DIR": "$env{QMK_FIRMWARE_DIR}",
+        "QUARK_KEYBOARD": "$env{QUARK_KEYBOARD}",
+        "QUARK_KEYMAP": "$env{QUARK_KEYMAP}",
+        "QUARK_ENABLE_DEBUGGING_WORKAROUNDS": "$env{QUARK_ENABLE_DEBUGGING_WORKAROUNDS}"
+      }
+    },
+    {
+      "name": "lint",
+      "inherits": "default",
+      "cacheVariables": {
         "CMAKE_C_CLANG_TIDY": "clang-tidy",
         "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
-      }
-    },
-    {
-      "name": "Debug",
-      "inherits": "clang",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
-      }
-    },
-    {
-      "name": "Release",
-      "inherits": "clang",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ],
   "buildPresets": [
     {
-      "name": "Debug",
-      "configurePreset": "Debug"
+      "name": "build",
+      "configurePreset": "default",
+      "targets": [
+        "$env{CMAKE_BUILD_TARGET}"
+      ]
     },
     {
-      "name": "Release",
-      "configurePreset": "Release"
+      "name": "rebuild",
+      "configurePreset": "default",
+      "targets": [
+        "$env{CMAKE_BUILD_TARGET}"
+      ],
+      "cleanFirst": true
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "build",
+      "steps": [
+        {
+          "name": "default",
+          "type": "configure"
+        },
+        {
+          "name": "build",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "rebuild",
+      "steps": [
+        {
+          "name": "default",
+          "type": "configure"
+        },
+        {
+          "name": "rebuild",
+          "type": "build"
+        }
+      ]
     }
   ]
 }

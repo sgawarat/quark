@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 # clang-tidyにQMKのソースファイルを解析させない
-set(TMP_CMAKE_C_CLANG_TIDY ${CMAKE_C_CLANG_TIDY})
 set(CMAKE_C_CLANG_TIDY "")
 
 add_library(quantum_core STATIC
   timer.cpp
   wait.cpp
+  quantum.cpp
 )
 target_compile_options(quantum_core PRIVATE
   -Wno-c23-extensions
@@ -115,5 +115,3 @@ endif()
 target_link_libraries(quantum INTERFACE
   quantum_core
 )
-
-set(CMAKE_C_CLANG_TIDY ${TMP_CMAKE_C_CLANG_TIDY})

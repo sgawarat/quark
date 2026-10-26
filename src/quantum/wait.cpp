@@ -5,6 +5,8 @@
  * @file wait.cpp
  * @brief 待機関数
  */
+#include <chrono>
+#include <cstdint>
 #include <thread>
 
 extern "C" {

@@ -8,11 +8,11 @@ include("${CMAKE_SOURCE_DIR}/cmake/utility.cmake")
 find_quantum_files(rules.cmake QUANTUM_RULES_FILES QUANTUM_POST_RULES_FILES)
 
 # 見つけたrules.cmakeを読み込む
-foreach(RULES_FILE ${QUANTUN_RULES_FILES})
+foreach(RULES_FILE ${QUANTUM_RULES_FILES})
   include("${RULES_FILE}")
 endforeach()
 
-foreach(RULES_FILE ${QUANTUN_POST_RULES_FILES})
+foreach(RULES_FILE ${QUANTUM_POST_RULES_FILES})
   include("${RULES_FILE}")
 endforeach()
 
@@ -26,6 +26,7 @@ target_precompile_headers(quantum_config INTERFACE
   ${QUANTUM_POST_CONFIG_HEADERS}
 )
 target_compile_definitions(quantum_config INTERFACE
+  # TODO: debounceに対応させる
   DEBOUNCE_TYPE="none"
   DEBOUNCE=0
 )
@@ -39,7 +40,9 @@ target_include_directories(quantum_config INTERFACE
   "${QMK_FIRMWARE_DIR}/quantum/sequencer"
   "${QMK_FIRMWARE_DIR}/platforms"
   "${QMK_FIRMWARE_DIR}/tmk_core/protocol"
-  ${CMAKE_SOURCE_DIR}/include/quark/quantum
+
+  # include-nextされるヘッダのため、QMKより後ろに列挙する必要がある
+  ${CMAKE_SOURCE_DIR}/include/quark/quantum/system
 )
 
 # ソース用の設定をまとめるライブラリを作る
@@ -75,7 +78,7 @@ target_sources(quantum_sources INTERFACE
   "${QMK_FIRMWARE_DIR}/tmk_core/protocol/usb_device_state.c"
 )
 
-# ビルドオプションが他のビルドオプションを操作にする
+# ビルドオプションが他のビルドオプションを定義する
 if(MOUSEKEY_ENABLE)
   set(MOUSE_ENABLE yes)
 endif()

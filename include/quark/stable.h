@@ -8,9 +8,9 @@
 #pragma once
 
 #ifdef _WIN32
-#include <Windows.h>
-
-// QMKと衝突するマクロを取り除く
+// QMKと衝突するWin32のマクロを退避させる
+#include <wincontypes.h>
+static const auto QUARK_WIN32_KEY_EVENT = KEY_EVENT;
 #undef KEY_EVENT
 #endif
 
@@ -56,11 +56,4 @@ extern "C" {
 
 #ifdef __cplusplus
 }  // extern "C"
-#endif
-
-// <print>と衝突するマクロを取り除く
-#ifdef __cplusplus
-#include <print.h>
-#undef print
-#undef println
 #endif

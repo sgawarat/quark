@@ -7,13 +7,18 @@ if(WIN32)
   add_subdirectory(win32)
 endif()
 
+if(LINUX)
+  add_subdirectory(linux)
+endif()
+
 add_library(engine STATIC
+  keyboard.cpp
   engine.cpp
 )
 target_link_libraries(engine PRIVATE
   config
-  $<$<TARGET_EXISTS:keymap>:keymap>
-  $<$<TARGET_EXISTS:keyboard>:keyboard>
   engine_impl
   quantum
+  $<$<TARGET_EXISTS:keyboard>:keyboard>
+  $<$<TARGET_EXISTS:keymap>:keymap>
 )

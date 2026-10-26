@@ -5,7 +5,7 @@ add_library(keyboard STATIC
   jis.cpp
 )
 target_compile_options(keyboard PRIVATE
-  -Wno-switch-enum
+  # -Wno-switch-enum
 )
 target_link_libraries(keyboard PRIVATE
   config

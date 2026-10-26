@@ -3,17 +3,17 @@
   "configurations": [
     {
       "name": "cmake",
-      "type": "cppvsdbg",
+      "type": "cppdbg",
       "request": "launch",
       "program": "${command:cmake.launchTargetPath}",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${command:cmake.launchTargetDirectory}",
       "environment": [],
-      "console": "internalConsole",
       "logging": {
         "moduleLoad": false
-      }
+      },
+      "MIMode": "lldb"
     }
   ]
 }

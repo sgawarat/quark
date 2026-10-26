@@ -10,6 +10,8 @@ set(QUARK_KEYBOARD "" CACHE STRING "Keyboard Name")
 set(QUARK_KEYMAP "" CACHE STRING "Keymap Name")
 set(QUARK_ENABLE_KEYMAP_LIBRARY FALSE CACHE BOOL "Compiles Your Keymap as a Static Library")
 
+set(QUARK_ENABLE_DEBUGGING_WORKAROUNDS FALSE CACHE BOOL "Enables Workarounds for Debugging")
+
 # QMK Firmware
 if(NOT(EXISTS "${QMK_FIRMWARE_DIR}" AND IS_DIRECTORY "${QMK_FIRMWARE_DIR}"))
   message(FATAL_ERROR "QMK Firmware directory '${QMK_FIRMWARE_DIR}' is not found")
@@ -61,6 +63,7 @@ if(MSVC)
 endif()
 
 target_compile_options(config INTERFACE
+  -fno-rtti
 
   # C++98の下位互換性を放棄
   -Wno-c++98-compat
@@ -91,6 +94,14 @@ target_compile_definitions(config INTERFACE
   UNICODE
   _UNICODE
 )
+
+if(QUARK_ENABLE_DEBUGGING_WORKAROUNDS)
+  target_compile_definitions(config INTERFACE
+    # デバッグ用のワークアラウンド（デバッガで停止するときのためにデバイスをgrabしない）
+    QUARK_ENABLE_DEBUGGING_WORKAROUNDS
+  )
+endif()
+
 target_include_directories(config INTERFACE
   ./include
 )
@@ -109,3 +120,7 @@ endif()
 add_subdirectory(src)
 add_subdirectory(platforms)
 add_subdirectory(tools)
+
+enable_testing()
+
+add_subdirectory(tests)

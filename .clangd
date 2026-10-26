@@ -1,4 +1,7 @@
+# SPDX-License-Identifier: CC0-1.0
 CompileFlags:
-  CompilationDatabase: "build"
+  CompilationDatabase: build
+Completion:
+  ArgumentLists: Delimiters
 Documentation:
   CommentFormat: Doxygen

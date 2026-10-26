@@ -6,8 +6,8 @@
  * @brief タイマー関数
  */
 #include <chrono>
-
 #include <cstdint>
+#include <ratio>
 
 extern "C" {
 #include <timer.h>

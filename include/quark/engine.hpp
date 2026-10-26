@@ -10,29 +10,14 @@
 #include <memory>
 #include <thread>
 
-#include <quark/utility.hpp>
-
-#ifndef QUARK_TICK_ACTIVE_RATE
-/**
- * @brief アクティブ状態の更新レート（Hz）
- */
-#define QUARK_TICK_ACTIVE_RATE 1000
-#endif
-
-#ifndef QUARK_TICK_ACTIVE_TIME
-/**
- * @brief アクティブ状態の終了時間
- */
-#define QUARK_TICK_ACTIVE_TIME (std::chrono::milliseconds(500))
-#endif
+#include "quark/utility.hpp"
 
 namespace quark {
 /**
- * @brief Engineに渡されるシグナルを表す列挙型
+ * @brief Engineの制御シグナル
  */
 enum class EngineSignal {
   CLEAR,  ///< すべてのキーを離す
-  RESET,  ///< 初期状態に戻す
 };
 
 /**
@@ -47,11 +32,6 @@ public:
   explicit operator bool() const noexcept {
     return !!state_;
   }
-
-  /**
-   * @brief 初期化する
-   */
-  void init();
 
   /**
    * @brief 処理を開始する
@@ -73,12 +53,12 @@ public:
 
 private:
   /**
-   * @brief 内部状態を管理するクラス
+   * @brief 内部状態を管理するためのクラス
    */
   class State;
 
   /**
-   * @brief 内部状態を管理するクラスのshared_ptr
+   * @brief 内部状態を共有するためのクラス
    */
   using SharedState = std::shared_ptr<State>;
 

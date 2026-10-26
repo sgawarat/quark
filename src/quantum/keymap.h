@@ -22,4 +22,4 @@
 #endif
 
 // キーマップをライブラリ化するので、ここでは宣言だけ行う
-extern uint16_t PROGMEM keymaps[QUARK_KEYMAP_LAYERS][MATRIX_ROWS][MATRIX_COLS];
+extern uint16_t PROGMEM keymaps[QUARK_KEYMAP_LAYERS][MATRIX_ROWS][MATRIX_COLS];  // NOLINT

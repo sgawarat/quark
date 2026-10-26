@@ -6,10 +6,22 @@ include_guard(DIRECTORY)
 function(find_quantum_files filename pre_var post_var)
   set(pre "")
   set(post "")
-  set(dir "${QUARK_KEYMAP_DIR}")
+  cmake_path(SET dir NORMALIZE "${QUARK_KEYMAP_DIR}")
+  cmake_path(SET goal_dir NORMALIZE "${CMAKE_SOURCE_DIR}/keyboards")
+
+  # filenameがパスでないことを確認する
+  if(filename MATCHES "[/\\\\]")
+    message(FATAL_ERROR "'${filename}' is not filename")
+  endif()
+
+  # たどるパスがkeyboardsの中にあることを確認する
+  cmake_path(IS_PREFIX goal_dir ${dir} NORMALIZE is_prefix)
+  if(NOT is_prefix)
+    message(FATAL_ERROR "Keymap '${dir}' is not found in '${goal_dir}'")
+  endif()
 
   # 終点のディレクトリに到達するまで、<filename>とpost_<filename>という名前のファイルを列挙する
-  while(NOT dir STREQUAL "${CMAKE_SOURCE_DIR}/keyboards")
+  while(NOT ${dir} STREQUAL ${goal_dir})
     # <filename>はディレクトリの浅い順に並べる
     if(EXISTS "${dir}/${filename}")
       list(PREPEND pre "${dir}/${filename}")
@@ -23,9 +35,9 @@ function(find_quantum_files filename pre_var post_var)
     # ひとつ上のディレクトリを探す
     cmake_path(GET dir PARENT_PATH parent_dir)
 
-    # ディレクトリを移動できなければ、そこはルートなので、glob処理を終了する
+    # 念のため無限ループに陥らないように、ルートディレクトリに到達したか確認する
     if(dir STREQUAL parent_dir)
-      break()
+      message(FATAL_ERROR "Root directory was detected")
     endif()
 
     # ひとつ上のディレクトリに移動する
