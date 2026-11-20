@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -144,6 +144,12 @@ static void process_unshifted_key(bool pressed, uint16_t keycode) {
   }
 }
 
+/**
+ * @brief 左親指キーを処理する
+ *
+ * @param pressed キーが押されているか
+ * @param tap_count recordのtap.countの値
+ */
 static void process_left_thumb(bool pressed, uint8_t tap_count) {
   if (pressed) {
     if (tap_count > 0) {
@@ -167,6 +173,12 @@ static void process_left_thumb(bool pressed, uint8_t tap_count) {
   }
 }
 
+/**
+ * @brief 右親指キーを処理する
+ *
+ * @param pressed キーが押されているか
+ * @param tap_count recordのtap.countの値
+ */
 static void process_right_thumb(bool pressed, uint8_t tap_count) {
   if (pressed) {
     if (tap_count > 0) {
@@ -199,6 +211,12 @@ static void process_right_thumb(bool pressed, uint8_t tap_count) {
  */
 #define MOD2MOD_BIT(mod) (((mod) & 0x10) ? (((mod) & 0xf) << 4) : ((mod) & 0xf))
 
+/**
+ * @brief SHIFTキーを処理する
+ *
+ * @param keycode 操作されているキーのコード
+ * @param pressed キーが押されているか
+ */
 static void process_shift(uint8_t keycode, bool pressed) {
   const uint8_t mods = MOD2MOD_BIT(keycode);
   if (pressed) {
@@ -230,6 +248,12 @@ static void process_shift(uint8_t keycode, bool pressed) {
   }
 }
 
+/**
+ * @brief CTRL,ALT,GUIキーを処理する
+ *
+ * @param keycode 操作されているキーのコード
+ * @param pressed キーが押されているか
+ */
 static void process_cag(uint8_t keycode, bool pressed) {
   const uint8_t mods = MOD2MOD_BIT(keycode);
   if (pressed) {

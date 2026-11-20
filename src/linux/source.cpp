@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -70,7 +70,7 @@ SourceContext::SourceContext(std::shared_ptr<SourceEventQueue> producer, const S
 
     const UdevDevice device{udev_device_new_from_syspath(udev_.get(), syspath)};
     if (!device) {
-      warn_log("{} was skipped: Failed to udev_device_new_from_syspath", syspath);
+      QUARK_LOG_WARN("{} was skipped: Failed to udev_device_new_from_syspath", syspath);
       continue;
     }
 
@@ -185,7 +185,7 @@ bool SourceContext::receive_input_event(size_t device_index, const InputDevice& 
   // その他のイベントはそのuinputダブルへ受け流す
   if (!device.uinput_fd.write(event)) {
     // 異常が発生したら、デバイスを監視リストから除外する
-    warn_log("Failed to write a input event back to the device #{}", device_index);
+    QUARK_LOG_WARN("Failed to write a input event back to the device #{}", device_index);
     remove_device(device_index);
     return false;
   }
@@ -196,7 +196,7 @@ bool SourceContext::receive_input_event(size_t device_index, const InputDevice& 
   // SYN_DROPPEDが来たら、処理が追いついていないという証なので、安全のためにデバイスを監視リストから除外する
   if (event.type == EV_SYN && event.code == SYN_DROPPED) {
     // TODO: SYN_DROPPEDを正しくハンドリングする
-    warn_log("Input events was dropped in the device #{}", device_index);
+    QUARK_LOG_WARN("Input events was dropped in the device #{}", device_index);
     remove_device(device_index);
     return false;  // 中断
   }
@@ -211,38 +211,39 @@ bool SourceContext::add_device(const char* syspath, udev_device* device) {
   // そのデバイスが入力イベントを送るものであることを確認する
   const char* const sysname = udev_device_get_sysname(device);
   if (!sysname || !std::string_view{sysname}.starts_with("event")) {
-    info_log("{} was skipped: This is not an input event", syspath);
+    QUARK_LOG_INFO("{} was skipped: This is not an input event", syspath);
     return false;
   }
 
   // そのデバイスがキーボードであることを確認する
   const char* const keyboard = udev_device_get_property_value(device, "ID_INPUT_KEYBOARD");
   if (!keyboard || std::string_view{keyboard} != "1") {
-    info_log("{} was skipped: This is not a keyboard", syspath);
+    QUARK_LOG_INFO("{} was skipped: This is not a keyboard", syspath);
     return false;
   }
 
   // そのデバイスがuinputダブルでないことを確認する
   udev_device* const parent_device = udev_device_get_parent(device);
   if (!parent_device) {
-    info_log("{} was skipped: This is a virtual device", syspath);
+    QUARK_LOG_INFO("{} was skipped: This is a virtual device", syspath);
     return false;
   }
   const char* const parent_sysname = udev_device_get_sysname(parent_device);
   if (!parent_sysname || uinput_sysname_set_.contains(parent_sysname)) {
-    info_log("{} was skipped: This is a virtual device", syspath);
+    QUARK_LOG_INFO("{} was skipped: This is a virtual device", syspath);
     return false;
   }
 
   // そのデバイスを開く
   const char* const devnode = udev_device_get_devnode(device);
   if (!devnode) {
-    info_log("{} was skipped: Invalid devnode", syspath);
+    QUARK_LOG_INFO("{} was skipped: Invalid devnode", syspath);
     return false;
   }
   auto input_fd_res = InputFd::create(devnode);
   if (!input_fd_res) {
-    info_log("{} was skipped: Failed to open input: {}", syspath, input_fd_res.error().message());
+    QUARK_LOG_INFO(
+        "{} was skipped: Failed to open input: {}", syspath, input_fd_res.error().message());
     return false;
   }
   auto&& input_fd = *std::move(input_fd_res);
@@ -250,14 +251,15 @@ bool SourceContext::add_device(const char* syspath, udev_device* device) {
   // そのデバイスがSinkの仮想デバイスでないことを確認する
   const auto input_name_res = input_fd.get_name();
   if (input_name_res && *input_name_res == "Quark Virtual Keyboard") {
-    info_log("{} was skipped: This is my virtual device", syspath);
+    QUARK_LOG_INFO("{} was skipped: This is my virtual device", syspath);
     return false;
   }
 
   // そのデバイスと対になる仮想デバイスを開く
   auto uinput_fd_res = UinputFd::create(input_fd);
   if (!uinput_fd_res) {
-    info_log("{} was skipped: Failed to open uinput: {}", syspath, uinput_fd_res.error().message());
+    QUARK_LOG_INFO(
+        "{} was skipped: Failed to open uinput: {}", syspath, uinput_fd_res.error().message());
     return false;
   }
   auto&& uinput_fd = *std::move(uinput_fd_res);
@@ -265,7 +267,7 @@ bool SourceContext::add_device(const char* syspath, udev_device* device) {
   // 作られた仮想デバイスのsysnameを取得する
   auto uinput_sysname_res = uinput_fd.get_sysname();
   if (!uinput_sysname_res) {
-    info_log("{} was skipped: Invalid uinput sysname: {}", syspath,
+    QUARK_LOG_INFO("{} was skipped: Invalid uinput sysname: {}", syspath,
         uinput_sysname_res.error().message());
     return false;
   }
@@ -277,7 +279,7 @@ bool SourceContext::add_device(const char* syspath, udev_device* device) {
         auto keys_res = input_fd.get_keys();
         if (!keys_res) return false;
         if (!keys_res->any()) return true;
-        info_log("Please release all keys on the {}", syspath);
+        QUARK_LOG_INFO("Please release all keys on the {}", syspath);
 
         constexpr size_t COUNT = 10;
         const auto DELTA = std::chrono::milliseconds(100);
@@ -289,7 +291,7 @@ bool SourceContext::add_device(const char* syspath, udev_device* device) {
         }
         return false;
       }()) {
-    warn_log("{} was skipped: Stuck key was detected", syspath);
+    QUARK_LOG_WARN("{} was skipped: Stuck key was detected", syspath);
     return false;
   }
 
@@ -298,7 +300,7 @@ bool SourceContext::add_device(const char* syspath, udev_device* device) {
   // そのデバイスをgrabする
   const auto input_grab_res = input_fd.grab();
   if (!input_grab_res) {
-    warn_log("{} was skipped: Failed to grab: {}", syspath, input_grab_res.error().message());
+    QUARK_LOG_WARN("{} was skipped: Failed to grab: {}", syspath, input_grab_res.error().message());
     return false;
   }
 #endif
@@ -309,7 +311,7 @@ bool SourceContext::add_device(const char* syspath, udev_device* device) {
   const auto epoll_add_res =
       epoll_fd_.add(input_fd.handle(), {.events = EPOLLIN, .data{.u64 = device_index}});
   if (!epoll_add_res) {
-    warn_log(
+    QUARK_LOG_WARN(
         "{} was skipped: Failed to add to epoll: {}", syspath, epoll_add_res.error().message());
     return false;
   }
@@ -333,7 +335,7 @@ bool SourceContext::add_device(const char* syspath, udev_device* device) {
     unused_device_indices_.pop_back();
   }
 
-  info_log("{} was added to the device list as #{}", syspath, device_index);
+  QUARK_LOG_INFO("{} was added to the device list as #{}", syspath, device_index);
   return true;
 }
 
@@ -353,6 +355,6 @@ void SourceContext::remove_device(size_t device_index) {
   device.uinput_fd = {};
   device.input_fd = {};
   unused_device_indices_.push_back(device_index);
-  info_log("Device #{} was removed from the device list", device_index);
+  QUARK_LOG_INFO("Device #{} was removed from the device list", device_index);
 }
 }  // namespace quark::inline evdev

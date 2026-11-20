@@ -8,73 +8,73 @@
   },
   "configurePresets": [
     {
-      "name": "default",
+      "name": "base",
+      "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_COLOR_DIAGNOSTICS": "ON",
-        "CMAKE_BUILD_TYPE": "$env{CMAKE_BUILD_TYPE}",
-        "QMK_FIRMWARE_DIR": "$env{QMK_FIRMWARE_DIR}",
-        "QUARK_KEYBOARD": "$env{QUARK_KEYBOARD}",
-        "QUARK_KEYMAP": "$env{QUARK_KEYMAP}",
-        "QUARK_ENABLE_DEBUGGING_WORKAROUNDS": "$env{QUARK_ENABLE_DEBUGGING_WORKAROUNDS}"
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
       }
     },
     {
-      "name": "lint",
-      "inherits": "default",
+      "name": "clang",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang"
+      }
+    },
+    {
+      "name": "clang-cl",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl"
+      }
+    },
+    {
+      "name": "clang-tidy",
+      "hidden": true,
       "cacheVariables": {
         "CMAKE_C_CLANG_TIDY": "clang-tidy",
         "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
       }
-    }
-  ],
-  "buildPresets": [
-    {
-      "name": "build",
-      "configurePreset": "default",
-      "targets": [
-        "$env{CMAKE_BUILD_TARGET}"
-      ]
     },
     {
-      "name": "rebuild",
-      "configurePreset": "default",
-      "targets": [
-        "$env{CMAKE_BUILD_TARGET}"
-      ],
-      "cleanFirst": true
-    }
-  ],
-  "workflowPresets": [
-    {
-      "name": "build",
-      "steps": [
-        {
-          "name": "default",
-          "type": "configure"
-        },
-        {
-          "name": "build",
-          "type": "build"
-        }
-      ]
+      "name": "debug",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
     },
     {
-      "name": "rebuild",
-      "steps": [
-        {
-          "name": "default",
-          "type": "configure"
-        },
-        {
-          "name": "rebuild",
-          "type": "build"
-        }
-      ]
+      "name": "release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-clang-cl-debug",
+      "displayName": "Windows clang-cl (Debug)",
+      "inherits": ["base", "clang-cl", "debug"]
+    },
+    {
+      "name": "windows-clang-clang-tidy-debug",
+      "displayName": "Windows clang & clang-tidy (Debug)",
+      "inherits": ["base", "clang", "clang-tidy", "debug"]
+    },
+    {
+      "name": "windows-clang-cl-release",
+      "displayName": "Windows clang-cl (Release)",
+      "inherits": ["base", "clang-cl", "release"]
+    },
+    {
+      "name": "windows-clang-clang-tidy-release",
+      "displayName": "Windows clang & clang-tidy (Release)",
+      "inherits": ["base", "clang", "clang-tidy", "release"]
     }
   ]
 }

@@ -1,11 +1,13 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
  * @file injected.cpp
  * @brief 自前のINJECTEDフラグ
  */
-#include <quark/win32/injected.hpp>
+#include "quark/win32/injected.hpp"
+
+#include <Windows.h>
 
 #include <bit>
 

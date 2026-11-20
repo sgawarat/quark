@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -16,15 +16,12 @@
 #include <optional>
 #include <utility>
 
-#include "quark/engine.hpp"
 #include "quark/linux/fd/base.hpp"
 #include "quark/linux/result.hpp"
 #include "quark/logging.hpp"
 #include "quark/result.hpp"
 
-namespace {
-using namespace quark;
-
+namespace quark::inline evdev {
 /**
  * @brief Signal FDを管理するためのクラス
  */
@@ -59,19 +56,10 @@ public:
 private:
   explicit SignalFd(int fd) noexcept : FdBase{fd} {}
 };
-}  // namespace
 
-/**
- * @brief メイン関数
- */
-int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
-  try {
-    const auto sigfd = SignalFd::create().or_throw("Failed to create SignalFd").value();
-
-    // 仮想キーボードを起動する
-    Engine engine;
-    engine.start([](void*) noexcept { kill(getpid(), SIGTERM); }, nullptr);
-
+class App final {
+public:
+  int run() {
     // メッセージループ
     while (true) {
       // ブロッキングモードでシグナルを待つ
@@ -85,10 +73,23 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
         break;
       }
     }
+  }
+};
+}  // namespace quark::inline evdev
 
-    return EXIT_SUCCESS;
+/**
+ * @brief メイン関数
+ */
+int main(int argc, char* argv[]) {
+  using namespace quark;
+  try {
+    App app{argc, argv};
+    return app.run();
   } catch (const std::exception& e) {
-    quark::critical_log("Main thread crashed: {}", e.what());
+    QUARK_LOG_FATAL("Main thread crashed: {}", e.what());
+    return EXIT_FAILURE;
+  } catch (...) {
+    QUARK_LOG_FATAL("Main thread crashed: Unknown error");
     return EXIT_FAILURE;
   }
 }

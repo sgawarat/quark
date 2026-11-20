@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -214,7 +214,7 @@ Key to_key(KeyCode keycode) noexcept {
     case KC_RIGHT_ALT: return Key{KEY_RIGHTALT};
     case KC_RIGHT_GUI: return Key{KEY_RIGHTMETA};
   };
-  return Key{0};
+  return Key::NO;
 }
 
 // Key to_key(UsagePage page, UsageId id) noexcept {

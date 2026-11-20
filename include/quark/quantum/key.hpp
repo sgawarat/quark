@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -39,9 +39,25 @@ private:
   uint8_t value_{};
 };
 
+/**
+ * @brief Quantumのキー表現の値型
+ */
 using KeyCodeValue = decltype(+KeyCode{});
 
+/**
+ * @brief Quantumのキーコードの個数
+ */
 static constexpr size_t KEYCODE_COUNT = QK_BASIC_MAX - QK_BASIC + 1;
+
+/**
+ * @brief 修飾キーのキーコードの先頭
+ */
+static constexpr size_t KEYCODE_MOD_BEGIN = KC_LEFT_CTRL;
+
+/**
+ * @brief 修飾キーのキーコードの終端
+ */
+static constexpr size_t KEYCODE_MOD_END = KEYCODE_MOD_BEGIN + 8;
 
 /**
  * @brief キーに設定された情報の種類を表すタグ型
@@ -74,7 +90,7 @@ enum class NonHoldable : bool {
  *
  * キーボードまたはキーマップによって実装される。
  *
- * @param key キー
+ * @param keycode キーコード
  */
 extern NonHoldable get_key_property(KeyCode keycode, KeyPropertyTag<NonHoldable>);
 
@@ -82,7 +98,7 @@ extern NonHoldable get_key_property(KeyCode keycode, KeyPropertyTag<NonHoldable>
  * @brief キーに設定された情報を取得する
  *
  * @tparam T 設定された情報の型
- * @param key キー
+ * @param keycode キーコード
  * @return T 設定された情報の値
  */
 template <typename T>

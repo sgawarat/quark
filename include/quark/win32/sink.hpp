@@ -1,80 +1,47 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
  * @file sink.hpp
- * @brief Win32のSink処理
+ * @brief Win32におけるSink処理
  */
 #pragma once
 
-#include <condition_variable>
-#include <deque>
-#include <mutex>
-#include <stop_token>
-#include <variant>
-
 #include <Windows.h>
 
-extern "C" {
-#include <report.h>
-}  // extern "C"
+#include <memory>
+#include <stop_token>
 
-#include <quark/bitset.hpp>
-#include <quark/utility.hpp>
+#include "quark/engine.hpp"
+#include "quark/event.hpp"
+#include "quark/queue.hpp"
+#include "quark/utility.hpp"
 
 namespace quark::inline win32 {
 /**
- * @brief Sinkに渡されるシグナルを表す列挙型
+ * @brief Sinkに送られるイベントを管理するキュー
  */
-enum class SinkSignal {
-  KEY_REPEAT,  ///< キーリピート
-  RESET,       ///< 初期状態に戻す
-};
+using SinkEventQueue = EventQueue<KeyPressEvent, KeyReleaseEvent, MousePressEvent,
+    MouseReleaseEvent, MouseWheelEvent, MouseCursorEvent, EngineSignal>;
 
 /**
- * @brief Sinkに渡されるイベントを格納するクラス
+ * @brief SinkEventQueueを流れるパケット
  */
-using SinkEvent = std::variant<std::monostate, report_keyboard_t, report_nkro_t, report_mouse_t,
-    report_extra_t, SinkSignal>;
+using SinkEventPacket = SinkEventQueue::Packet;
 
 /**
- * @brief Sinkに渡されるイベントのためのキューを管理するクラス
+ * @brief Sink処理に必要な初期データを格納するためのクラス
  */
-class SinkQueue final : private Stationary {
-public:
-  SinkQueue();
-
-  ~SinkQueue() noexcept;
-
-  /**
-   * @brief キューにイベントを追加する
-   */
-  void push(const SinkEvent& event);
-
-  /**
-   * @brief キューからイベントを取り出す
-   *
-   * @param stop_token 呼び出し元スレッドのstop_token
-   * @param event 受け取ったイベントの格納先
-   * @retval true イベントを受け取った
-   * @retval false 停止要求を受け取った
-   */
-  bool pop(const std::stop_token& stop_token, SinkEvent& event);
-
-private:
-  std::deque<SinkEvent> queue_;
-  std::mutex queue_mtx_;
-  std::condition_variable_any queue_cv_;
-};
+struct SinkContextDesc {};
 
 /**
  * @brief Sink処理を行うためのクラス
  */
-class SinkContext final : private Stationary {
+class SinkContext final : private Pinned {
 public:
-  explicit SinkContext(SinkQueue& queue) : queue_{queue} {}
+  explicit SinkContext(std::shared_ptr<SinkEventQueue> consumer, const SinkContextDesc& desc);
 
-  ~SinkContext() noexcept = default;
+  ~SinkContext() noexcept;
 
   /**
    * @brief ループ処理を行う
@@ -86,28 +53,21 @@ public:
   void run(const std::stop_token& stop_token);
 
 private:
-  /**
-   * @brief キーの状態を格納するためのビットセット型
-   */
-  using KeySet = BitSet<256>;
+  void update(EventTime time, TickEvent event);
+  void update(EventTime time, KeyPressEvent event);
+  void update(EventTime time, KeyReleaseEvent event);
+  void update(EventTime time, MousePressEvent event);
+  void update(EventTime time, MouseReleaseEvent event);
+  void update(EventTime time, MouseWheelEvent event);
+  void update(EventTime time, MouseCursorEvent event);
+  void update(EventTime time, EngineSignal signal);
 
-  /**
-   * @brief 修飾キーの状態を格納するためのビットセット型
-   */
-  using ModKeySet = BitSet<8, uint8_t>;
-
-  // イベントのvisitor
-  void update(std::monostate) noexcept;
-  void update(const report_keyboard_t& report) noexcept;
-  void update(const report_nkro_t& report) noexcept;
-  void update(const report_mouse_t& report) noexcept;
-  void update(const report_extra_t& report) noexcept;
-  void update(SinkSignal signal) noexcept;
-
-  SinkQueue& queue_;
-  KeySet prev_keys_;              ///< 直前のキー状態
-  ModKeySet prev_mods_;           ///< 直前の修飾キー状態
-  uint8_t prev_mouse_buttons_{};  ///< 直前のマウスボタン状態
-  INPUT last_input_{};            ///< 最後に押したキーのイベント
+  std::shared_ptr<SinkEventQueue> consumer_;
+  KeySet prev_keys_;                       ///< 直前のキー状態
+  MouseButtonSet prev_mouse_buttons_;      ///< 直前のマウスボタン状態
+  KeyCode last_key_;                       ///< 最後に押したキー
+  EventClock::time_point repeat_period_;   ///< 次のキーリピートが発生する時刻
+  EventClock::duration keyboard_delay_{};  ///< キーリピートの「表示までの待ち時間」
+  EventClock::duration keyboard_speed_{};  ///< キーリピートの「繰り返し速度」
 };
 }  // namespace quark::inline win32

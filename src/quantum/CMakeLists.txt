@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+# SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 # clang-tidyにQMKのソースファイルを解析させない
@@ -7,6 +7,7 @@ set(CMAKE_C_CLANG_TIDY "")
 add_library(quantum_core STATIC
   timer.cpp
   wait.cpp
+  print.cpp
   quantum.cpp
 )
 target_compile_options(quantum_core PRIVATE
@@ -36,7 +37,7 @@ target_compile_options(quantum_core PRIVATE
   -Wno-vla
 )
 target_link_libraries(quantum_core PRIVATE
-  config
+  quantum_config
   quantum_sources
 )
 
@@ -63,7 +64,7 @@ if(QUARK_ENABLE_KEYMAP_LIBRARY)
       QMK_KEYBOARD_H="${CMAKE_SOURCE_DIR}/src/quantum/keyboard.h"
     )
     target_link_libraries(quantum_keymap PRIVATE
-      config
+      quantum_config
     )
 
     if(EXISTS "${QUARK_KEYBOARD_DIR}/${QUARK_KEYBOARD_NAME}.h")
@@ -83,7 +84,7 @@ if(QUARK_ENABLE_KEYMAP_LIBRARY)
       "${QUARK_KEYBOARD_DIR}/${QUARK_KEYBOARD_NAME}.c"
     )
     target_link_libraries(quantum_keyboard PRIVATE
-      config
+      quantum_config
     )
 
     target_link_libraries(quantum INTERFACE
@@ -113,5 +114,6 @@ else()
 endif()
 
 target_link_libraries(quantum INTERFACE
+  quantum_config
   quantum_core
 )

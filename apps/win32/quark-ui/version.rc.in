@@ -1,0 +1,37 @@
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+#include <Windows.h>
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     @PROJECT_VERSION_MAJOR@,@PROJECT_VERSION_MINOR@,@PROJECT_VERSION_PATCH@,0
+PRODUCTVERSION  @PROJECT_VERSION_MAJOR@,@PROJECT_VERSION_MINOR@,@PROJECT_VERSION_PATCH@,0
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+#ifdef NDEBUG
+FILEFLAGS       0
+#else
+FILEFLAGS       VS_FF_DEBUG
+#endif
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     0
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName",      ""
+            VALUE "FileDescription",  "GUI Application for Quark Virtual Keyboard"
+            VALUE "FileVersion",      "@PROJECT_VERSION@"
+            VALUE "InternalName",     "quark-ui"
+            VALUE "LegalCopyright",   "Copyright (C) 2026 sgawarat"
+            VALUE "OriginalFilename", "quark-ui.exe"
+            VALUE "ProductName",      "quark-ui"
+            VALUE "ProductVersion",   "@PROJECT_VERSION@"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 0x04B0
+    END
+END

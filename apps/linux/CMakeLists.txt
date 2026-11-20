@@ -1,5 +1,10 @@
-# SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+# SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-add_subdirectory(backend)
-add_subdirectory(frontend)
+add_subdirectory(quark)
+
+if(QUARK_QT)
+  add_subdirectory(quark-ui)
+endif()
+
+add_subdirectory(keytest)

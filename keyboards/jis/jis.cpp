@@ -1,15 +1,15 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
  * @file jis.cpp
  * @brief JIS配列
  */
-#include "jis.hpp"
+#include "jis.hpp"  // IWYU pragma: keep
 
 extern "C" {
-#include <keycodes.h>
-#include <keymap_japanese.h>
+#include <keycodes.h>         // IWYU pragma: export
+#include <keymap_japanese.h>  // IWYU pragma: export
 }
 
 #include "quark/quantum/key.hpp"
@@ -44,11 +44,10 @@ using namespace jis;
 NonHoldable get_key_property([[maybe_unused]] KeyCode keycode, KeyPropertyTag<NonHoldable>) {
 #ifdef _WIN32
   // IMEを通るキーは離した時にキーイベントを発生させないので押した段階で離してもらう
-  switch (key) {
-    case K_HANKAKU_ZENKAKU: [[fallthrough]];
-    case K_EISU: [[fallthrough]];
-    case K_KATAKANA_HIRAGANA: return NonHoldable{true};
-    default: break;
+  switch (+keycode) {
+    case JP_ZKHK:
+    case JP_EISU:
+    case JP_KANA: return NonHoldable::YES;
   }
 #endif
   return NonHoldable::NO;

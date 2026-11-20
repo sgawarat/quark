@@ -11,6 +11,7 @@ Checks:
 
   - cppcoreguidelines-*,
   - -cppcoreguidelines-macro-usage, # マクロを使っても良い
+  - -cppcoreguidelines-pro-bounds-constant-array-index, # 添字に非定数を使っても良い
   - -cppcoreguidelines-pro-type-vararg, # Cの可変長引数を使っても良い（ioctlとか）
   - -cppcoreguidelines-special-member-functions, # 暗黙的に定義されるコンストラクタを明示しなくても良い（mixinで表現するため）
 
@@ -37,10 +38,13 @@ CheckOptions:
   - key: cppcoreguidelines-avoid-do-while.IgnoreMacros
     value: true
 
-  # 暗黙的にインクルードされるヘッダは検査対象から除外する
-  # 他、偽陽性をオフにする（signal.hとか）
+  # 間接的にインクルードされるシンボルを使っても良い（これを想定しないヘッダが多いので）
+  - key: misc-include-cleaner.MissingIncludes
+    value: false
+
+  # 以下のヘッダは検査対象から除外する（未使用でも残しておきたいので）
   - key: misc-include-cleaner.IgnoreHeaders
-    value: "config.h;signal.h;sigset_t.h"
+    value: "config.h;Windows.h"
 
   # ごく短い文は括弧で囲わなくても良い
   - key: readability-braces-around-statements.ShortStatementLines

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -7,17 +7,24 @@
  */
 #pragma once
 
+#include <functional>
 #include <memory>
-#include <thread>
 
 #include "quark/utility.hpp"
+
+#ifdef _WIN32
+#include "quark/win32/thread.hpp"
+#elifdef __linux__
+#include "quark/linux/thread.hpp"
+#endif
 
 namespace quark {
 /**
  * @brief Engineの制御シグナル
  */
 enum class EngineSignal {
-  CLEAR,  ///< すべてのキーを離す
+  SCREEN_LOCKED,    ///< ロック画面に入った
+  SCREEN_UNLOCKED,  ///< ロック画面から出た
 };
 
 /**
@@ -25,7 +32,12 @@ enum class EngineSignal {
  */
 class Engine final : private MoveOnly {
 public:
-  Engine();
+  /**
+   * @brief 既定値で構築する
+   *
+   * @param on_error エラー発生時に呼び出される関数。その呼出はスレッドセーフである必要がある。
+   */
+  Engine(std::function<void()> on_error);
 
   ~Engine() noexcept;
 
@@ -35,11 +47,8 @@ public:
 
   /**
    * @brief 処理を開始する
-   *
-   * @param on_error エラー発生時に呼び出される関数
-   * @param data on_errorの引数
    */
-  void start(void (*on_error)(void*) noexcept, void* data);
+  void start();
 
   /**
    * @brief 処理を停止する
@@ -52,19 +61,11 @@ public:
   void send(EngineSignal signal);
 
 private:
-  /**
-   * @brief 内部状態を管理するためのクラス
-   */
   class State;
 
-  /**
-   * @brief 内部状態を共有するためのクラス
-   */
-  using SharedState = std::shared_ptr<State>;
-
-  SharedState state_;
-  std::jthread sink_thread_;
-  std::jthread keyboard_thread_;
-  std::jthread source_thread_;
+  std::shared_ptr<State> state_;
+  Thread sink_thread_;
+  Thread keyboard_thread_;
+  Thread source_thread_;
 };
 }  // namespace quark

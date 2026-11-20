@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -6,8 +6,6 @@
  * @brief bitsetの単体テスト
  */
 #include "quark/bitset.hpp"
-
-#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -30,8 +28,8 @@ TEST_CASE_TEMPLATE("BitArray", T, uint8_t, uintptr_t) {
 
   SUBCASE("any") {
     REQUIRE_FALSE(BitArray<BIT_EXTENT, T>{}.any());
-    REQUIRE(BitArray<BIT_EXTENT, T>{63}.any());
-    REQUIRE(BitArray<BIT_EXTENT, T>{64}.any());
+    REQUIRE(BitArray<BIT_EXTENT, T>{63U}.any());
+    REQUIRE(BitArray<BIT_EXTENT, T>{64U}.any());
   }
 
   SUBCASE("ones") {

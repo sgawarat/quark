@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -55,6 +55,9 @@
   } while (false)
 
 namespace quark {
+/**
+ * @brief 値かエラーを表現するためのクラス
+ */
 template <typename T>
 class Result : public std::expected<T, std::error_code> {
 public:
@@ -68,7 +71,8 @@ public:
   constexpr Self&& or_log(
       this Self&& self, const std::format_string<Args...> what, Args&&... args) {
     if (!self.has_value()) {
-      error_log("{}: {}", std::format(what, std::forward<Args>(args)...), self.error().message());
+      QUARK_LOG_ERROR(
+          "{}: {}", std::format(what, std::forward<Args>(args)...), self.error().message());
     }
     return std::forward<Self>(self);
   }

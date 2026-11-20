@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -30,7 +30,7 @@ int main() {  // NOLINT(readability-function-cognitive-complexity)
   using namespace quark::key_test;
   try {
     auto epfd_res = EpollFd::create();
-    if (!epfd_res) warn_log("Failed to epoll_create1");
+    if (!epfd_res) QUARK_LOG_WARN("Failed to epoll_create1");
 
     constexpr size_t MAX_DEVICE_COUNT = 64;
     std::vector<InputFd> infds;
@@ -42,7 +42,7 @@ int main() {  // NOLINT(readability-function-cognitive-complexity)
 
       const auto name_res = infd.get_name();
       if (!name_res) {
-        warn_log("Failed to get_name (index:{})", i);
+        QUARK_LOG_WARN("Failed to get_name (index:{})", i);
         continue;
       }
       auto&& name = *name_res;
@@ -50,24 +50,24 @@ int main() {  // NOLINT(readability-function-cognitive-complexity)
       // デバイスがキーボードらしい機能を持っているか調べる
       const auto evbits_res = infd.get_bits<0>();
       if (!evbits_res) {
-        warn_log("Failed to get_bits(0) (index:{})", i);
+        QUARK_LOG_WARN("Failed to get_bits(0) (index:{})", i);
         continue;
       }
       auto&& evbits = *evbits_res;
 
       const EventBitArray<0> required_evbits{EV_SYN, EV_KEY, EV_MSC, EV_REP};
       if (!evbits.is_superset_of(required_evbits)) {
-        info_log("\"{}\" is not a keyboard (EV:{::#016x})", path, evbits.values());
+        QUARK_LOG_INFO("\"{}\" is not a keyboard (EV:{::#016x})", path, evbits.values());
         continue;
       }
       if (evbits.contains(EV_REL) || evbits.contains(EV_ABS)) {
-        info_log("\"{}\" is a pointing device (EV:{::#016x})", path, evbits.values());
+        QUARK_LOG_INFO("\"{}\" is a pointing device (EV:{::#016x})", path, evbits.values());
         continue;
       }
 
       const auto keybits_res = infd.get_bits<EV_KEY>();
       if (!keybits_res) {
-        warn_log("Failed to get keybits (index:{})", i);
+        QUARK_LOG_WARN("Failed to get keybits (index:{})", i);
         continue;
       }
       auto&& keybits = *keybits_res;
@@ -91,7 +91,7 @@ int main() {  // NOLINT(readability-function-cognitive-complexity)
       if (epfd_res) {
         epoll_event eev{.events = EPOLLIN, .data{.u64 = infds.size()}};
         if (epoll_ctl(epfd_res->handle(), EPOLL_CTL_ADD, infd.handle(), &eev) < 0) {
-          warn_log("Failed to EPOLL_CTL_ADD (path:\"{}\")", path);
+          QUARK_LOG_WARN("Failed to EPOLL_CTL_ADD (path:\"{}\")", path);
         }
         infds.push_back(std::move(infd));
       }

@@ -1,371 +1,325 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
  * @file sink.cpp
- * @brief Win32のSink処理
+ * @brief Win32におけるSink処理
  */
-#include <quark/win32/sink.hpp>
+#include "quark/win32/sink.hpp"
 
-extern "C" {
-#include <report.h>
-}  // extern "C"
+#include <Windows.h>
 
-#include <quark/logging.hpp>
-#include <quark/win32/injected.hpp>
-#include <quark/win32/scancode.hpp>
+#include <array>
+#include <chrono>
+#include <cstddef>
+
+#include "quark/event.hpp"
+#include "quark/logging.hpp"
+#include "quark/win32/injected.hpp"
+#include "quark/win32/key.hpp"
 
 namespace quark::inline win32 {
 namespace {
-/**
- * @brief INPUT_KEYBOARDのためのINPUTのラッパークラス
- */
-struct KeyInput final : INPUT {
-  /**
-   * @brief スキャンコードで初期化する
-   */
-  explicit KeyInput(Scancode scancode) noexcept
-    : INPUT{
-        .type = INPUT_KEYBOARD,
-        .ki{
-          .wScan = static_cast<uint8_t>(scancode),
-          .dwFlags =
-              static_cast<uint16_t>(scancode) > UINT8_MAX ? DWORD{KEYEVENTF_EXTENDEDKEY} : DWORD{0},
-          .dwExtraInfo = EXTRA_INFO_INJECTED,
-        },
-      } {
-    using enum Scancode;
+template <bool KEYUP>
+class KeyInput {
+public:
+  explicit KeyInput(Key key) {
+    if (key == Key::NO) return;
 
-    // Pauseは正確なスキャンコードが分からないためVKで送る
-    if (scancode == SC_PAUSE) {
-      ki.wVk = VK_PAUSE;  // NOLINT(cppcoreguidelines-pro-type-union-access)
-    } else if (scancode == SC_NUM_LOCK) {
-      ki.wVk = VK_NUMLOCK;  // NOLINT(cppcoreguidelines-pro-type-union-access)
+    DWORD dwFlags = 0;
+    if (KEYUP) dwFlags |= KEYEVENTF_KEYUP;
+    if (+key > UINT8_MAX) dwFlags |= KEYEVENTF_EXTENDEDKEY;
+
+    WORD wVk = 0;
+    if (key == Key::PAUSE) {
+      // Pauseはスキャンコードが特殊なのでVKで送る
+      wVk = VK_PAUSE;
     } else {
-      ki.dwFlags |= KEYEVENTF_SCANCODE;  // NOLINT(cppcoreguidelines-pro-type-union-access)
+      // それ以外はスキャンコードで送る
+      dwFlags |= KEYEVENTF_SCANCODE;
     }
+
+    inputs_.at(size_++) = {
+      .type = INPUT_KEYBOARD,
+      .ki{
+        .wVk = wVk,
+        .wScan = static_cast<uint8_t>(+key),
+        .dwFlags = dwFlags,
+        .dwExtraInfo = EXTRA_INFO_INJECTED,
+      },
+    };
   }
 
-  /**
-   * @brief キーコードで初期化する
-   */
-  explicit KeyInput(uint8_t keycode) noexcept : KeyInput{to_scancode(keycode)} {}
+  explicit KeyInput(KeyCode keycode) : KeyInput{to_key(keycode)} {}
 
-  /**
-   * @brief Generic Desktop PageのUsage IDで初期化する
-   */
-  explicit KeyInput(desktop_usages usage) noexcept : KeyInput{to_scancode(usage)} {}
-
-  /**
-   * @brief Consumer PageのUsage IDで初期化する
-   */
-  explicit KeyInput(consumer_usages usage) noexcept : KeyInput{to_scancode(usage)} {}
-
-  /**
-   * @brief キーを押すイベントを送信する
-   */
-  KeyInput& press() noexcept {
-    if (ki.wScan != 0) {                      // NOLINT(cppcoreguidelines-pro-type-union-access)
-      ki.dwFlags &= ~DWORD{KEYEVENTF_KEYUP};  // NOLINT(cppcoreguidelines-pro-type-union-access)
-      SendInput(1, this, sizeof(*this));
-    }
-    return *this;
-  }
-
-  /**
-   * @brief キーを離すイベントを送信する
-   */
-  KeyInput& release() noexcept {
-    if (ki.wScan != 0) {              // NOLINT(cppcoreguidelines-pro-type-union-access)
-      ki.dwFlags |= KEYEVENTF_KEYUP;  // NOLINT(cppcoreguidelines-pro-type-union-access)
-      SendInput(1, this, sizeof(*this));
-    }
-    return *this;
-  }
-
-  /**
-   * @brief キーを押して離すイベントを送信する
-   */
-  KeyInput& tap() noexcept {
-    return press().release();
-  }
-};
-
-/**
- * @brief INPUT_MOUSEのためのINPUTのラッパークラス
- */
-struct MouseInput final : INPUT {
-  static constexpr uint8_t MOUSE_BTN_MASK_123 = MOUSE_BTN1 | MOUSE_BTN2 | MOUSE_BTN3;
-  static constexpr uint8_t MOUSE_BTN_MASK_678 = MOUSE_BTN6 | MOUSE_BTN7 | MOUSE_BTN8;
-
-  MouseInput() noexcept
-    : INPUT{
-        .type = INPUT_MOUSE,
-        .mi{
-          .dwExtraInfo = EXTRA_INFO_INJECTED,
-        },
-      } {}
-
-  /**
-   * @brief ボタンを押すイベントを送信する
-   */
-  MouseInput& press(uint8_t buttons) noexcept {
-    // 左右中央ボタン
-    if ((buttons & MOUSE_BTN_MASK_123) != 0) {
-      // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-      mi.mouseData = 0;
-      if ((buttons & MOUSE_BTN1) != 0) mi.dwFlags |= MOUSEEVENTF_LEFTDOWN;
-      if ((buttons & MOUSE_BTN2) != 0) mi.dwFlags |= MOUSEEVENTF_RIGHTDOWN;
-      if ((buttons & MOUSE_BTN3) != 0) mi.dwFlags |= MOUSEEVENTF_MIDDLEDOWN;
-      // NOLINTEND(cppcoreguidelines-pro-type-union-access)
-      SendInput(1, this, sizeof(*this));
-    }
-
-    // 戻るボタン
-    if ((buttons & MOUSE_BTN4) != 0) {
-      // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-      mi.mouseData = XBUTTON1;
-      mi.dwFlags = MOUSEEVENTF_XDOWN;
-      // NOLINTEND(cppcoreguidelines-pro-type-union-access)
-      SendInput(1, this, sizeof(*this));
-    }
-
-    // 進むボタン
-    if ((buttons & MOUSE_BTN5) != 0) {
-      // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-      mi.mouseData = XBUTTON2;
-      mi.dwFlags = MOUSEEVENTF_XDOWN;
-      // NOLINTEND(cppcoreguidelines-pro-type-union-access)
-      SendInput(1, this, sizeof(*this));
-    }
-
-    // ボタン6～8
-    if ((buttons & MOUSE_BTN_MASK_678) != 0) mouse_button_6_7_8_not_supported();
-
-    return *this;
-  }
-
-  /**
-   * @brief ボタンを離すイベントを送信する
-   */
-  MouseInput& release(uint8_t buttons) noexcept {
-    // 左右中央ボタン
-    if ((buttons & MOUSE_BTN_MASK_123) != 0) {
-      // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-      mi.mouseData = 0;
-      if ((buttons & MOUSE_BTN1) != 0) mi.dwFlags |= MOUSEEVENTF_LEFTUP;
-      if ((buttons & MOUSE_BTN2) != 0) mi.dwFlags |= MOUSEEVENTF_RIGHTUP;
-      if ((buttons & MOUSE_BTN3) != 0) mi.dwFlags |= MOUSEEVENTF_MIDDLEUP;
-      // NOLINTEND(cppcoreguidelines-pro-type-union-access)
-      SendInput(1, this, sizeof(*this));
-    }
-
-    // 戻るボタンを離す
-    if ((buttons & MOUSE_BTN4) != 0) {
-      // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-      mi.mouseData = XBUTTON1;
-      mi.dwFlags = MOUSEEVENTF_XUP;
-      // NOLINTEND(cppcoreguidelines-pro-type-union-access)
-      SendInput(1, this, sizeof(*this));
-    }
-
-    // 進むボタン
-    if ((buttons & MOUSE_BTN5) != 0) {
-      // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-      mi.mouseData = XBUTTON2;
-      mi.dwFlags = MOUSEEVENTF_XUP;
-      // NOLINTEND(cppcoreguidelines-pro-type-union-access)
-      SendInput(1, this, sizeof(*this));
-    }
-
-    // ボタン6～8
-    if ((buttons & MOUSE_BTN_MASK_678) != 0) mouse_button_6_7_8_not_supported();
-
-    return *this;
-  }
-
-  /**
-   * @brief ホイールを動かすイベントを送信する
-   */
-  MouseInput& wheel(const report_mouse_t& report) noexcept {
-    // ホイール縦
-    if (report.v != 0) {
-      // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-      mi.mouseData = static_cast<DWORD>(report.v * WHEEL_DELTA);
-      mi.dwFlags = MOUSEEVENTF_WHEEL;
-      // NOLINTEND(cppcoreguidelines-pro-type-union-access)
-      SendInput(1, this, sizeof(*this));
-    }
-
-    // ホイール横
-    if (report.h != 0) {
-      // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-      mi.mouseData = static_cast<DWORD>(report.h * WHEEL_DELTA);
-      mi.dwFlags = MOUSEEVENTF_HWHEEL;
-      // NOLINTEND(cppcoreguidelines-pro-type-union-access)
-      SendInput(1, this, sizeof(*this));
-    }
-
-    return *this;
-  }
-
-  /**
-   * @brief カーソルを動かすイベントを送信する
-   */
-  MouseInput& move(const report_mouse_t& report) noexcept {
-    // カーソル
-    if (report.x != 0 || report.y != 0) {
-      // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
-      mi.dx = report.x;
-      mi.dy = report.y;
-      mi.mouseData = 0;
-      mi.dwFlags = MOUSEEVENTF_MOVE;
-      // NOLINTEND(cppcoreguidelines-pro-type-union-access)
-      SendInput(1, this, sizeof(*this));
-    }
-
-    return *this;
+  bool send() noexcept {
+    if (size_ == 0) return true;
+    return SendInput(size_, inputs_.data(), sizeof(*inputs_.data())) != 0;
   }
 
 private:
-  static void mouse_button_6_7_8_not_supported() noexcept {
-    static std::atomic<size_t> total_count{};
-    if (const auto count = total_count++; count == 0) {
-      warn_log("Mouse button 6,7,8 is not supported.");
+  std::array<INPUT, 1> inputs_{};
+  UINT size_{};
+};
+
+using KeyPressInput = KeyInput<false>;
+using KeyReleaseInput = KeyInput<true>;
+
+template <bool KEYUP>
+class MouseButtonInput {
+public:
+  explicit MouseButtonInput(MouseButtonSet buttons) {
+    // 左右中央ボタン
+    DWORD dwFlags = 0;
+    if (buttons.contains(0)) dwFlags |= (KEYUP ? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_LEFTDOWN);
+    if (buttons.contains(1)) dwFlags |= (KEYUP ? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_RIGHTDOWN);
+    if (buttons.contains(2)) dwFlags |= (KEYUP ? MOUSEEVENTF_MIDDLEUP : MOUSEEVENTF_MIDDLEDOWN);
+    if (dwFlags != 0) {
+      inputs_.at(size_++) = {
+        .type = INPUT_MOUSE,
+        .mi{
+          .mouseData = 0,
+          .dwFlags = dwFlags,
+          .dwExtraInfo = EXTRA_INFO_INJECTED,
+        },
+      };
+    }
+
+    // 戻るボタン
+    if (buttons.contains(3)) {
+      inputs_.at(size_++) = {
+        .type = INPUT_MOUSE,
+        .mi{
+          .mouseData = XBUTTON1,
+          .dwFlags = KEYUP ? MOUSEEVENTF_XUP : MOUSEEVENTF_XDOWN,
+          .dwExtraInfo = EXTRA_INFO_INJECTED,
+        },
+      };
+    }
+
+    // 進むボタン
+    if (buttons.contains(4)) {
+      inputs_.at(size_++) = {
+        .type = INPUT_MOUSE,
+        .mi{
+          .mouseData = XBUTTON2,
+          .dwFlags = KEYUP ? MOUSEEVENTF_XUP : MOUSEEVENTF_XDOWN,
+          .dwExtraInfo = EXTRA_INFO_INJECTED,
+        },
+      };
     }
   }
+
+  bool send() noexcept {
+    if (size_ == 0) return true;
+    return SendInput(size_, inputs_.data(), sizeof(*inputs_.data())) != 0;
+  }
+
+private:
+  std::array<INPUT, 3> inputs_{};
+  UINT size_{};
 };
+
+using MousePressInput = MouseButtonInput<false>;
+using MouseReleaseInput = MouseButtonInput<true>;
+
+class MouseWheelInput {
+public:
+  explicit MouseWheelInput(MouseWheelEvent event) {
+    // ホイール縦
+    if (event.rel_v != 0) {
+      inputs_.at(size_++) = {
+        .type = INPUT_MOUSE,
+        .mi{
+          .mouseData = static_cast<DWORD>(event.rel_v * WHEEL_DELTA),
+          .dwFlags = MOUSEEVENTF_WHEEL,
+          .dwExtraInfo = EXTRA_INFO_INJECTED,
+        },
+      };
+    }
+
+    // ホイール横
+    if (event.rel_h != 0) {
+      inputs_.at(size_++) = {
+        .type = INPUT_MOUSE,
+        .mi{
+          .mouseData = static_cast<DWORD>(event.rel_h * WHEEL_DELTA),
+          .dwFlags = MOUSEEVENTF_HWHEEL,
+          .dwExtraInfo = EXTRA_INFO_INJECTED,
+        },
+      };
+    }
+  }
+
+  bool send() noexcept {
+    if (size_ == 0) return true;
+    return SendInput(size_, inputs_.data(), sizeof(*inputs_.data())) != 0;
+  }
+
+private:
+  std::array<INPUT, 2> inputs_{};
+  UINT size_{};
+};
+
+class MouseCursorInput {
+public:
+  explicit MouseCursorInput(MouseCursorEvent event) {
+    // カーソル
+    if (event.rel_x != 0 || event.rel_y != 0) {
+      inputs_.at(size_++) = {
+        .type = INPUT_MOUSE,
+        .mi{
+          .dx = event.rel_x,
+          .dy = event.rel_y,
+          .dwFlags = MOUSEEVENTF_MOVE,
+          .dwExtraInfo = EXTRA_INFO_INJECTED,
+        },
+      };
+    }
+  }
+
+  bool send() noexcept {
+    if (size_ == 0) return true;
+    return SendInput(size_, inputs_.data(), sizeof(*inputs_.data())) != 0;
+  }
+
+private:
+  std::array<INPUT, 1> inputs_{};
+  UINT size_{};
+};
+
+constexpr int64_t KEYBOARD_DELAY_DELTA = 250;
+constexpr int64_t KEYBOARD_DELAY_MSEC = 250;
+constexpr int64_t KEYBOARD_SPEED_MSEC = 33;
 }  // namespace
 
-SinkQueue::SinkQueue() = default;
+SinkContext::SinkContext(std::shared_ptr<SinkEventQueue> consumer, const SinkContextDesc&)
+  : consumer_{std::move(consumer)} {
+  if (!consumer_) throw std::invalid_argument("Invalid SinkEventQueue");
 
-SinkQueue::~SinkQueue() noexcept = default;
+  keyboard_delay_ = std::chrono::milliseconds(KEYBOARD_DELAY_MSEC);
+  keyboard_speed_ = std::chrono::milliseconds(KEYBOARD_SPEED_MSEC);
 
-void SinkQueue::push(const SinkEvent& event) {
+  // レジストリからキーリピート設定を読み出す
+  // TODO: アクセシビリティのキーリピート設定にも対応する
   {
-    const std::scoped_lock<std::mutex> lock{queue_mtx_};
-    queue_.push_back(event);
-  }
-  queue_cv_.notify_one();
-}
+    constexpr size_t REG_SZ_BUFFER_SIZE = 32;
+    std::array<wchar_t, REG_SZ_BUFFER_SIZE> buffer{};
+    DWORD size = sizeof(buffer);
+    if (RegGetValueW(HKEY_CURRENT_USER, L"Control Panel\\Keyboard", L"KeyboardDelay", RRF_RT_REG_SZ,
+            nullptr, buffer.data(), &size) == ERROR_SUCCESS) {
+      const auto value = _wtoll(buffer.data());  // [0, 3] => [250ms, 1000ms]
+      keyboard_delay_ = std::chrono::milliseconds((value + 1) * KEYBOARD_DELAY_DELTA);
+    } else {
+      QUARK_LOG_WARN("Failed to RegGetValue from KeyboardDelay");
+    }
 
-bool SinkQueue::pop(const std::stop_token& stop_token, SinkEvent& event) {
-  std::unique_lock<std::mutex> lock{queue_mtx_};
-
-  if (queue_.empty()) {
-    //  イベントかないので、イベントか停止要求を待つ
-    if (!queue_cv_.wait(lock, stop_token, [&] { return !queue_.empty(); })) {
-      // イベントが来なかった
-      return false;
+    buffer = {};
+    size = sizeof(buffer);
+    if (RegGetValueW(HKEY_CURRENT_USER, L"Control Panel\\Keyboard", L"KeyboardSpeed", RRF_RT_REG_SZ,
+            nullptr, buffer.data(), &size) == ERROR_SUCCESS) {
+      const auto value = _wtoll(buffer.data());  // [0, 31] -> [~2.5hz, ~30hz] -> [~400ms, ~33ms]
+      keyboard_speed_ =
+          std::chrono::milliseconds(12400 / (31 + (11 * value)));  // NOLINT(*-magic-numbers)
+    } else {
+      QUARK_LOG_WARN("Failed to RegGetValue from KeyboardSpeed");
     }
   }
+}
 
-  // イベントがあるので、それを返す
-  event = queue_.front();
-  queue_.pop_front();
-  return true;
+SinkContext::~SinkContext() noexcept {
+  prev_keys_.scan([](KeyCode keycode) { KeyReleaseInput{keycode}.send(); });
+  MouseReleaseInput{prev_mouse_buttons_}.send();
 }
 
 void SinkContext::run(const std::stop_token& stop_token) {
-  SinkEvent event;
-  while (queue_.pop(stop_token, event)) {
-    std::visit([this](const auto& report) { update(report); }, event);
-    std::this_thread::yield();
+  while (!stop_token.stop_requested()) {
+    const auto packet_opt = [&] {
+      // キーを押していなければ、初回のキー入力を無限に待つ
+      if (last_key_ == KC_NO) {
+        return consumer_->pop(stop_token);
+      }
+      // キーを押していれば、キーリピートを発生させるために一定時間で制御を戻させる
+      return consumer_->pop(stop_token, repeat_period_);
+    }();
+    if (packet_opt) {
+      packet_opt->visit([this](const auto& time, const auto& event) { update(time, event); });
+    }
   }
 }
 
-void SinkContext::update(std::monostate) noexcept {}
-
-void SinkContext::update(const report_keyboard_t& report) noexcept {
-  const KeySet keys = [&] {
-    KeySet out{};
-    for (auto key : std::span(report.keys)) {
-      if (key >= KC_LEFT_CTRL && key <= KC_RIGHT_GUI) continue;
-      if (key != KC_NO) out.set(key);
-    }
-    return out;
-  }();
-  const ModKeySet mods{report.mods};
-
-  prev_keys_.and_not(keys).scan([](size_t i) {  // 非修飾キーを離す
-    KeyInput{static_cast<uint8_t>(i)}.release();
-  });
-  prev_mods_.and_not(mods).scan([](size_t i) {  // 修飾キーを離す
-    KeyInput{static_cast<uint8_t>(KC_LEFT_CTRL + i)}.release();
-  });
-  mods.and_not(prev_mods_).scan([this](size_t i) {  // 修飾キーを押す
-    last_input_ = KeyInput{static_cast<uint8_t>(KC_LEFT_CTRL + i)}.press();
-  });
-  keys.and_not(prev_keys_).scan([this](size_t i) {  // 非修飾キーを押す
-    last_input_ = KeyInput{static_cast<uint8_t>(i)}.press();
-  });
-
-  prev_keys_ = keys;
-  prev_mods_ = mods;
-}
-
-void SinkContext::update(const report_nkro_t& report) noexcept {
-  const KeySet keys{std::span{report.bits}};  // 今回のキー状態
-  const ModKeySet mods{report.mods};          // 今回の修飾キー状態
-
-  prev_keys_.and_not(keys).scan([](size_t i) {  // 非修飾キーを離す
-    KeyInput{static_cast<uint8_t>(i)}.release();
-  });
-  prev_mods_.and_not(mods).scan([](size_t i) {  // 修飾キーを離す
-    KeyInput{static_cast<uint8_t>(KC_LEFT_CTRL + i)}.release();
-  });
-  mods.and_not(prev_mods_).scan([this](size_t i) {  // 修飾キーを押す
-    last_input_ = KeyInput{static_cast<uint8_t>(KC_LEFT_CTRL + i)}.press();
-  });
-  keys.and_not(prev_keys_).scan([this](size_t i) {  // 非修飾キーを押す
-    last_input_ = KeyInput{static_cast<uint8_t>(i)}.press();
-  });
-
-  prev_keys_ = keys;
-  prev_mods_ = mods;
-}
-
-void SinkContext::update(const report_mouse_t& report) noexcept {
-  MouseInput{}
-      .release(prev_mouse_buttons_ & ~report.buttons)
-      .press(~prev_mouse_buttons_ & report.buttons)
-      .wheel(report)
-      .move(report);
-  prev_mouse_buttons_ = report.buttons;
-}
-
-void SinkContext::update(const report_extra_t& report) noexcept {
-  switch (report.report_id) {
-    case REPORT_ID_SYSTEM: {
-      KeyInput{static_cast<desktop_usages>(report.usage)}.tap();
-      break;
-    }
-    case REPORT_ID_CONSUMER: {
-      KeyInput{static_cast<consumer_usages>(report.usage)}.tap();
-      break;
-    }
-    default: break;
+void SinkContext::update(EventTime, TickEvent) {
+  // キーを押しているなら、キーリピートを表すイベントを発生させる
+  if (last_key_ == KC_NO) return;
+  if (KeyPressInput{last_key_}.send()) {
+    repeat_period_ = EventClock::now() + keyboard_speed_;  // 初回以降はspeedで時間を求める
+    QUARK_LOG_DEBUG("Sink: repeat {}", +last_key_);
+  } else {
+    // 安全のために、送信に失敗したらキーリピートを止める
+    QUARK_LOG_DEBUG("Sink: Failed to repeat {}", +last_key_);
+    last_key_ = KC_NO;
   }
 }
 
-void SinkContext::update(SinkSignal signal) noexcept {
+void SinkContext::update(EventTime, KeyPressEvent event) {
+  if (KeyPressInput{event.keycode}.send()) {
+    prev_keys_.insert(event.keycode);
+    last_key_ = event.keycode;
+    repeat_period_ = EventClock::now() + keyboard_delay_;  // 初回はdelayで時間を求める
+    QUARK_LOG_DEBUG("Sink: press {}", +event.keycode);
+  } else {
+    QUARK_LOG_DEBUG("Sink: Failed to press {}", +event.keycode);
+  }
+}
+
+void SinkContext::update(EventTime, KeyReleaseEvent event) {
+  if (KeyReleaseInput{event.keycode}.send()) {
+    prev_keys_.remove(event.keycode);
+    QUARK_LOG_DEBUG("Sink: release {}", +event.keycode);
+  } else {
+    QUARK_LOG_DEBUG("Sink: Failed to release {}", +event.keycode);
+  }
+  if (event.keycode == last_key_) last_key_ = KC_NO;
+}
+
+void SinkContext::update(EventTime, MousePressEvent event) {
+  if (MousePressInput{event.buttons}.send()) {
+    prev_mouse_buttons_.unite(event.buttons);
+  }
+}
+
+void SinkContext::update(EventTime, MouseReleaseEvent event) {
+  if (MouseReleaseInput{event.buttons}.send()) {
+    prev_mouse_buttons_.subtract(event.buttons);
+  }
+}
+
+void SinkContext::update(EventTime, MouseWheelEvent event) {
+  MouseWheelInput{event}.send();
+}
+
+void SinkContext::update(EventTime, MouseCursorEvent event) {
+  MouseCursorInput{event}.send();
+}
+
+void SinkContext::update(EventTime, EngineSignal signal) {
   switch (signal) {
-    case SinkSignal::KEY_REPEAT: {
-      SendInput(1, &last_input_, sizeof(last_input_));
+    case EngineSignal::SCREEN_LOCKED: {
       break;
     }
-    case SinkSignal::RESET: {
-      prev_keys_.scan([](size_t i) {  // 非修飾キーを離す
-        KeyInput{static_cast<uint8_t>(i)}.release();
+    case EngineSignal::SCREEN_UNLOCKED: {
+      QUARK_LOG_DEBUG("Sink: SCREEN_UNLOCKED signal");
+      prev_keys_.scan([](KeyCode keycode) {
+        if (!KeyReleaseInput{keycode}.send()) {
+          QUARK_LOG_DEBUG("Sink: Failed to clear {}", +keycode);
+          return;
+        }
+        QUARK_LOG_DEBUG("Sink: clear {}", +keycode);
       });
-      prev_mods_.scan([](size_t i) {  // 修飾キーを離す
-        KeyInput{static_cast<uint8_t>(KC_LEFT_CTRL + i)}.release();
-      });
-      MouseInput{}.release(prev_mouse_buttons_);
       prev_keys_ = {};
-      prev_mods_ = {};
+      last_key_ = KC_NO;
+      MouseReleaseInput{prev_mouse_buttons_}.send();
       prev_mouse_buttons_ = {};
-      break;
     }
   }
 }

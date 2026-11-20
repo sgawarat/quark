@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -14,7 +14,6 @@
 #include <ranges>
 #include <span>
 #include <stdexcept>
-#include <utility>
 
 extern "C" {
 #include <debounce.h>
@@ -31,7 +30,7 @@ extern matrix_row_t raw_matrix[MATRIX_ROWS];
 
 namespace quark {
 namespace {
-// TODO: グローバル変数を使用しない書き方にする
+// TODO: グローバル変数を使用しない書き方にする？
 // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 std::atomic<QuantumHost*> s_current_host_of_quantum{};  ///< Quantumを使用している現在のホスト
 std::exception_ptr s_exception_ptr_from_quantum{};      ///< Quantum内部から投げられた例外のポインタ
@@ -96,7 +95,7 @@ void QuantumHost::matrix_set(KeyCode keycode) {
   const auto keypos = get_key_property<keypos_t>(keycode);
   if (keypos.row >= MATRIX_ROWS || keypos.col >= MATRIX_COLS) return;
 
-  // NOLINTNEXTLINE(*-constant-array-index,*-avoid-unchecked-container-access))
+  // NOLINTNEXTLINE(*-avoid-unchecked-container-access)
   s_raw_matrix[keypos.row] |= matrix_row_t{1} << keypos.col;
   s_raw_matrix_changed = true;
 
@@ -110,7 +109,7 @@ void QuantumHost::matrix_reset(KeyCode keycode) {
   const auto keypos = get_key_property<keypos_t>(keycode);
   if (keypos.row >= MATRIX_ROWS || keypos.col >= MATRIX_COLS) return;
 
-  // NOLINTNEXTLINE(*-constant-array-index,*-avoid-unchecked-container-access))
+  // NOLINTNEXTLINE(*-avoid-unchecked-container-access)
   s_raw_matrix[keypos.row] &= ~(matrix_row_t{1} << keypos.col);
   s_raw_matrix_changed = true;
 }
@@ -125,7 +124,7 @@ void QuantumHost::matrix_clear() {
 void QuantumHost::keyboard_task() {
   ::keyboard_task();
   if (s_exception_ptr_from_quantum) {
-    std::rethrow_exception(std::move(s_exception_ptr_from_quantum));
+    std::rethrow_exception(s_exception_ptr_from_quantum);
   }
 
   // 押下の成立したNonHoldableキーがあれば、それを離した状態に更新する
@@ -144,7 +143,7 @@ void QuantumHost::keyboard_task() {
       s_debounce_disabled = true;
       ::keyboard_task();
       if (s_exception_ptr_from_quantum) {
-        std::rethrow_exception(std::move(s_exception_ptr_from_quantum));
+        std::rethrow_exception(s_exception_ptr_from_quantum);
       }
     }
   }

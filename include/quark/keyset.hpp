@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -9,18 +9,16 @@
 
 #include <cstdint>
 #include <span>
-#include <utility>
 
 #include "quark/bitset.hpp"
 #include "quark/quantum/key.hpp"
 #include "quark/quantum/report.hpp"
-#include "report.h"
 
 namespace quark {
 /**
  * @brief キーのビットセット
  */
-class KeySet {
+class KeySet : public BitArray<KEYCODE_COUNT> {
 public:
   /**
    * @brief 全体を0で初期化する
@@ -28,19 +26,41 @@ public:
   constexpr KeySet() noexcept = default;
 
   /**
+   * @brief BitArrayから構築する
+   */
+  constexpr KeySet(const BitArray& other) : BitArray{other} {}
+
+  /**
    * @brief キーの配列から構築する
    */
   constexpr explicit KeySet(const report_keyboard_t& report) noexcept {
     for (const auto key : std::span{report.keys}) {
-      if (key != 0) bits_.insert(key);
+      if (key != 0) BitArray::insert(key);
     }
+    add_mods(report.mods);
   }
 
   /**
    * @brief キーのビット列から構築する
    */
   constexpr explicit KeySet(const report_nkro_t& report) noexcept
-    : bits_{std::in_place, std::as_bytes(std::span{report.bits})} {}
+    : BitArray{std::in_place, std::as_bytes(std::span{report.bits})} {
+    add_mods(report.mods);
+  }
+
+  /**
+   * @brief ビットを1にする
+   */
+  constexpr void insert(KeyCode keycode) noexcept {
+    BitArray::insert(+keycode);
+  }
+
+  /**
+   * @brief ビットを0にする
+   */
+  constexpr void remove(KeyCode keycode) noexcept {
+    BitArray::remove(+keycode);
+  }
 
   /**
    * @brief 1になっているビットを列挙する
@@ -48,86 +68,76 @@ public:
    * @param fn キーコードを引数とする関数オブジェクト
    */
   constexpr void scan(std::invocable<KeyCode> auto fn) const {
-    for (const auto i : BitOneView{bits_}) {
+    for (const auto i : BitOneView{*this}) {
       fn(KeyCode{static_cast<KeyCodeValue>(i)});
     }
   }
 
   /**
-   * @brief AND NOT演算を行う
-   *
-   * @param other NOTされる側
-   * @return lhs & ~rhs
-   */
-  [[nodiscard]] constexpr KeySet and_not(const KeySet& other) const noexcept {
-    return KeySet{bits_.difference(other.bits_)};
-  }
-
-private:
-  static constexpr size_t BIT_EXTENT = KEYCODE_COUNT;
-
-  constexpr explicit KeySet(const BitArray<BIT_EXTENT>& bits) noexcept : bits_{bits} {}
-
-  BitArray<BIT_EXTENT> bits_;
-};
-
-/**
- * @brief 修飾キーのビットセット
- */
-class ModKeySet {
-public:
-  /**
-   * @brief 全体を0で初期化する
-   */
-  constexpr ModKeySet() noexcept = default;
-
-  /**
-   * @brief 値から構築する
-   */
-  constexpr explicit ModKeySet(const report_keyboard_t& report) noexcept
-    : bits_{std::in_place, {report.mods}} {}
-
-  /**
-   * @brief 値から構築する
-   */
-  constexpr explicit ModKeySet(const report_nkro_t& report) noexcept
-    : bits_{std::in_place, {report.mods}} {}
-
-  /**
-   * @brief 1になっているビットを列挙する
+   * @brief 通常のキーの中で1になっているビットを列挙する
    *
    * @param fn キーコードを引数とする関数オブジェクト
    */
-  constexpr void scan(std::invocable<KeyCode> auto fn) const {
-    for (const auto i : BitOneView{bits_}) {
-      fn(KeyCode{static_cast<KeyCodeValue>(KC_LEFT_CTRL + i)});
+  constexpr void scan_keys(std::invocable<KeyCode> auto fn) const {
+    for (const auto i : BitOneView{*this, 0, KEYCODE_MOD_BEGIN}) {
+      fn(KeyCode{static_cast<KeyCodeValue>(i)});
     }
   }
 
   /**
-   * @brief AND NOT演算を行う
+   * @brief 修飾キーの中で1になっているビットを列挙する
    *
-   * @param other NOTされる側
-   * @return lhs & ~rhs
+   * @param fn キーコードを引数とする関数オブジェクト
    */
-  [[nodiscard]] constexpr ModKeySet and_not(const ModKeySet& other) const noexcept {
-    return ModKeySet{bits_.difference(other.bits_)};
+  constexpr void scan_mods(std::invocable<KeyCode> auto fn) const {
+    for (const auto i : BitOneView{*this, KEYCODE_MOD_BEGIN, KEYCODE_MOD_END}) {
+      fn(KeyCode{static_cast<KeyCodeValue>(i)});
+    }
+  }
+
+  /**
+   * @brief ビット列の変化から、押したキーのビット列を計算する
+   *
+   * @param prev 直前のビット列
+   * @param next 直後のビット列
+   * @return 押したキーを1とするビット列
+   */
+  [[nodiscard]] friend constexpr KeySet pressing(const KeySet& prev, const KeySet& next) noexcept {
+    return bit_difference(next, prev);
+  }
+
+  /**
+   * @brief ビット列の変化から、離したキーのビット列を計算する
+   *
+   * @param prev 直前のビット列
+   * @param next 直後のビット列
+   * @return 離したキーを1とするビット列
+   */
+  [[nodiscard]] friend constexpr KeySet releasing(const KeySet& prev, const KeySet& next) noexcept {
+    return bit_difference(prev, next);
   }
 
 private:
-  using Value = decltype(report_keyboard_t::mods);
-
-  static constexpr size_t BIT_EXTENT = sizeof(Value) * CHAR_BIT;
-
-  constexpr explicit ModKeySet(BitArray<BIT_EXTENT, Value> bits) noexcept : bits_{bits} {}
-
-  BitArray<BIT_EXTENT, Value> bits_;
+  /**
+   * @brief reportのmodsをビット列に直接加える
+   */
+  constexpr void add_mods(uint8_t mods) noexcept {
+    constexpr size_t index = KEYCODE_MOD_BEGIN / BitArray::WIDTH;
+    constexpr size_t offset = KEYCODE_MOD_BEGIN % BitArray::WIDTH;
+    static_assert(index < BitArray::HEIGHT);              // 配列の範囲外を指していないか
+    static_assert(offset + CHAR_BIT <= BitArray::WIDTH);  // 配列の境界を跨いでいないか
+    // NOLINTNEXTLINE(*-avoid-unchecked-container-access)
+    values()[index] |= BitArray::Value{mods} << offset;
+  }
 };
+
+using ReportMouseButtonType = decltype(report_mouse_t::buttons);
+static constexpr size_t REPORT_MOUSE_BUTTON_COUNT = sizeof(ReportMouseButtonType) * CHAR_BIT;
 
 /**
  * @brief マウスボタンのビットセット
  */
-class MouseButtonSet {
+class MouseButtonSet : public BitArray<REPORT_MOUSE_BUTTON_COUNT, ReportMouseButtonType> {
 public:
   /**
    * @brief 全体を0で初期化する
@@ -135,17 +145,15 @@ public:
   constexpr MouseButtonSet() noexcept = default;
 
   /**
+   * @brief BitArrayから構築する
+   */
+  constexpr MouseButtonSet(const BitArray& other) : BitArray{other} {}
+
+  /**
    * @brief 値から構築する
    */
   constexpr explicit MouseButtonSet(const report_mouse_t& report) noexcept
-    : bits_{std::in_place, {report.buttons}} {}
-
-  /**
-   * @brief いずれかのビットが1かを調べる
-   */
-  constexpr explicit operator bool() const noexcept {
-    return bits_.any();
-  }
+    : BitArray{std::in_place, {report.buttons}} {}
 
   /**
    * @brief 1になっているビットを列挙する
@@ -153,28 +161,33 @@ public:
    * @param fn ビット位置を引数とする関数オブジェクト
    */
   constexpr void scan(std::invocable<uint8_t> auto fn) const {
-    for (const auto i : BitOneView{bits_}) {
+    for (const auto i : BitOneView{*this}) {
       fn(static_cast<uint8_t>(i));
     }
   }
 
   /**
-   * @brief AND NOT演算を行う
+   * @brief ビット列の変化から、押したボタンのビット列を計算する
    *
-   * @param other NOTされる側
-   * @return lhs & ~rhs
+   * @param prev 直前のビット列
+   * @param next 直後のビット列
+   * @return 押したボタンを1とするビット列
    */
-  [[nodiscard]] constexpr MouseButtonSet and_not(const MouseButtonSet& other) const noexcept {
-    return MouseButtonSet{bits_.difference(other.bits_)};
+  [[nodiscard]] friend constexpr MouseButtonSet pressing(
+      const MouseButtonSet& prev, const MouseButtonSet& next) noexcept {
+    return bit_difference(next, prev);
   }
 
-private:
-  using Value = decltype(report_mouse_t::buttons);
-
-  static constexpr size_t BIT_EXTENT = sizeof(Value) * CHAR_BIT;
-
-  constexpr explicit MouseButtonSet(BitArray<BIT_EXTENT, Value> bits) noexcept : bits_{bits} {}
-
-  BitArray<BIT_EXTENT, Value> bits_;
+  /**
+   * @brief ビット列の変化から、離したボタンのビット列を計算する
+   *
+   * @param prev 直前のビット列
+   * @param next 直後のビット列
+   * @return 離したボタンを1とするビット列
+   */
+  [[nodiscard]] friend constexpr MouseButtonSet releasing(
+      const MouseButtonSet& prev, const MouseButtonSet& next) noexcept {
+    return bit_difference(prev, next);
+  }
 };
 }  // namespace quark

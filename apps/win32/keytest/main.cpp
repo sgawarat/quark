@@ -1,18 +1,17 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2021 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
  * @file main.cpp
  * @brief キーの値を確認するためのアプリケーション
  */
-#include <print>
+#include <Windows.h>
 
-#include <minwindef.h>
-#include <winuser.h>
+#include <print>
 
 #include "print.hpp"
 
-namespace quark::key_test {
+namespace quark::keytest::inline win32 {
 namespace {
 LRESULT CALLBACK hookproc(int code, WPARAM wparam, LPARAM lparam) noexcept {
   switch (code) {
@@ -37,11 +36,11 @@ LRESULT CALLBACK hookproc(int code, WPARAM wparam, LPARAM lparam) noexcept {
   return CallNextHookEx(nullptr, code, wparam, lparam);
 }
 }  // namespace
-}  // namespace quark::key_test
+}  // namespace quark::keytest::inline win32
 
 int main() {
   try {
-    using namespace quark::key_test;
+    using namespace quark::keytest;
 
     // 有効なスキャンコードを列挙する
     std::println("-----  VK  -----");

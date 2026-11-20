@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2021 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -16,6 +16,7 @@
 
 #include "quark/event.hpp"
 #include "quark/keyset.hpp"
+#include "quark/logging.hpp"
 #include "quark/quantum/key.hpp"
 #include "quark/quantum/report.hpp"
 #include "quark/queue.hpp"
@@ -95,16 +96,16 @@ constexpr KeyCode to_keycode(const report_extra_t& report) noexcept {
 }  // namespace
 
 KeyboardContext::KeyboardContext(
-    std::shared_ptr<SourceEventQueue> consumer, std::shared_ptr<SinkEventQueue> producer)
+    std::shared_ptr<KeyboardEventQueue> consumer, std::shared_ptr<SinkEventQueue> producer)
   : consumer_{std::move(consumer)}, producer_{std::move(producer)} {
-  if (!consumer_) throw std::invalid_argument("Invalid SourceEventQueue");
+  if (!consumer_) throw std::invalid_argument("Invalid KeyboardEventQueue");
   if (!producer_) throw std::invalid_argument("Invalid SinkEventQueue");
 }
 
 KeyboardContext::~KeyboardContext() noexcept = default;
 
 void KeyboardContext::run(const std::stop_token& stop_token) {
-  std::optional<SourceEventPacket> packet_opt;
+  std::optional<KeyboardEventPacket> packet_opt;
   while (!stop_token.stop_requested()) {
     if (tick_period_tp_ < tick_timeout_tp_) {
       // 次のtickがアクティブ期間内なので、指定の時間で制御を戻させる
@@ -140,62 +141,80 @@ void KeyboardContext::update(EventTime, KeyReleaseEvent event) {
   tick_timeout_tp_ = EventClock::now() + TICK_ACTIVE_TIME;
 }
 
-void KeyboardContext::update(EventTime, SourceCommand event) {
-  if (event == SourceCommand::CLEAR) {
-    matrix_clear();
+void KeyboardContext::update(EventTime, EngineSignal signal) {
+  switch (signal) {
+    case EngineSignal::SCREEN_LOCKED: {
+      break;
+    }
+    case EngineSignal::SCREEN_UNLOCKED: {
+      QUARK_LOG_DEBUG("Keyboard: SCREEN_UNLOCKED signal");
+      matrix_clear();
+
+      // 新しいキーイベントが来たと同じことなので、アクティブ時間をリセットする
+      tick_timeout_tp_ = EventClock::now() + TICK_ACTIVE_TIME;
+      break;
+    }
   }
 }
 
 void KeyboardContext::send_report(const report_keyboard_t& report) {
   const KeySet keys{report};
-  const ModKeySet mods{report};
+  const KeySet released_keys = releasing(prev_keys_, keys);
+  const KeySet pressed_keys = pressing(prev_keys_, keys);
 
-  prev_keys_.and_not(keys).scan([this](KeyCode keycode) {  // 非修飾キーを離す
+  released_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを離す
+    QUARK_LOG_DEBUG("Keyboard: release {}", +keycode);
     producer_->emplace<KeyReleaseEvent>(keycode);
   });
-  prev_mods_.and_not(mods).scan([this](KeyCode keycode) {  // 修飾キーを離す
+  released_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを離す
+    QUARK_LOG_DEBUG("Keyboard: release {}", +keycode);
     producer_->emplace<KeyReleaseEvent>(keycode);
   });
-  mods.and_not(prev_mods_).scan([this](KeyCode keycode) {  // 修飾キーを押す
+  pressed_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを押す
+    QUARK_LOG_DEBUG("Keyboard: press {}", +keycode);
     producer_->emplace<KeyPressEvent>(keycode);
   });
-  keys.and_not(prev_keys_).scan([this](KeyCode keycode) {  // 非修飾キーを押す
+  pressed_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを押す
+    QUARK_LOG_DEBUG("Keyboard: press {}", +keycode);
     producer_->emplace<KeyPressEvent>(keycode);
   });
 
   prev_keys_ = keys;
-  prev_mods_ = mods;
 }
 
 void KeyboardContext::send_report(const report_nkro_t& report) {
   const KeySet keys{report};
-  const ModKeySet mods{report};
+  const KeySet released_keys = releasing(prev_keys_, keys);
+  const KeySet pressed_keys = pressing(prev_keys_, keys);
 
-  prev_keys_.and_not(keys).scan([this](KeyCode keycode) {  // 非修飾キーを離す
+  released_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを離す
+    QUARK_LOG_DEBUG("Keyboard: release {}", +keycode);
     producer_->emplace<KeyReleaseEvent>(keycode);
   });
-  prev_mods_.and_not(mods).scan([this](KeyCode keycode) {  // 修飾キーを離す
+  released_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを離す
+    QUARK_LOG_DEBUG("Keyboard: release {}", +keycode);
     producer_->emplace<KeyReleaseEvent>(keycode);
   });
-  mods.and_not(prev_mods_).scan([this](KeyCode keycode) {  // 修飾キーを押す
+  pressed_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを押す
+    QUARK_LOG_DEBUG("Keyboard: press {}", +keycode);
     producer_->emplace<KeyPressEvent>(keycode);
   });
-  keys.and_not(prev_keys_).scan([this](KeyCode keycode) {  // 非修飾キーを押す
+  pressed_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを押す
+    QUARK_LOG_DEBUG("Keyboard: press {}", +keycode);
     producer_->emplace<KeyPressEvent>(keycode);
   });
 
   prev_keys_ = keys;
-  prev_mods_ = mods;
 }
 
 void KeyboardContext::send_report(const report_mouse_t& report) {
   const MouseButtonSet buttons{report};
 
-  const auto released_buttons = prev_mouse_buttons_.and_not(buttons);
-  if (released_buttons) producer_->emplace<MouseReleaseEvent>(released_buttons);
+  const MouseButtonSet released_buttons{releasing(prev_mouse_buttons_, buttons)};
+  if (released_buttons.any()) producer_->emplace<MouseReleaseEvent>(released_buttons);
 
-  const auto pressed_buttons = buttons.and_not(prev_mouse_buttons_);
-  if (pressed_buttons) producer_->emplace<MousePressEvent>(pressed_buttons);
+  const MouseButtonSet pressed_buttons{pressing(prev_mouse_buttons_, buttons)};
+  if (pressed_buttons.any()) producer_->emplace<MousePressEvent>(pressed_buttons);
 
   if (report.v != 0 || report.h != 0) producer_->emplace<MouseWheelEvent>(report.v, report.h);
   if (report.x != 0 || report.y != 0) producer_->emplace<MouseCursorEvent>(report.x, report.y);

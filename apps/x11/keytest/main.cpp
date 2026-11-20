@@ -1,11 +1,17 @@
-#include <print>
-#include <thread>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-or-later
 
-#include <cstdlib>
-
+/**
+ * @file main.cpp
+ * @brief X11キー入力テスト
+ */
 #include <X11/XKBlib.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
+
+#include <cstdlib>
+#include <print>
+#include <thread>
 
 int main() {
   auto* display = XOpenDisplay(nullptr);

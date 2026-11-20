@@ -1,36 +1,70 @@
-# SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+# SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-or-later
 include_guard(GLOBAL)
 
-include("${CMAKE_SOURCE_DIR}/cmake/utility.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/quantum/files.cmake")
 
-# rules.cmakeをQuantumのルールに従って列挙する
-find_quantum_files(rules.cmake QUANTUM_RULES_FILES QUANTUM_POST_RULES_FILES)
+# rulesを読み込む
+load_quantum_rules()
 
-# 見つけたrules.cmakeを読み込む
-foreach(RULES_FILE ${QUANTUM_RULES_FILES})
-  include("${RULES_FILE}")
-endforeach()
-
-foreach(RULES_FILE ${QUANTUM_POST_RULES_FILES})
-  include("${RULES_FILE}")
-endforeach()
-
-# config.hをQuantumのルールに従って列挙する
-find_quantum_files(config.h QUANTUM_CONFIG_HEADERS QUANTUM_POST_CONFIG_HEADERS)
-
-# ヘッダ用の設定をまとめるライブラリを作る
+# Quantumの設定をまとめたライブラリを作る
 add_library(quantum_config INTERFACE)
-target_precompile_headers(quantum_config INTERFACE
-  ${QUANTUM_CONFIG_HEADERS}
-  ${QUANTUM_POST_CONFIG_HEADERS}
-)
+
+# Quantumのルールに基づくconfigヘッダ
+find_quantum_files(config.h QUANTUM_CONFIG_HEADERS)
+list(JOIN QUANTUM_CONFIG_HEADERS "\",\"" QUANTUM_CONFIG_HEADER_LIST)
 target_compile_definitions(quantum_config INTERFACE
-  # TODO: debounceに対応させる
-  DEBOUNCE_TYPE="none"
-  DEBOUNCE=0
+  QUARK_CONFIG_HEADER_LIST=\"${QUANTUM_CONFIG_HEADER_LIST}\"
 )
-target_include_directories(quantum_config INTERFACE
+
+# ライブラリ側で用意したconfigヘッダ
+if(MSVC)
+  target_compile_options(quantum_config INTERFACE
+    "SHELL:/FI quark/quantum/config.h"
+  )
+else()
+  target_compile_options(quantum_config INTERFACE
+    "SHELL:-include quark/quantum/config.h"
+  )
+endif()
+
+# セキュリティオプション
+if(MSVC)
+  target_compile_options(quantum_config INTERFACE
+    # バッファセキュリティチェック
+    /GS
+
+    # 追加のセキュリティチェック
+    /sdl
+
+    # 制御フローガード
+    /guard:cf
+  )
+  target_link_options(quantum_config INTERFACE
+    # 制御フローガード
+    /GUARD:CF
+
+    # ハードウェア保護スタック
+    /CETCOMPAT
+
+    # DLL検索パスをsystem32のみに制限
+    /DEPENDENTLOADFLAG:0x800
+  )
+else()
+  target_compile_options(quantum_config INTERFACE
+    # TODO: GCC用にセキュリティ系オプションを追加する
+    # -fstack-protector-all
+    # -fstack-clash-protection
+    # -fcf-protection=full
+    # -fsanitize=cfi
+  )
+endif()
+
+target_compile_options(quantum_config INTERFACE
+  -Wno-reserved-identifier  # _______マクロを許可
+  -Wno-gnu-include-next  # include_nextを許可
+)
+target_include_directories(quantum_config SYSTEM INTERFACE
   "${QMK_FIRMWARE_DIR}/quantum"
   "${QMK_FIRMWARE_DIR}/quantum/keymap_extras"
   "${QMK_FIRMWARE_DIR}/quantum/logging"
@@ -42,10 +76,14 @@ target_include_directories(quantum_config INTERFACE
   "${QMK_FIRMWARE_DIR}/tmk_core/protocol"
 
   # include-nextされるヘッダのため、QMKより後ろに列挙する必要がある
-  ${CMAKE_SOURCE_DIR}/include/quark/quantum/system
+  "${CMAKE_SOURCE_DIR}/include/quark/quantum/system"
 )
 
-# ソース用の設定をまとめるライブラリを作る
+target_link_libraries(quantum_config INTERFACE
+  config
+)
+
+# Quantumのソースコードをまとめたライブラリを作る
 add_library(quantum_sources INTERFACE)
 target_sources(quantum_sources INTERFACE
   "${QMK_FIRMWARE_DIR}/quantum/action.c"
@@ -79,6 +117,10 @@ target_sources(quantum_sources INTERFACE
 )
 
 # ビルドオプションが他のビルドオプションを定義する
+if(NOT DEBOUNCE_TYPE)
+  set(DEBOUNCE_TYPE "sym_defer_g")
+endif()
+
 if(MOUSEKEY_ENABLE)
   set(MOUSE_ENABLE yes)
 endif()
@@ -97,7 +139,7 @@ if(AUTO_SHIFT_ENABLE)
     AUTO_SHIFT_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_auto_shift.c
+    "${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_auto_shift.c"
   )
 endif()
 
@@ -106,7 +148,7 @@ if(AUTOCORRECT_ENABLE)
     AUTOCORRECT_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_autocorrect.c
+    "${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_autocorrect.c"
   )
 endif()
 
@@ -127,8 +169,8 @@ if(CAPS_WORD_ENABLE)
     CAPS_WORD_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/caps_word.c
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_caps_word.c
+    "${QMK_FIRMWARE_DIR}/quantum/caps_word.c"
+    "${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_caps_word.c"
   )
 endif()
 
@@ -137,7 +179,7 @@ if(COMBO_ENABLE)
     COMBO_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_combo.c
+    "${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_combo.c"
   )
 endif()
 
@@ -146,7 +188,7 @@ if(COMMAND_ENABLE)
     COMMAND_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/command.c
+    "${QMK_FIRMWARE_DIR}/quantum/command.c"
   )
 endif()
 
@@ -158,8 +200,13 @@ if(CONSOLE_ENABLE)
   message(WARNING "CONSOLE_ENABLE is not supported")
 endif()
 
-if(DEBOUNCE_TYPE)
-  message(WARNING "DEBOUNCE_TYPE is not supported")
+if(NOT DEBOUNCE_TYPE STREQUAL "custom")
+  target_compile_definitions(quantum_config INTERFACE
+    DEBOUNCE_TYPE="${DEBOUNCE_TYPE}"
+  )
+  target_sources(quantum_sources INTERFACE
+    "${QMK_FIRMWARE_DIR}/quantum/debounce/${DEBOUNCE_TYPE}.c"
+  )
 endif()
 
 if(DEFERRED_EXEC_ENABLE)
@@ -167,7 +214,7 @@ if(DEFERRED_EXEC_ENABLE)
     DEFERRED_EXEC_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/deferred_exec.c
+    "${QMK_FIRMWARE_DIR}/quantum/deferred_exec.c"
   )
 endif()
 
@@ -176,7 +223,7 @@ if(DIGITIZER_ENABLE)
     DIGITIZER_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/digitizer.c
+    "${QMK_FIRMWARE_DIR}/quantum/digitizer.c"
   )
 endif()
 
@@ -185,7 +232,7 @@ if(DYNAMIC_KEYMAP_ENABLE)
     DYNAMIC_KEYMAP_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/dynamic_keymap.c
+    "${QMK_FIRMWARE_DIR}/quantum/dynamic_keymap.c"
   )
 endif()
 
@@ -194,7 +241,7 @@ if(DYNAMIC_MACRO_ENABLE)
     DYNAMIC_MACRO_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_dynamic_macro.c
+    "${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_dynamic_macro.c"
   )
 endif()
 
@@ -203,7 +250,7 @@ if(DYNAMIC_TAPPING_TERM_ENABLE)
     DYNAMIC_TAPPING_TERM_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_dynamic_tapping_term.c
+    "${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_dynamic_tapping_term.c"
   )
 endif()
 
@@ -222,7 +269,7 @@ if(GRAVE_ESC_ENABLE)
     GRAVE_ESC_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_grave_esc.c
+    "${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_grave_esc.c"
   )
 endif()
 
@@ -235,8 +282,8 @@ if(JOYSTICK_ENABLE)
     JOYSTICK_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/joystick.c
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_joystick.c
+    "${QMK_FIRMWARE_DIR}/quantum/joystick.c"
+    "${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_joystick.c"
   )
 endif()
 
@@ -245,7 +292,7 @@ if(KEY_LOCK_ENABLE)
     KEY_LOCK_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_key_lock.c
+    "${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_key_lock.c"
   )
 endif()
 
@@ -254,7 +301,7 @@ if(KEY_OVERRIDE_ENABLE)
     KEY_OVERRIDE_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_key_override.c
+    "${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_key_override.c"
   )
 endif()
 
@@ -263,8 +310,8 @@ if(LAYER_LOCK_ENABLE)
     LAYER_LOCK_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/layer_lock.c
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_layer_lock.c
+    "${QMK_FIRMWARE_DIR}/quantum/layer_lock.c"
+    "${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_layer_lock.c"
   )
 endif()
 
@@ -273,8 +320,8 @@ if(LEADER_ENABLE)
     LEADER_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/leader.c
-    ${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_leader.c
+    "${QMK_FIRMWARE_DIR}/quantum/leader.c"
+    "${QMK_FIRMWARE_DIR}/quantum/process_keycode/process_leader.c"
   )
 endif()
 
@@ -299,7 +346,7 @@ if(MOUSEKEY_ENABLE)
     MOUSEKEY_ENABLE
   )
   target_sources(quantum_sources INTERFACE
-    ${QMK_FIRMWARE_DIR}/quantum/mousekey.c
+    "${QMK_FIRMWARE_DIR}/quantum/mousekey.c"
   )
 endif()
 

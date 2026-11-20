@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -8,11 +8,11 @@
 #include "quark/engine.hpp"
 
 #include <exception>
+#include <functional>
 #include <memory>
 #include <stdexcept>
 #include <stop_token>
 
-#include "quark/event.hpp"
 #include "quark/keyboard.hpp"
 #include "quark/logging.hpp"
 #include "quark/utility.hpp"
@@ -28,42 +28,49 @@
 namespace quark {
 class Engine::State : public std::enable_shared_from_this<Engine::State>, private Pinned {
 public:
-  State() = default;
+  explicit State(std::function<void()> on_error) : on_error_{std::move(on_error)} {}
 
   ~State() noexcept = default;
 
   void reset() {
     source_queue_.reset();
+    keyboard_queue_.reset();
     sink_queue_.reset();
   }
 
-  void push(SourceCommand command) {
-    source_queue_.push(command);
-  }
-
-  void push(SinkCommand command) {
-    sink_queue_.push(command);
+  void push(EngineSignal signal) {
+    source_queue_.push(signal);
+    keyboard_queue_.push(signal);
+    sink_queue_.push(signal);
   }
 
   [[nodiscard]] SourceContext get_source_context() {
-    return SourceContext{{shared_from_this(), &source_queue_}, {}};
+    return SourceContext{
+      {shared_from_this(), &keyboard_queue_}, {shared_from_this(), &source_queue_}, {}};
   }
 
   [[nodiscard]] KeyboardContext get_keyboard_context() {
     return KeyboardContext{
-      {shared_from_this(), &source_queue_}, {shared_from_this(), &sink_queue_}};
+      {shared_from_this(), &keyboard_queue_}, {shared_from_this(), &sink_queue_}};
   }
 
   [[nodiscard]] SinkContext get_sink_context() {
     return SinkContext{{shared_from_this(), &sink_queue_}, {}};
   }
 
+  void on_error() {
+    on_error_();
+  }
+
 private:
+  std::function<void()> on_error_;
   SinkEventQueue sink_queue_;
+  KeyboardEventQueue keyboard_queue_;
   SourceEventQueue source_queue_;
 };
 
-Engine::Engine() : state_{std::make_shared<State>()} {}
+Engine::Engine(std::function<void()> on_error)
+  : state_{std::make_shared<State>(std::move(on_error))} {}
 
 Engine::~Engine() noexcept {
   source_thread_.request_stop();
@@ -71,43 +78,46 @@ Engine::~Engine() noexcept {
   sink_thread_.request_stop();
 }
 
-void Engine::start(void (*on_error)(void*) noexcept, void* data) {
+void Engine::start() {
   if (!state_) throw std::logic_error("Invalid EngineState");
 
   stop();
   state_->reset();
 
   const auto state = state_;
-  sink_thread_ = std::jthread{[=](const std::stop_token& stop_token) noexcept {
+  sink_thread_ = Thread{[=](const std::stop_token& stop_token) noexcept {
     try {
+      Logger::set_source("sink");
       auto ctx = state->get_sink_context();
       ctx.run(stop_token);
-      info_log("Sink thread exited successfully");
+      QUARK_LOG_INFO("Sink thread exited successfully");
     } catch (const std::exception& e) {
-      critical_log("Sink thread crashed: {}", e.what());
-      if (on_error) on_error(data);
+      QUARK_LOG_FATAL("Sink thread crashed: {}", e.what());
+      state->on_error();
     }
   }};
 
-  keyboard_thread_ = std::jthread{[=](const std::stop_token& stop_token) noexcept {
+  keyboard_thread_ = Thread{[=](const std::stop_token& stop_token) noexcept {
     try {
+      Logger::set_source("keyboard");
       auto ctx = state->get_keyboard_context();
       ctx.run(stop_token);
-      info_log("Keyboard thread exited successfully");
+      QUARK_LOG_INFO("Keyboard thread exited successfully");
     } catch (const std::exception& e) {
-      critical_log("Keyboard thread crashed: {}", e.what());
-      if (on_error) on_error(data);
+      QUARK_LOG_FATAL("Keyboard thread crashed: {}", e.what());
+      state->on_error();
     }
   }};
 
-  source_thread_ = std::jthread{[=](const std::stop_token& stop_token) noexcept {
+  source_thread_ = Thread{[=](const std::stop_token& stop_token) noexcept {
     try {
+      Logger::set_source("source");
       auto ctx = state->get_source_context();
       ctx.run(stop_token);
-      info_log("Source thread exited successfully");
+      QUARK_LOG_INFO("Source thread exited successfully");
     } catch (const std::exception& e) {
-      critical_log("Source thread crashed: {}", e.what());
-      if (on_error) on_error(data);
+      QUARK_LOG_FATAL("Source thread crashed: {}", e.what());
+      state->on_error();
     }
   }};
 }
@@ -123,8 +133,8 @@ void Engine::stop() noexcept {
 
 void Engine::send(EngineSignal signal) {
   if (!state_) throw std::logic_error("Invalid EngineState");
-  if (signal == EngineSignal::CLEAR) {
-    state_->push(SourceCommand::CLEAR);
-  }
+  state_->push(signal);
+  state_->push(signal);
+  state_->push(signal);
 }
 }  // namespace quark

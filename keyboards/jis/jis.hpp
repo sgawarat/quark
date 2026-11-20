@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -18,16 +18,16 @@ namespace quark::jis {
  *
  * マルチメディアキーなどの追加のキーが必要な場合に、キーボードまたはキーマップによって実装される。
  *
- * @param key キー
+ * @param keycode キー
  */
-extern std::optional<keypos_t> get_extra_key_property(KeyCode keycode, KeyPropertyTag<keypos_t>);
+std::optional<keypos_t> get_extra_key_property(KeyCode keycode, KeyPropertyTag<keypos_t>);
 #endif
 
 /**
  * @brief 追加のキーに設定された情報を取得する
  *
  * @tparam T 設定された情報の型
- * @param key キー
+ * @param keycode キー
  * @return std::optional<T> 設定された情報の値
  */
 template <typename T>

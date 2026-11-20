@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -90,7 +90,7 @@ private:
     constexpr size_t KEY_COUNT = 256;
     for (size_t i = 1; i < KEY_COUNT; ++i) {
       const auto key = to_key(KeyCode{static_cast<uint8_t>(i)});
-      if (key == Key{0}) continue;
+      if (key == Key::NO) continue;
       QUARK_EVDEV_RESULT_CHECK(ioctl(handle(), UI_SET_KEYBIT, static_cast<int>(key)));
     }
 

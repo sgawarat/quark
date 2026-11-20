@@ -1,126 +1,156 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
- * @file receiver.hpp
- * @brief Win32のSource処理
+ * @file source.hpp
+ * @brief Win32におけるSource処理
  */
 #pragma once
 
-#include <chrono>
-#include <condition_variable>
+#include <Windows.h>
+
 #include <deque>
+#include <memory>
 #include <mutex>
+#include <optional>
+#include <stdexcept>
 #include <stop_token>
-#include <variant>
 
-#include <WinUser.h>
-
-#include <quark/utility.hpp>
-#include <quark/win32/key.hpp>
+#include "quark/engine.hpp"
+#include "quark/keyboard.hpp"
+#include "quark/utility.hpp"
+#include "quark/win32/utility.hpp"
 
 namespace quark::inline win32 {
 /**
- * @brief イベントの時刻を得るための時計クラス
+ * @brief Sourceに送られるイベントの時刻をはかる時計
  */
-using SourceClock = std::chrono::steady_clock;
+struct SourceEventClock final {
+  using time_point = DWORD;
 
-/**
- * @brief Win32のキーイベント
- */
-class SourceKeyEvent final {
-public:
-  SourceKeyEvent() = default;
-
-  SourceKeyEvent(const KBDLLHOOKSTRUCT& event) noexcept
-    : vk_{event.vkCode}, sc_{event.scanCode}, flags_{event.flags} {}
-
-  [[nodiscard]] Key key() const noexcept {
-    return make_key(vk_, sc_, flags_);
+  static time_point now() noexcept {
+    return static_cast<time_point>(GetMessageTime());
   }
-
-  [[nodiscard]] bool is_pressed() const noexcept {
-    return !static_cast<bool>(flags_ & LLKHF_UP);
-  }
-
-private:
-  DWORD vk_{};
-  DWORD sc_{};
-  DWORD flags_{};
 };
 
 /**
- * @brief Sourceから渡されるシグナルを表す列挙型
+ * @brief Sourceに送られるイベントの時刻を格納するための型
  */
-enum class SourceSignal {
-  CLEAR,  ///< すべてのキーを離す
-  RESET,  ///< 初期状態に戻す
-};
+using SourceEventTime = SourceEventClock::time_point;
 
 /**
- * @brief Sourceから渡されるイベントを格納するクラス
+ * @brief Sourceに送られるイベントを管理するキュー
  */
-using SourceEvent = std::variant<std::monostate, SourceKeyEvent, SourceSignal>;
-
-/**
- * @brief Sourceから渡されるイベントのためのキューを管理するクラス
- */
-class SourceQueue final : private Stationary {
+class SourceEventQueue {
 public:
-  SourceQueue();
+  /**
+   * @brief イベントキューを流れるパケット
+   */
+  class Packet final {
+  public:
+    Packet() = default;
 
-  ~SourceQueue() noexcept;
+    explicit Packet(SourceEventTime time) : time_{time} {}
+
+    template <typename T>
+    explicit Packet(std::in_place_t, T&& value)
+      : time_{SourceEventClock::now()}, value_{std::forward<T>(value)} {}
+
+    template <typename T, typename... Args>
+    explicit Packet(std::in_place_type_t<T>, Args&&... args)
+      : time_{SourceEventClock::now()},
+        value_{std::in_place_type<T>, std::forward<Args>(args)...} {}
+
+    template <EventVisitor Fn>
+    void visit(Fn&& fn) const {
+      std::visit([&](const auto& event) { std::forward<Fn>(fn)(time_, event); }, value_);
+    }
+
+    [[nodiscard]] auto time() const noexcept {
+      return time_;
+    }
+
+  private:
+    SourceEventTime time_{};
+    std::variant<TickEvent, EngineSignal> value_;
+  };
+
+  SourceEventQueue() : handle_{CreateEventW(nullptr, FALSE, FALSE, nullptr)} {
+    if (!handle_) throw std::runtime_error("Failed to CreateEvent");
+  }
 
   /**
-   * @brief キューにイベントを追加する
+   * @brief イベントを追加する
    */
-  void push(const SourceEvent& event);
+  template <typename T>
+  void push(T&& value) {
+    {
+      const std::scoped_lock<std::mutex> lock{mutex_};
+      queue_.emplace_back(std::in_place, std::forward<T>(value));
+    }
+    if (SetEvent(handle_.get()) == 0) {
+      throw std::runtime_error("Failed to SetEvent");
+    }
+  }
+
+  /**
+   * @brief イベントを構築して追加する
+   */
+  template <typename T, typename... Args>
+  void emplace(Args&&... args) {
+    {
+      const std::scoped_lock<std::mutex> lock{mutex_};
+      queue_.emplace_back(std::in_place_type<T>, std::forward<Args>(args)...);
+    }
+    if (SetEvent(handle_.get()) == 0) {
+      throw std::runtime_error("Failed to SetEvent");
+    }
+  }
 
   /**
    * @brief キューからイベントを取り出す
-   *
-   * タイムアウトした場合、空のイベントがeventに格納される。
-   *
-   * @param stop_token 呼び出し元スレッドのstop_token
-   * @param time タイムアウトする時刻
-   * @param event 受け取ったイベントの格納先
-   * @retval true イベントを受け取った
-   * @retval false 停止要求を受け取った
    */
-  bool pop(const std::stop_token& stop_token, SourceClock::time_point time, SourceEvent& out);
-
-  /**
-   * @brief フックプロシージャで投げられた例外を捕捉する
-   */
-  void catch_exception_in_hookproc() noexcept {
-    exception_in_hookproc_ = std::current_exception();
+  std::optional<Packet> pop() {
+    const std::unique_lock<std::mutex> lock{mutex_};
+    if (queue_.empty()) return std::nullopt;
+    auto out = queue_.front();
+    queue_.pop_front();
+    return out;
   }
 
   /**
-   * @brief フックプロシージャで補足した例外をrethrowする
+   * @brief キューを初期化する
    */
-  [[noreturn]] void rethrow_exception_in_hookproc() {
-    std::rethrow_exception(exception_in_hookproc_);
+  void reset() {
+    const std::unique_lock<std::mutex> lock{mutex_};
+    queue_ = {};  // 内部で確保されたメモリを解放する
+  }
+
+  /**
+   * @brief キューに値が追加されたことを通知するハンドルを取得する
+   */
+  [[nodiscard]] HANDLE handle() const noexcept [[clang::lifetimebound]] {
+    return handle_.get();
   }
 
 private:
-  struct Item {
-    SourceClock::time_point time;
-    SourceEvent event;
-  };
-
-  std::deque<Item> queue_;
-  std::mutex queue_mtx_;
-  std::condition_variable_any queue_cv_;
-  std::exception_ptr exception_in_hookproc_;  ///< フックプロシージャで投げられた例外
+  std::deque<Packet> queue_;
+  std::mutex mutex_;
+  Handle handle_;  ///< キューにイベントが追加されたことを通知するためのEvent
 };
+
+/**
+ * @brief Source処理に必要な初期データを格納するためのクラス
+ */
+struct SourceContextDesc {};
 
 /**
  * @brief Source処理を行うためのクラス
  */
-class SourceContext final : private Stationary {
+class SourceContext final : private Pinned {
 public:
-  SourceContext(SourceQueue& queue);
+  SourceContext(std::shared_ptr<KeyboardEventQueue> producer,
+      std::shared_ptr<SourceEventQueue> consumer, const SourceContextDesc& desc);
 
   ~SourceContext() noexcept;
 
@@ -134,7 +164,14 @@ public:
   void run(const std::stop_token& stop_token);
 
 private:
-  SourceQueue& queue_;
-  HHOOK hook_{};
+  LRESULT hookproc(int code, WPARAM wparam, LPARAM lparam);
+
+  void update(SourceEventTime time, TickEvent event);
+  void update(SourceEventTime time, EngineSignal signal);
+
+  std::shared_ptr<KeyboardEventQueue> producer_;
+  std::shared_ptr<SourceEventQueue> consumer_;
+  Hook hook_;
+  KeyCode last_key_;  ///< 最後に押されたキー
 };
 }  // namespace quark::inline win32

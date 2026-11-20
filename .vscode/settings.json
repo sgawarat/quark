@@ -1,24 +1,22 @@
 {
-    "cmake.configureOnOpen": true,
-    "cmake.configureArgs": [
-        "-DCMAKE_BUILD_TYPE=Debug",
-        "-DQMK_FIRMWARE_DIR=../../qmk_firmware",
-        "-DQUARK_KEYBOARD=jis",
-        "-DQUARK_KEYMAP=example",
-        "-DQUARK_ENABLE_DEBUGGING_WORKAROUNDS=yes",
-    ],
-    "editor.formatOnSave": true,
-    "cmake.configureOnEdit": false,
-    "editor.tabSize": 2,
-    "doxdocgen.file.copyrightTag": [
-        "SPDX-FileCopyrightText:  Copyright {year} sgawarat <sgawarat@gmail.com>",
-        "SPDX-License-Identifier: GPL-2.0-or-later"
-    ],
-    "doxdocgen.generic.authorEmail": "sgawarat@gmail.com",
-    "doxdocgen.generic.authorName": "sgawarat",
-    "doxdocgen.file.fileOrder": [
-        "copyright",
-        "file",
-        "brief"
-    ],
+  "cmake.configureEnvironment": {
+    "QMK_FIRMWARE_DIR": "../../qmk_firmware",
+    "QUARK_KEYBOARD": "jis",
+    "QUARK_KEYMAP": "example",
+    "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+  },
+  "editor.formatOnSave": true,
+  "cmake.configureOnEdit": false,
+  "editor.tabSize": 2,
+  "doxdocgen.file.copyrightTag": [
+    "SPDX-FileCopyrightText:  Copyright {year} sgawarat <sgawarat@gmail.com>",
+    "SPDX-License-Identifier: GPL-2.0-or-later",
+  ],
+  "doxdocgen.generic.authorEmail": "sgawarat@gmail.com",
+  "doxdocgen.generic.authorName": "sgawarat",
+  "doxdocgen.file.fileOrder": [
+    "copyright",
+    "file",
+    "brief"
+  ],
 }

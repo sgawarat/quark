@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2026 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -8,128 +8,163 @@
 #pragma once
 
 #include <chrono>
+#include <exception>
+#include <filesystem>
 #include <format>
+#include <fstream>
 #include <iostream>
-#include <print>
 #include <string_view>
 
-#ifdef _WIN32
-#include <debugapi.h>
-#elifdef __linux__
-#include <unistd.h>
-#endif
+#include "quark/utility.hpp"
 
 namespace quark {
 /**
+ * @brief ログの深刻さのレベル
+ */
+enum class LogSeverity {
+  FATAL,  ///< 継続不能かつ復旧困難
+  ERROR,  ///< 継続不能だが復旧可能
+  WARN,   ///< 継続可能だが異常な状態
+  INFO,   ///< 継続可能かつ正常な状態
+  DEBUG,  ///< デバッグに有用な情報
+  TRACE,  ///< デバッグに有用な情報の詳細
+};
+
+/**
+ * @brief LogSeverityを文字列に変換する
+ *
+ * @return その値の定数名の文字列。不明の場合は空を返す。
+ */
+constexpr std::string_view to_string(LogSeverity severity) noexcept {
+  switch (severity) {
+    using enum LogSeverity;
+    case FATAL: return "FATAL";
+    case ERROR: return "ERROR";
+    case WARN: return "WARN";
+    case INFO: return "INFO";
+    case DEBUG: return "DEBUG";
+    case TRACE: return "TRACE";
+  }
+  return {};
+}
+
+#ifdef NDEBUG
+/**
+ * @brief ログレベルの既定のしきい値
+ */
+constexpr auto DEFAULT_LOG_LEVEL = LogSeverity::WARN;
+#else
+/**
+ * @brief ログレベルの既定のしきい値
+ */
+constexpr auto DEFAULT_LOG_LEVEL = LogSeverity::DEBUG;
+#endif
+
+/**
+ * @brief ロガー
+ */
+class Logger final : Pinned {
+public:
+  using Clock = std::chrono::system_clock;
+
+  /**
+   * @brief 初期化する
+   *
+   * @param log_level ログレベルのしきい値。これより低いseverityを持つログは出力されない。
+   * @param output_path 出力先のファイルパス。空であれば、代わりにstderrに出力される。
+   */
+  explicit Logger(LogSeverity log_level, const std::filesystem::path& output_path = {}) {
+    s_log_level = log_level;
+    if (!output_path.empty()) {
+      s_log_file = std::make_unique<std::ofstream>(output_path, std::ios::app);
+    }
+  }
+
+  ~Logger() noexcept {
+    s_log_file = {};
+    s_log_level = DEFAULT_LOG_LEVEL;
+  }
+
+  /**
+   * @brief ログを出力する
+   *
+   * 出力される文字列はstd::formatの書式で整形される。
+   *
+   * @param severity ログの深刻さ
+   * @param fmt フォーマット文字列
+   * @param args 文字列に挿入される値
+   */
+  template <typename... Args>
+  static void log(LogSeverity severity, std::format_string<Args...> fmt, Args&&... args) noexcept {
+    if (severity > s_log_level) return;
+    try {
+      auto& os = s_log_file ? *s_log_file : std::clog;
+      os << std::format(
+          "{{\"timestamp\":\"{:%FT%TZ}\",\"severity\":{:?},\"source\":{:?},"
+          "\"message\":{:?}}}\n",
+          Clock::now(), to_string(severity), t_source,
+          std::format(fmt, std::forward<Args>(args)...));
+      if (severity <= LogSeverity::ERROR) os.flush();  // severityの高いログは即座に出力する
+    } catch (const std::exception& e) {
+      try {
+        std::cerr << "Failed to log: " << e.what() << '\n';
+      } catch (...) {
+        // できることがない
+        (void)0;
+      }
+    } catch (...) {
+      try {
+        std::cerr << "Failed to log: Unknown error\n";
+      } catch (...) {
+        // できることがない
+        (void)0;
+      }
+    }
+  }
+
+  /**
+   * @brief スレッドごとのログの発信元を示す文字列をセットする
+   */
+  static void set_source(std::string_view str) noexcept {
+    t_source = str;
+  }
+
+  /**
+   * @brief 指定の条件でログを出力できるか調べる
+   */
+  [[nodiscard]] static bool is_enabled_for(LogSeverity severity) noexcept {
+    return severity <= s_log_level;
+  }
+
+private:
+  static inline std::unique_ptr<std::ofstream> s_log_file;    ///< 出力先のファイル
+  static inline LogSeverity s_log_level = DEFAULT_LOG_LEVEL;  ///< ログレベルのしきい値
+  static thread_local inline std::string_view t_source;       ///< ログの発信元を示す文字列
+};
+
+/**
  * @brief ログを出力する
  *
- * std::formatの書式を用いる。
- *
- * @tparam ArgsT 文字列に挿入する値の型
- * @param severity ログレベル
- * @param fmt フォーマット文字列
- * @param args 文字列に挿入する値
+ * 設定によりログを出力しない場合、関数の呼び出し自体が行われない。
  */
-template <typename... ArgsT>
-inline void log(
-    const std::string_view severity, std::format_string<ArgsT...> fmt, ArgsT&&... args) noexcept {
-  try {
-    const auto message = std::format(fmt, std::forward<ArgsT>(args)...);
+#define QUARK_LOG(severity, fmt, ...) \
+  do { \
+    if (::quark::Logger::is_enabled_for(severity)) { \
+      ::quark::Logger::log((severity), fmt __VA_OPT__(, ) __VA_ARGS__); \
+    } \
+  } while (false)
 
-    // QMKのprintlnマクロが定義されていれば一時的に無効化しておく
-#pragma push_macro("println")
-#ifdef println
-#undef println
-#endif
-    std::println(std::cerr, R"({{"timestamp":"{:%FT%TZ}","severity":{:?},"message":{:?}}})",
-        std::chrono::system_clock::now(), severity, message);
-#pragma pop_macro("println")
+#define QUARK_LOG_FATAL(fmt, ...) QUARK_LOG(::quark::LogSeverity::FATAL, fmt, __VA_ARGS__)
+#define QUARK_LOG_ERROR(fmt, ...) QUARK_LOG(::quark::LogSeverity::ERROR, fmt, __VA_ARGS__)
+#define QUARK_LOG_WARN(fmt, ...) QUARK_LOG(::quark::LogSeverity::WARN, fmt, __VA_ARGS__)
+#define QUARK_LOG_INFO(fmt, ...) QUARK_LOG(::quark::LogSeverity::INFO, fmt, __VA_ARGS__)
 
-  } catch (const std::exception& e) {
-    // エラーの起こりにくい出力先に対して、最小限のログを出力する
-#ifdef _WIN32
-    OutputDebugStringA("[Quark] Failed to log: ");
-    OutputDebugStringA(e.what());
-#else
-    const std::string_view head = "[Quark] Failed to log: ";
-    const std::string_view what = e.what();
-    write(STDERR_FILENO, head.data(), head.size());
-    write(STDERR_FILENO, what.data(), what.size());
-#endif
-  }
-}
-
-/**
- * @brief formatの書式で致命的エラーログを出力する
- *
- * 処理に失敗して、もう他にできることがないときに用いる。
- *
- * @tparam ArgsT 文字列に挿入する値の型
- * @param fmt フォーマット文字列
- * @param args 文字列に挿入する値
- */
-template <typename... ArgsT>
-inline void critical_log(std::format_string<ArgsT...> fmt, ArgsT&&... args) noexcept {
-  log("critical", fmt, std::forward<ArgsT>(args)...);
-}
-
-/**
- * @brief formatの書式を用いてエラーログを出力する
- *
- * 処理に失敗したが、まだ他にできることがあるときに用いる。
- *
- * @tparam ArgsT 文字列に挿入する値の型
- * @param fmt フォーマット文字列
- * @param args 文字列に挿入する値
- */
-template <typename... ArgsT>
-inline void error_log(std::format_string<ArgsT...> fmt, ArgsT&&... args) noexcept {
-  log("error", fmt, std::forward<ArgsT>(args)...);
-}
-
-/**
- * @brief formatの書式を用いて警告ログを出力する
- *
- * 通常では起こり得ないことが起こったときに用いる。
- *
- * @tparam ArgsT 文字列に挿入する値の型
- * @param fmt フォーマット文字列
- * @param args 文字列に挿入する値
- */
-template <typename... ArgsT>
-inline void warn_log(std::format_string<ArgsT...> fmt, ArgsT&&... args) noexcept {
-  log("warn", fmt, std::forward<ArgsT>(args)...);
-}
-
-/**
- * @brief formatの書式を用いて情報ログを出力する
- *
- * 通常でも起こり得ることが起こったときに用いる。
- *
- * @tparam ArgsT 文字列に挿入する値の型
- * @param fmt フォーマット文字列
- * @param args 文字列に挿入する値
- */
-template <typename... ArgsT>
-inline void info_log(std::format_string<ArgsT...> fmt, ArgsT&&... args) noexcept {
-  log("info", fmt, std::forward<ArgsT>(args)...);
-}
-
-/**
- * @brief formatの書式を用いてデバッグログを出力する
- *
- * デバッグに必要な情報を得るために用いる。
- * デバッグビルドでのみ有効。
- *
- * @tparam ArgsT 文字列に挿入する値の型
- * @param fmt フォーマット文字列
- * @param args 文字列に挿入する値
- */
-template <typename... ArgsT>
-inline void debug_log(
-    [[maybe_unused]] std::format_string<ArgsT...> fmt, [[maybe_unused]] ArgsT&&... args) noexcept {
+// DEBUGとTRACEはデバッグビルドのみで有効
 #ifndef NDEBUG
-  log("debug", fmt, std::forward<ArgsT>(args)...);
+#define QUARK_LOG_DEBUG(fmt, ...) QUARK_LOG(::quark::LogSeverity::DEBUG, fmt, __VA_ARGS__)
+#define QUARK_LOG_TRACE(fmt, ...) QUARK_LOG(::quark::LogSeverity::TRACE, fmt, __VA_ARGS__)
+#else
+#define QUARK_LOG_DEBUG(...) (void)0
+#define QUARK_LOG_TRACE(...) (void)0
 #endif
-}
 }  // namespace quark

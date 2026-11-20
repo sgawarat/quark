@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2021 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "resource.h"
@@ -7,12 +7,13 @@ IDR_CONTEXT_MENU MENU
 BEGIN
     POPUP "Context Menu"
     BEGIN
-        MENUITEM "Enable/Disable", ID_ENABLE_DISABLE
-        MENUITEM "Reset", ID_RESET
+        MENUITEM "&Start/Stop", ID_START_STOP
         MENUITEM "&Exit", ID_EXIT
     END
 END
 
-IDI_MYAPP ICON "assets/keyboard.ico"
+IDI_MYAPP ICON "assets/app.ico"
 IDI_KEYBOARD_ON ICON "assets/keyboard.ico"
 IDI_KEYBOARD_OFF ICON "assets/keyboard-off.ico"
+IDI_DARK_KEYBOARD_ON ICON "assets/dark/keyboard.ico"
+IDI_DARK_KEYBOARD_OFF ICON "assets/dark/keyboard-off.ico"

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2021-2026 sgawarat <sgawarat@gmail.com>
+// SPDX-FileCopyrightText: 2021 sgawarat <sgawarat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
+#include <iterator>
 #include <ranges>
 #include <span>
 #include <type_traits>
@@ -171,7 +172,7 @@ public:
     const auto index = position / WIDTH;
     const auto offset = position % WIDTH;
     if (index >= values_.size()) return false;
-    // NOLINTNEXTLINE(*-avoid-unchecked-container-access,*-constant-array-index)
+    // NOLINTNEXTLINE(*-avoid-unchecked-container-access)
     return (values_[index] & static_cast<Value>(Value{1} << offset)) != 0;
   }
 
@@ -230,7 +231,7 @@ public:
     const size_t index = position / WIDTH;
     const size_t offset = position % WIDTH;
     if (index >= values_.size()) return;
-    // NOLINTNEXTLINE(*-avoid-unchecked-container-access,*-constant-array-index)
+    // NOLINTNEXTLINE(*-avoid-unchecked-container-access)
     values_[index] |= static_cast<Value>(Value{1} << offset);
   }
 
@@ -290,7 +291,7 @@ public:
    */
   template <BitSetValueRangeFor<BitArray> R>
   constexpr void assign(const R& values) noexcept {
-    const auto size = std::min(std::ranges::size(values), values_.size());
+    const auto size = std::min(std::ranges::ssize(values), std::ranges::ssize(values_));
     auto [_, mid] = std::ranges::copy_n(std::ranges::begin(values), size, values_.begin());
     std::ranges::fill(mid, values_.end(), Value{});
     clear_unused_bits();
@@ -318,17 +319,45 @@ public:
   }
 
   /**
-   * @brief ビット列の差分を計算する
+   * @brief ビット列の和を計算する
    *
    * @param other 右手側のビット列
-   * @return lhs & ~rhs
+   * @return *this |= other
    */
-  [[nodiscard]] constexpr BitArray difference(const BitArray& other) const noexcept {
-    BitArray out{*this};
-    for (auto&& [lhs, rhs] : std::views::zip(out.values_, other.values_)) {
+  constexpr BitArray& unite(const BitArray& other) noexcept {
+    for (auto&& [lhs, rhs] : std::views::zip(values_, other.values_)) {
+      lhs |= rhs;
+    }
+    return *this;
+  }
+
+  /**
+   * @brief ビット列の差を計算する
+   *
+   * @param other 右手側のビット列
+   * @return *this &= ~other
+   */
+  constexpr BitArray& subtract(const BitArray& other) noexcept {
+    for (auto&& [lhs, rhs] : std::views::zip(values_, other.values_)) {
       lhs &= static_cast<Value>(~rhs);
     }
-    return out;
+    return *this;
+  }
+
+  /**
+   * @brief ビット列の和を計算する
+   */
+  [[nodiscard]] friend constexpr BitArray bit_union(
+      const BitArray& lhs, const BitArray& rhs) noexcept {
+    return BitArray{lhs}.unite(rhs);
+  }
+
+  /**
+   * @brief ビット列の差分を計算する
+   */
+  [[nodiscard]] friend constexpr BitArray bit_difference(
+      const BitArray& lhs, const BitArray& rhs) noexcept {
+    return BitArray{lhs}.subtract(rhs);
   }
 
 private:
@@ -423,7 +452,7 @@ public:
     constexpr void next() noexcept {
       while (position_ < N) {
         // 直前の1より上位に現れる次の1を探す
-        const size_t index = position_ / WIDTH;
+        const typename ValueIterator::difference_type index = position_ / WIDTH;
         const size_t offset = position_ % WIDTH;
         const auto value = iter_[index];  // NOLINT(*-avoid-unchecked-container-access)
         const auto count = static_cast<size_t>(std::countr_zero(static_cast<T>(value >> offset)));
@@ -446,17 +475,33 @@ public:
     Position position_{};
   };
 
+  /**
+   * @brief 全体のビューを構築する
+   */
   constexpr explicit BitOneView(const BitArray<N, T>& bits) noexcept : values_{bits.values()} {}
 
+  /**
+   * @brief 指定の範囲のビューを構築する
+   */
+  constexpr explicit BitOneView(const BitArray<N, T>& bits, size_t first, size_t last = N) noexcept
+    : values_{bits.values()}, first_{first}, last_{last} {
+    if (last_ < first_) last_ = first_;
+  }
+
   [[nodiscard]] constexpr auto begin() const noexcept {
-    return Iterator{values_.begin(), 0};
+    return Iterator{values_.begin(), first_};
   }
 
   [[nodiscard]] constexpr auto end() const noexcept {
-    return Iterator{values_.begin(), N};
+    return Iterator{values_.begin(), last_};
   }
 
 private:
   std::span<const T, HEIGHT> values_;
+  size_t first_ = 0;
+  size_t last_ = N;
 };
+
+template <size_t N, typename T>
+BitOneView(const BitArray<N, T>&) -> BitOneView<N, T>;
 }  // namespace quark
