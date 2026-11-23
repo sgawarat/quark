@@ -100,9 +100,9 @@ public:
     try {
       auto& os = s_log_file ? *s_log_file : std::clog;
       os << std::format(
-          "{{\"timestamp\":\"{:%FT%TZ}\",\"severity\":{:?},\"source\":{:?},"
+          "{{\"timestamp\":\"{:%FT%TZ}\",\"severity\":{:?},\"module\":{:?},"
           "\"message\":{:?}}}\n",
-          Clock::now(), to_string(severity), t_source,
+          Clock::now(), to_string(severity), t_module,
           std::format(fmt, std::forward<Args>(args)...));
       if (severity <= LogSeverity::ERROR) os.flush();  // severityの高いログは即座に出力する
     } catch (const std::exception& e) {
@@ -125,8 +125,8 @@ public:
   /**
    * @brief スレッドごとのログの発信元を示す文字列をセットする
    */
-  static void set_source(std::string_view str) noexcept {
-    t_source = str;
+  static void set_module(std::string_view str) noexcept {
+    t_module = str;
   }
 
   /**
@@ -139,7 +139,7 @@ public:
 private:
   static inline std::unique_ptr<std::ofstream> s_log_file;    ///< 出力先のファイル
   static inline LogSeverity s_log_level = DEFAULT_LOG_LEVEL;  ///< ログレベルのしきい値
-  static thread_local inline std::string_view t_source;       ///< ログの発信元を示す文字列
+  static thread_local inline std::string_view t_module;       ///< ログの発信元を示す文字列
 };
 
 /**

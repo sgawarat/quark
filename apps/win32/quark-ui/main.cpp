@@ -524,7 +524,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
   using namespace quark;
   try {
     // ロガー
-    Logger::set_source("ui");
+    Logger::set_module("ui");
     const auto log_path = std::filesystem::path{get_current_module_path()} / "quark-ui.log";
     const Logger logger{DEFAULT_LOG_LEVEL, log_path};
 

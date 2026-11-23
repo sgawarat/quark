@@ -211,7 +211,7 @@ private:
 int main(int argc, char* argv[]) {
   using namespace quark;
   try {
-    Logger::set_source("main");
+    Logger::set_module("main");
 
     // プロセスとメインスレッドにセキュリティ設定を適用する
     if (!protect_current_process()) {

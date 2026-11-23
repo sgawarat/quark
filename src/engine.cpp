@@ -87,7 +87,7 @@ void Engine::start() {
   const auto state = state_;
   sink_thread_ = Thread{[=](const std::stop_token& stop_token) noexcept {
     try {
-      Logger::set_source("sink");
+      Logger::set_module("sink");
       auto ctx = state->get_sink_context();
       ctx.run(stop_token);
       QUARK_LOG_INFO("Sink thread exited successfully");
@@ -99,7 +99,7 @@ void Engine::start() {
 
   keyboard_thread_ = Thread{[=](const std::stop_token& stop_token) noexcept {
     try {
-      Logger::set_source("keyboard");
+      Logger::set_module("keyboard");
       auto ctx = state->get_keyboard_context();
       ctx.run(stop_token);
       QUARK_LOG_INFO("Keyboard thread exited successfully");
@@ -111,7 +111,7 @@ void Engine::start() {
 
   source_thread_ = Thread{[=](const std::stop_token& stop_token) noexcept {
     try {
-      Logger::set_source("source");
+      Logger::set_module("source");
       auto ctx = state->get_source_context();
       ctx.run(stop_token);
       QUARK_LOG_INFO("Source thread exited successfully");
