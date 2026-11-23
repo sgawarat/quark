@@ -67,11 +67,17 @@ else()
       /W4
       -Wno-missing-designated-field-initializers
     )
-  else()
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(config INTERFACE
       -Wall
       -Wextra
       -Wno-missing-field-initializers
+      -Wno-attributes=clang::  # clang固有の属性が無視されることを警告しない
+    )
+  else()
+    target_compile_options(config INTERFACE
+      -Wall
+      -Wextra
       -Wno-missing-designated-field-initializers
     )
   endif()
