@@ -30,7 +30,7 @@
   if (!result) { \
     return ::std::unexpected{::std::forward<decltype(result)>(result).error()}; \
   } \
-  decl(*::std::forward<decltype(result)>(result));
+  decl(*::std::forward<decltype(result)>(result))
 
 /**
  * @brief expectedをconstでアンラップするマクロ
@@ -42,7 +42,7 @@
   if (!result) { \
     return ::std::unexpected{std::forward<decltype(result)>(result).error()}; \
   } \
-  decl(*::std::forward<decltype(result)>(result));
+  decl(*::std::forward<decltype(result)>(result))
 
 /**
  * @brief expectedがエラーのときにリターンするマクロ

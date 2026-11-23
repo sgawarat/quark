@@ -28,6 +28,7 @@ public:
   /**
    * @brief BitArrayから構築する
    */
+  // NOLINTNEXTLINE(*-explicit-constructor)
   constexpr KeySet(const BitArray& other) : BitArray{other} {}
 
   /**
@@ -147,6 +148,7 @@ public:
   /**
    * @brief BitArrayから構築する
    */
+  // NOLINTNEXTLINE(*-explicit-constructor)
   constexpr MouseButtonSet(const BitArray& other) : BitArray{other} {}
 
   /**

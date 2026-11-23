@@ -37,7 +37,7 @@ using BitSetValue = std::remove_cvref_t<BitSet>::Value;
  * @brief ビットセットにおいて、ビットの位置として使用できる型の制約
  */
 template <typename T, typename BitSet>
-concept BitSetPositionFor = std::convertible_to<T, BitSetPosition<BitSet>>;
+concept BitSetPositionFor = std::same_as<T, BitSetPosition<BitSet>>;
 
 /**
  * @brief ビットセットにおいて、ビットの位置として使用できるレンジ型の制約
@@ -50,7 +50,7 @@ concept BitSetPositionRangeFor = std::ranges::input_range<R> && std::ranges::siz
  * @brief ビットセットにおいて、ビットを格納する数値列の要素として使用できる型の制約
  */
 template <typename T, typename BitSet>
-concept BitSetValueFor = std::convertible_to<T, BitSetValue<BitSet>>;
+concept BitSetValueFor = std::same_as<T, BitSetValue<BitSet>>;
 
 /**
  * @brief ビットセットにおいて、ビットを格納する数値列の要素として使用できるレンジ型の制約
@@ -125,7 +125,6 @@ public:
    *
    * @param positions ビット位置の配列
    */
-  template <BitSetPositionFor<BitArray> Position>
   constexpr BitArray(std::initializer_list<Position> positions) noexcept : values_{} {
     insert(positions);
   }
@@ -145,8 +144,7 @@ public:
    *
    * @param values 値の配列
    */
-  template <BitSetValueFor<BitArray> U>
-  constexpr explicit BitArray(std::in_place_t, std::initializer_list<U> values) noexcept {
+  constexpr explicit BitArray(std::in_place_t, std::initializer_list<Value> values) noexcept {
     assign(values);
   }
 
@@ -420,12 +418,12 @@ public:
 
     constexpr Iterator() noexcept = default;
 
-    constexpr explicit Iterator(ValueIterator iter, size_t position) noexcept
+    constexpr explicit Iterator(ValueIterator iter, Position position) noexcept
       : iter_{iter}, position_{position} {
       next();  // 最初の1に移動する
     }
 
-    [[nodiscard]] constexpr size_t operator*() const noexcept {
+    [[nodiscard]] constexpr Position operator*() const noexcept {
       return position_;
     }
 
@@ -483,7 +481,8 @@ public:
   /**
    * @brief 指定の範囲のビューを構築する
    */
-  constexpr explicit BitOneView(const BitArray<N, T>& bits, size_t first, size_t last = N) noexcept
+  constexpr explicit BitOneView(
+      const BitArray<N, T>& bits, Position first, Position last = N) noexcept
     : values_{bits.values()}, first_{first}, last_{last} {
     if (last_ < first_) last_ = first_;
   }
@@ -498,8 +497,8 @@ public:
 
 private:
   std::span<const T, HEIGHT> values_;
-  size_t first_ = 0;
-  size_t last_ = N;
+  Position first_ = 0;
+  Position last_ = N;
 };
 
 template <size_t N, typename T>

@@ -19,9 +19,11 @@ void quark_log_printf(const char* fmt, ...) {
   constexpr auto BUFFER_SIZE = 512;
   std::array<char, BUFFER_SIZE> buffer{};
   va_list args{};
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
   va_start(args, fmt);
   const auto ret = vsnprintf(buffer.data(), buffer.size(), fmt, args);
   va_end(args);
+  // NOLINTEND(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
   if (ret > 0) QUARK_LOG_TRACE("{}", std::string_view{buffer.data()});
 }
 }  // extern "C"

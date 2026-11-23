@@ -37,7 +37,7 @@ public:
    *
    * @param on_error エラー発生時に呼び出される関数。その呼出はスレッドセーフである必要がある。
    */
-  Engine(std::function<void()> on_error);
+  explicit Engine(std::function<void()> on_error);
 
   ~Engine() noexcept;
 
