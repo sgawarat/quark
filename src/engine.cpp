@@ -134,7 +134,5 @@ void Engine::stop() noexcept {
 void Engine::send(EngineSignal signal) {
   if (!state_) throw std::logic_error("Invalid EngineState");
   state_->push(signal);
-  state_->push(signal);
-  state_->push(signal);
 }
 }  // namespace quark
