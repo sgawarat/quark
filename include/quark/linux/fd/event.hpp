@@ -23,7 +23,12 @@ class EventFd final : public FdBase {
 public:
   static Result<EventFd> create() noexcept {
     QUARK_EVDEV_RESULT_TRY(EventFd evfd, eventfd(0, EFD_CLOEXEC));
-    return std::move(evfd);
+    return evfd;
+  }
+
+  static Result<EventFd> create_semaphore() noexcept {
+    QUARK_EVDEV_RESULT_TRY(EventFd evfd, eventfd(0, EFD_SEMAPHORE | EFD_CLOEXEC));
+    return evfd;
   }
 
   EventFd() noexcept = default;
@@ -31,6 +36,12 @@ public:
   [[nodiscard]] Result<void> write(eventfd_t value) const noexcept {
     QUARK_EVDEV_RESULT_CHECK(eventfd_write(handle(), value));
     return {};
+  }
+
+  [[nodiscard]] Result<eventfd_t> read() const noexcept {
+    eventfd_t value{};
+    QUARK_EVDEV_RESULT_CHECK(eventfd_read(handle(), &value));
+    return value;
   }
 
 private:

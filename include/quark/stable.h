@@ -18,3 +18,7 @@ static const unsigned int QUARK_WIN32_ERROR = ERROR;
 #undef DELETE
 #undef ERROR
 #endif
+
+#ifdef __linux__
+#include <unistd.h>
+#endif

@@ -59,7 +59,7 @@ class InputFd final : public FdBase {
 public:
   static Result<InputFd> create(const char* path) {
     QUARK_EVDEV_RESULT_TRY(InputFd infd, open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC));
-    return std::move(infd);
+    return infd;
   }
 
   InputFd() noexcept = default;
@@ -153,10 +153,10 @@ public:
     return std::string{buffer.data()};
   }
 
-  [[nodiscard]] Result<size_t> get_effects() const noexcept {
+  [[nodiscard]] Result<uint32_t> get_effects() const noexcept {
     int effects{};
     QUARK_EVDEV_RESULT_CHECK(ioctl(handle(), EVIOCGEFFECTS, &effects));
-    return static_cast<size_t>(effects);
+    return static_cast<uint32_t>(effects);
   }
 
   [[nodiscard]] Result<BitArray<KEY_CNT>> get_keys() const noexcept {

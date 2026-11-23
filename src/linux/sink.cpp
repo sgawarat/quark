@@ -26,71 +26,144 @@
 
 namespace quark::inline evdev {
 namespace {
-template <size_t N>
-struct InputEventBuilder {
-  constexpr auto& add(const input_event& event) {
-    events_.at(size_++) = event;
-    return *this;
-  }
-
-  constexpr auto& key_press(Key key) {
-    return add({
-      .type = EV_KEY,
-      .code = static_cast<uint16_t>(key),
-      .value = 1,
-    });
-  }
-
-  constexpr auto& key_release(Key key) {
-    return add({
-      .type = EV_KEY,
-      .code = static_cast<uint16_t>(key),
-      .value = 0,
-    });
-  }
-
-  constexpr auto& button_press(uint16_t index) {
-    return add({
-      .type = EV_KEY,
-      .code = static_cast<uint16_t>(BTN_MOUSE + index),
-      .value = 1,
-    });
-  }
-
-  constexpr auto& button_release(uint16_t index) {
-    return add({
-      .type = EV_KEY,
-      .code = static_cast<uint16_t>(BTN_MOUSE + index),
-      .value = 0,
-    });
-  }
-
-  constexpr auto& rel(uint16_t code, int32_t value) {
-    return add({
-      .type = EV_REL,
-      .code = code,
-      .value = value,
-    });
-  }
-
-  constexpr auto& syn_report() {
-    return add({
-      .type = EV_SYN,
-      .code = SYN_REPORT,
-    });
-  }
+template <bool KEYUP>
+class KeyInput {
+public:
+  explicit KeyInput(Key key) noexcept
+    : events_{
+        {
+          {
+            .type = EV_KEY,
+            .code = static_cast<uint16_t>(key),
+            .value = KEYUP ? 0 : 1,
+          },
+          {
+            .type = EV_SYN,
+            .code = SYN_REPORT,
+          },
+        },
+      } {}
 
   void send(const UinputFd& uifd) const {
-    uifd.write(std::span{events_.data(), size_})
-        .or_throw("Failed to send input events to the virtual device");
-  }
-
-  [[nodiscard]] constexpr size_t size() const noexcept {
-    return size_;
+    uifd.write(events_).or_throw("Failed to send input events to the virtual device");
   }
 
 private:
-  std::array<input_event, N> events_{};
+  std::array<input_event, 2> events_{};
+};
+
+using KeyPressInput = KeyInput<false>;
+using KeyReleaseInput = KeyInput<true>;
+
+template <bool KEYUP>
+class MouseButtonInput {
+public:
+  explicit MouseButtonInput(MouseButtonSet buttons) {
+    buttons.scan([&](uint8_t index) {
+      events_.at(size_++) = {
+        .type = EV_KEY,
+        .code = static_cast<uint16_t>(BTN_MOUSE + index),
+        .value = KEYUP ? 0 : 1,
+      };
+    });
+    if (size_ > 0) {
+      events_.at(size_++) = {
+        .type = EV_SYN,
+        .code = SYN_REPORT,
+      };
+    }
+  }
+
+  void send(const UinputFd& uifd) const {
+    if (size_ == 0) return;
+    uifd.write(events_).or_throw("Failed to send input events to the virtual device");
+  }
+
+private:
+  static constexpr size_t MAX_EVENT_COUNT = MouseButtonSet::EXTENT + 1;
+
+  std::array<input_event, MAX_EVENT_COUNT> events_{};
+  size_t size_{};
+};
+
+using MousePressInput = MouseButtonInput<false>;
+using MouseReleaseInput = MouseButtonInput<true>;
+
+class MouseWheelInput {
+public:
+  explicit MouseWheelInput(MouseWheelEvent event) {
+    // ホイール縦
+    if (event.rel_v != 0) {
+      events_.at(size_++) = {
+        .type = EV_REL,
+        .code = REL_WHEEL,
+        .value = event.rel_v,
+      };
+    }
+
+    // ホイール横
+    if (event.rel_h != 0) {
+      events_.at(size_++) = {
+        .type = EV_REL,
+        .code = REL_HWHEEL,
+        .value = event.rel_h,
+      };
+    }
+
+    if (size_ > 0) {
+      events_.at(size_++) = {
+        .type = EV_SYN,
+        .code = SYN_REPORT,
+      };
+    }
+  }
+
+  void send(const UinputFd& uifd) const {
+    if (size_ == 0) return;
+    uifd.write(events_).or_throw("Failed to send input events to the virtual device");
+  }
+
+private:
+  std::array<input_event, 3> events_{};
+  size_t size_{};
+};
+
+class MouseCursorInput {
+public:
+  explicit MouseCursorInput(MouseCursorEvent event) {
+    // カーソル横
+    if (event.rel_x != 0) {
+      events_.at(size_++) = {
+        .type = EV_REL,
+        .code = REL_X,
+        .value = event.rel_x,
+      };
+    }
+
+    // カーソル縦
+    if (event.rel_y != 0) {
+      events_.at(size_++) = {
+        .type = EV_REL,
+        .code = REL_Y,
+        .value = event.rel_y,
+      };
+    }
+
+    if (size_ > 0) {
+      events_.at(size_++) = {
+        .type = EV_SYN,
+        .code = SYN_REPORT,
+      };
+    }
+  }
+
+  void send(const UinputFd& uifd) const {
+    if (size_ == 0) return;
+    uifd.write(events_).or_throw("Failed to send input events to the virtual device");
+  }
+
+private:
+  std::array<input_event, 3> events_{};
   size_t size_{};
 };
 }  // namespace
@@ -116,41 +189,31 @@ void SinkContext::update(EventTime, TickEvent) {}
 
 void SinkContext::update(EventTime, KeyPressEvent event) {
   const auto key = to_key(event.keycode);
-  if (key == Key{}) return;
-  InputEventBuilder<2>{}.key_press(key).syn_report().send(uinput_fd_);
+  if (key == Key::NO) return;
+  KeyPressInput{key}.send(uinput_fd_);
 }
 
 void SinkContext::update(EventTime, KeyReleaseEvent event) {
   const auto key = to_key(event.keycode);
-  if (key == Key{}) return;
-  InputEventBuilder<2>{}.key_release(key).syn_report().send(uinput_fd_);
+  if (key == Key::NO) return;
+  KeyReleaseInput{key}.send(uinput_fd_);
 }
 
 void SinkContext::update(EventTime, MousePressEvent event) {
-  InputEventBuilder<9> events{};
-  event.buttons.scan([&](uint8_t i) { events.button_press(i); });
-  if (events.size() > 0) events.syn_report().send(uinput_fd_);
+  MousePressInput{event.buttons}.send(uinput_fd_);
 }
 
 void SinkContext::update(EventTime, MouseReleaseEvent event) {
-  InputEventBuilder<9> events{};
-  event.buttons.scan([&](uint8_t i) { events.button_release(i); });
-  if (events.size() > 0) events.syn_report().send(uinput_fd_);
+  MouseReleaseInput{event.buttons}.send(uinput_fd_);
 }
 
 void SinkContext::update(EventTime, MouseWheelEvent event) {
-  InputEventBuilder<3> events{};
-  if (event.rel_v != 0) events.rel(REL_WHEEL, event.rel_v);
-  if (event.rel_h != 0) events.rel(REL_HWHEEL, event.rel_h);
-  if (events.size() > 0) events.syn_report().send(uinput_fd_);
+  MouseWheelInput{event}.send(uinput_fd_);
 }
 
 void SinkContext::update(EventTime, MouseCursorEvent event) {
-  InputEventBuilder<3> events{};
-  if (event.rel_x != 0) events.rel(REL_X, event.rel_x);
-  if (event.rel_y != 0) events.rel(REL_Y, event.rel_y);
-  if (events.size() > 0) events.syn_report().send(uinput_fd_);
+  MouseCursorInput{event}.send(uinput_fd_);
 }
 
-void SinkContext::update(EventTime, SinkCommand) {}
+void SinkContext::update(EventTime, EngineSignal) {}
 }  // namespace quark::inline evdev

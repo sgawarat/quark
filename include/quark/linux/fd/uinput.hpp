@@ -31,7 +31,7 @@ public:
   static Result<UinputFd> create() noexcept {
     QUARK_EVDEV_RESULT_TRY(UinputFd uifd, open("/dev/uinput", O_WRONLY | O_CLOEXEC));
     QUARK_RESULT_CHECK(uifd.setup());
-    return std::move(uifd);
+    return uifd;
   }
 
   /**
@@ -40,7 +40,7 @@ public:
   static Result<UinputFd> create(const InputFd& infd) noexcept {
     QUARK_EVDEV_RESULT_TRY(UinputFd uifd, open("/dev/uinput", O_WRONLY | O_CLOEXEC));
     QUARK_RESULT_CHECK(uifd.setup(infd));
-    return std::move(uifd);
+    return uifd;
   }
 
   UinputFd() noexcept = default;
@@ -141,7 +141,7 @@ private:
       }
     }
     return {};
-  };
+  }
 
   /**
    * @brief Input FDから構成をコピーしてセットアップする

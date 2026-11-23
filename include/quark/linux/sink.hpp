@@ -10,10 +10,23 @@
 #include <memory>
 #include <stop_token>
 
+#include "quark/engine.hpp"
 #include "quark/event.hpp"
 #include "quark/linux/fd/uinput.hpp"
+#include "quark/queue.hpp"
 
 namespace quark::inline evdev {
+/**
+ * @brief Sinkに送られるイベントを管理するキュー
+ */
+using SinkEventQueue = EventQueue<KeyPressEvent, KeyReleaseEvent, MousePressEvent,
+    MouseReleaseEvent, MouseWheelEvent, MouseCursorEvent, EngineSignal>;
+
+/**
+ * @brief SinkEventQueueを流れるパケット
+ */
+using SinkEventPacket = SinkEventQueue::Packet;
+
 /**
  * @brief Sink処理に必要な初期データを格納するためのクラス
  */
@@ -45,7 +58,7 @@ private:
   void update(EventTime time, MouseReleaseEvent event);
   void update(EventTime time, MouseWheelEvent event);
   void update(EventTime time, MouseCursorEvent event);
-  void update(EventTime time, SinkCommand event);
+  void update(EventTime time, EngineSignal signal);
 
   std::shared_ptr<SinkEventQueue> consumer_;
   UinputFd uinput_fd_;  ///< 入力イベントを送信するためのFD

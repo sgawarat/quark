@@ -1,0 +1,11 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "CMake: install quark-ui",
+      "type": "shell",
+      "command": "cmake --install ./build --component quark-ui --prefix ./install",
+      "problemMatcher": []
+    }
+  ]
+}

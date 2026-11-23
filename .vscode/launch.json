@@ -26,7 +26,7 @@
       "logging": {
         "moduleLoad": false
       },
-      "MIMode": "lldb"
+      "MIMode": "gdb"
     }
   ]
 }

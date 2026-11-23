@@ -27,13 +27,9 @@ int main(int argc, char* argv[]) {
   QApplication::setQuitOnLastWindowClosed(false);
 
   // バックエンドプログラムのパス
-#ifdef NDEBUG
   // const auto child_program = QStandardPaths::findExecutable("quark");
   const auto child_program = QDir{QApplication::applicationDirPath()}.absoluteFilePath("quark");
-#else
-  const auto child_program =
-      QDir{QApplication::applicationDirPath()}.absoluteFilePath("../backend/quark");
-#endif
+  const QStringList child_command_args{"--log-file"};
 
   // アイコン
   struct IconSet {
@@ -66,7 +62,7 @@ int main(int argc, char* argv[]) {
   // コンテキストメニューからバックエンドプロセスを開始・停止させる
   QObject::connect(start_stop_action, &QAction::triggered, &app, [&] {
     if (child.state() == QProcess::NotRunning) {
-      child.start(child_program);
+      child.start(child_program, child_command_args);
     } else {
       child.terminate();
       constexpr int msecs = 1000;
@@ -111,7 +107,7 @@ int main(int argc, char* argv[]) {
   });
 
   // バックエンドプロセスを起動する
-  child.start(child_program);
+  child.start(child_program, child_command_args);
 
   return QApplication::exec();
 }

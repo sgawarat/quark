@@ -14,20 +14,16 @@
 #include <cstdlib>
 #include <format>
 #include <print>
-#include <string>
 #include <utility>
-#include <vector>
 
 #include "print.hpp"
 #include "quark/linux/fd/epoll.hpp"
 #include "quark/linux/fd/input.hpp"
-#include "quark/linux/key.hpp"
 #include "quark/logging.hpp"
-#include "quark/quantum/key.hpp"
 
 int main() {  // NOLINT(readability-function-cognitive-complexity)
   using namespace quark;
-  using namespace quark::key_test;
+  using namespace quark::keytest;
   try {
     auto epfd_res = EpollFd::create();
     if (!epfd_res) QUARK_LOG_WARN("Failed to epoll_create1");
@@ -80,10 +76,9 @@ int main() {  // NOLINT(readability-function-cognitive-complexity)
 
       std::print("Unsupported Keys: ");
       {
-        for (uint16_t i = 0; i < KEY_CNT; ++i) {
-          if (!keybits.contains(i)) continue;
-          if (to_keycode(Key{i}) != KeyCode{KC_NO}) continue;
-          std::print("{} ({}), ", get_key_name(i), i);
+        for (uint16_t key = 0; key < KEY_CNT; ++key) {
+          if (!keybits.contains(key)) continue;
+          std::print("{} ({}), ", get_key_name(key), key);
         }
       }
       std::println("");

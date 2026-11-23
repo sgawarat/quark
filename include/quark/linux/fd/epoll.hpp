@@ -25,7 +25,7 @@ class EpollFd final : public FdBase {
 public:
   static Result<EpollFd> create() noexcept {
     QUARK_EVDEV_RESULT_TRY(EpollFd epfd, epoll_create1(EPOLL_CLOEXEC));
-    return std::move(epfd);
+    return epfd;
   }
 
   EpollFd() = default;

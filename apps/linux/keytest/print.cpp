@@ -15,7 +15,7 @@
 #include <print>
 #include <string_view>
 
-namespace quark::key_test::inline evdev {
+namespace quark::keytest::inline evdev {
 std::string_view get_key_name(uint32_t keycode) {
   // from linux/input-event-codes.h
   switch (keycode) {
@@ -667,7 +667,7 @@ std::string_view get_key_name(uint32_t keycode) {
     case BTN_TRIGGER_HAPPY39: return "BTN_TRIGGER_HAPPY39";
     case BTN_TRIGGER_HAPPY40: return "BTN_TRIGGER_HAPPY40";
     default: break;
-  };
+  }
   return "NONAME";
 }
 
@@ -695,4 +695,4 @@ void print_key_event(size_t index, const input_event& event) {
     }
   }
 }
-}  // namespace quark::key_test::inline evdev
+}  // namespace quark::keytest::inline evdev

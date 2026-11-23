@@ -8,3 +8,9 @@ target_link_libraries(quark PRIVATE
   config
   engine
 )
+
+install(
+  TARGETS quark
+  RUNTIME DESTINATION .
+  COMPONENT quark
+)

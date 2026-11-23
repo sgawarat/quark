@@ -11,7 +11,7 @@ add_library(engine_impl STATIC
   sink.cpp
 )
 target_link_libraries(engine_impl PRIVATE
-  config
+  quantum_config
 )
 target_link_libraries(engine_impl PUBLIC
   PkgConfig::UDEV

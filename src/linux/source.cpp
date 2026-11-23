@@ -27,17 +27,23 @@
 #include "quark/quantum/key.hpp"
 
 namespace quark::inline evdev {
-SourceContext::SourceContext(std::shared_ptr<SourceEventQueue> producer, const SourceContextDesc&)
-  : producer_{std::move(producer)} {
-  if (!producer_) throw std::invalid_argument("Invalid SourceEventQueue");
+SourceContext::SourceContext(std::shared_ptr<KeyboardEventQueue> producer,
+    std::shared_ptr<SourceEventQueue> consumer, const SourceContextDesc&)
+  : producer_{std::move(producer)}, consumer_{std::move(consumer)} {
+  if (!producer_) throw std::invalid_argument("Invalid KeyboardEventQueue");
+  if (!consumer_) throw std::invalid_argument("Invalid SourceEventQueue");
 
   // 受信待機用FDを作る
   epoll_fd_ = EpollFd::create().or_throw("Failed to create EpollFd").value();
 
   // 終了通知用FDを作る
   event_fd_ = EventFd::create().or_throw("Failed to create EventFd").value();
-  epoll_fd_.add(event_fd_.handle(), {.events = EPOLLIN, .data{.u64 = EPOLL_DATA_EVENT}})
+  epoll_fd_.add(event_fd_.handle(), {.events = EPOLLIN, .data{.u64 = EPOLL_DATA_STOP_REQUESTED}})
       .or_throw("Failed to add EventFd to Epoll");
+
+  // イベントキュー通知用FDをepollに登録する
+  epoll_fd_.add(consumer_->handle(), {.events = EPOLLIN, .data{.u64 = EPOLL_DATA_EVENT_QUEUE}})
+      .or_throw("Failed to add EventQueue's EventFd to Epoll");
 
   // udev経由で入力デバイスの接続を監視する
   udev_ = Udev{udev_new()};
@@ -94,7 +100,15 @@ void SourceContext::run(const std::stop_token& stop_token) {
     auto&& event = *event_opt;
 
     // Event FD経由で終了要求が来たらループを抜ける
-    if (event.data.u64 == EPOLL_DATA_EVENT) break;
+    if (event.data.u64 == EPOLL_DATA_STOP_REQUESTED) break;
+
+    if (event.data.u64 == EPOLL_DATA_EVENT_QUEUE) {
+      const auto packet_opt = consumer_->pop();
+      if (packet_opt) {
+        packet_opt->visit([this](const auto& time, const auto& ev) { update(time, ev); });
+      }
+      continue;
+    }
 
     // デバイスの接続状況に変化があれば、それを反映させる
     if (event.data.u64 == EPOLL_DATA_UDEV_MONITOR) {
@@ -111,12 +125,15 @@ void SourceContext::run(const std::stop_token& stop_token) {
   }
 }
 
+void SourceContext::update(SourceEventTime, TickEvent) {}
+
+void SourceContext::update(SourceEventTime, EngineSignal) {}
+
 void SourceContext::update_udev_monitor(const epoll_event& event) {
   if ((event.events & (EPOLLERR | EPOLLHUP)) != 0) {
     // TODO: udevを見失ったときに再接続を行うべきか検討する
     throw std::runtime_error("udev was disconnected");
   }
-
   if ((event.events & EPOLLIN) != 0) {
     const UdevDevice device{udev_monitor_receive_device(udev_monitor_.get())};
     if (!device) return;
@@ -276,10 +293,12 @@ bool SourceContext::add_device(const char* syspath, udev_device* device) {
   // キーが押されたままgrabするとungrabするまで押されたままになるので、ユーザーがすべてのキーを離すまで少し待つ
   // TODO: 押しっぱなしキー問題のきちんとした解決策を考える
   if (![&] {
-        auto keys_res = input_fd.get_keys();
-        if (!keys_res) return false;
-        if (!keys_res->any()) return true;
-        QUARK_LOG_INFO("Please release all keys on the {}", syspath);
+        {
+          auto keys_res = input_fd.get_keys();
+          if (!keys_res) return false;
+          if (!keys_res->any()) return true;
+          QUARK_LOG_INFO("Please release all keys on the {}", syspath);
+        }
 
         constexpr size_t COUNT = 10;
         const auto DELTA = std::chrono::milliseconds(100);
