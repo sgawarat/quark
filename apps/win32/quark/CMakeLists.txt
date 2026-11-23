@@ -9,6 +9,7 @@ add_executable(quark
   "${CMAKE_CURRENT_BINARY_DIR}/version.rc"
 )
 target_link_libraries(quark PRIVATE
+  config
   engine
   winmm.lib
 )

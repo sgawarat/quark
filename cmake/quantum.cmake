@@ -17,15 +17,9 @@ target_compile_definitions(quantum_config INTERFACE
 )
 
 # ライブラリ側で用意したconfigヘッダ
-if(MSVC)
-  target_compile_options(quantum_config INTERFACE
-    "SHELL:/FI quark/quantum/config.h"
-  )
-else()
-  target_compile_options(quantum_config INTERFACE
-    "SHELL:-include ${CMAKE_SOURCE_DIR}/include/quark/quantum/config.h"
-  )
-endif()
+target_precompile_headers(quantum_config INTERFACE
+  "${CMAKE_SOURCE_DIR}/include/quark/quantum/config.h"
+)
 
 target_include_directories(quantum_config SYSTEM INTERFACE
   "${QMK_FIRMWARE_DIR}/quantum"

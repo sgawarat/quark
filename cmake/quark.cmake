@@ -7,7 +7,6 @@ add_library(config INTERFACE)
 
 if(MSVC)
   target_compile_options(config INTERFACE
-    /WX # 警告をエラーにする
     /GR- # RTTIを無効化する
     /GS # バッファセキュリティチェック
     /sdl # 追加のセキュリティチェック
@@ -18,24 +17,27 @@ if(MSVC)
     /CETCOMPAT # ハードウェア保護スタック
     /DEPENDENTLOADFLAG:0x800 # DLL検索パスをsystem32のみに制限
   )
-  target_compile_definitions(config INTERFACE
-    WIN32_LEAN_AND_MEAN
-    NOMINMAX
-    UNICODE
-    _UNICODE
-  )
 else()
   target_compile_options(config INTERFACE
-    -Werror # 警告をエラーにする
     $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti> # RTTIを無効化する
 
     # TODO: GCC用にセキュリティ系オプションを追加する
   )
 endif()
 
+if(WIN32)
+  target_compile_definitions(config INTERFACE
+    WIN32_LEAN_AND_MEAN
+    NOMINMAX
+    UNICODE
+    _UNICODE
+  )
+endif()
+
 if(QUARK_ENABLE_WARNING_EVERYTHING)
   target_compile_options(config INTERFACE
     -Weverything
+    -Werror # 警告をエラーにする
 
     # C++の下位互換性の警告を無効化
     -Wno-c++98-compat
@@ -48,19 +50,31 @@ if(QUARK_ENABLE_WARNING_EVERYTHING)
     -Wno-missing-designated-field-initializers # 指示付初期化にて指示子の省略を許容する
     -Wno-global-constructors # 動的に初期化されるグローバル変数を許容する
     -Wno-exit-time-destructors # グローバル変数がデストラクタを持つことを許容する
-
-    # -Wno-unique-object-duplication # グローバル変数にimport/exort属性が付いていないことを警告しない
+    -Wno-unique-object-duplication # グローバル変数にimport/exort属性が付いていないことを警告しない
     -Wno-unused-member-function # 未使用のメンバー関数が実装されていても良い
     -Wno-c2y-extensions # __COUNTER__の使用を許可
     -Wno-disabled-macro-expansion # 自身と同名のトークンに展開するマクロを許容
-    -Wno-lifetime-safety-all # clang v23.1.5では、機能全体をオフにしないとクラッシュする
   )
+
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "23")
+    target_compile_options(config INTERFACE
+      -Wno-lifetime-safety-all # clang v23.1.5では、機能全体をオフにしないとクラッシュする
+    )
+  endif()
 else()
-  target_compile_options(config INTERFACE
-    -Wall
-    -Wextra
-    -Wno-missing-field-initializers
-  )
+  if(MSVC)
+    target_compile_options(config INTERFACE
+      /W4
+      -Wno-missing-designated-field-initializers
+    )
+  else()
+    target_compile_options(config INTERFACE
+      -Wall
+      -Wextra
+      -Wno-missing-field-initializers
+      -Wno-missing-designated-field-initializers
+    )
+  endif()
 endif()
 
 target_compile_features(config INTERFACE

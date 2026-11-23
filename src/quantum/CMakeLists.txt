@@ -48,9 +48,18 @@ if(QUARK_ENABLE_WARNING_EVERYTHING)
     -Wno-exit-time-destructors
   )
 else()
+  if(MSVC)
+    target_compile_options(quantum_core PRIVATE
+      /W4
+    )
+  else()
+    target_compile_options(quantum_core PRIVATE
+      -Wall
+      -Wextra
+    )
+  endif()
+
   target_compile_options(quantum_core PRIVATE
-    -Wall
-    -Wextra
     -Wno-unused-parameter
     -Wno-include-next-absolute-path
   )
