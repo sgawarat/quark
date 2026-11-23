@@ -68,8 +68,8 @@ public:
    * @brief エラー時にログを出力する
    */
   template <typename Self, typename... Args>
-  constexpr Self&& or_log(
-      this Self&& self, const std::format_string<Args...> what, Args&&... args) {
+  constexpr Self&& or_log(this Self&& self [[clang::lifetimebound]],
+      const std::format_string<Args...> what, Args&&... args) {
     if (!self.has_value()) {
       QUARK_LOG_ERROR(
           "{}: {}", std::format(what, std::forward<Args>(args)...), self.error().message());
@@ -81,8 +81,8 @@ public:
    * @brief エラー時にsystem_error例外を投げる
    */
   template <typename Self, typename... Args>
-  constexpr Self&& or_throw(
-      this Self&& self, const std::format_string<Args...> what, Args&&... args) {
+  constexpr Self&& or_throw(this Self&& self [[clang::lifetimebound]],
+      const std::format_string<Args...> what, Args&&... args) {
     if (!self.has_value()) {
       throw std::system_error{
         std::forward<Self>(self).error(),

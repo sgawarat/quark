@@ -58,7 +58,8 @@ if(QUARK_ENABLE_WARNING_EVERYTHING)
 
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "23")
     target_compile_options(config INTERFACE
-      -Wno-lifetime-safety-all # clang v23.1.5では、機能全体をオフにしないとクラッシュする
+      # TODO: lifetimebound属性の使用を検討する
+      -Wno-lifetime-safety-intra-tu-suggestions # lifetimebound属性を付けなくても良い
     )
   endif()
 else()
