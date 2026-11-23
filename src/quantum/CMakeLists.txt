@@ -10,32 +10,52 @@ add_library(quantum_core STATIC
   print.cpp
   quantum.cpp
 )
-target_compile_options(quantum_core PRIVATE
-  -Wno-c23-extensions
-  -Wno-c2y-extensions
-  -Wno-cast-qual
-  -Wno-declaration-after-statement
-  -Wno-documentation
-  -Wno-extra-semi
-  -Wno-extra-semi-stmt
-  -Wno-gnu-folding-constant
-  -Wno-gnu-union-cast
-  -Wno-gnu-zero-variadic-macro-arguments
-  -Wno-implicit-int-conversion
-  -Wno-include-next-absolute-path
-  -Wno-language-extension-token
-  -Wno-missing-prototypes
-  -Wno-missing-variable-declarations
-  -Wno-pre-c11-compat
-  -Wno-shadow
-  -Wno-sign-conversion
-  -Wno-switch-default
-  -Wno-unsafe-buffer-usage
-  -Wno-unused-macros
-  -Wno-unused-parameter
-  -Wno-used-but-marked-unused
-  -Wno-vla
-)
+
+if(QUARK_ENABLE_WARNING_EVERYTHING)
+  target_compile_options(quantum_core PRIVATE
+    -Weverything
+
+    -Wno-c2y-extensions
+    -Wno-cast-qual
+    -Wno-declaration-after-statement
+    -Wno-documentation
+    -Wno-extra-semi
+    -Wno-extra-semi-stmt
+    -Wno-gnu-folding-constant
+    -Wno-gnu-include-next
+    -Wno-gnu-union-cast
+    -Wno-implicit-int-conversion
+    -Wno-include-next-absolute-path
+    -Wno-missing-prototypes
+    -Wno-missing-variable-declarations
+    -Wno-packed
+    -Wno-padded
+    -Wno-pre-c11-compat
+    -Wno-pre-c23-compat
+    -Wno-reserved-identifier
+    -Wno-shadow
+    -Wno-sign-conversion
+    -Wno-switch-default
+    -Wno-unaligned-access
+    -Wno-unsafe-buffer-usage
+    -Wno-unused-macros
+    -Wno-unused-parameter
+    -Wno-used-but-marked-unused
+    -Wno-vla
+
+    # C++
+    -Wno-global-constructors
+    -Wno-exit-time-destructors
+  )
+else()
+  target_compile_options(quantum_core PRIVATE
+    -Wall
+    -Wextra
+    -Wno-unused-parameter
+    -Wno-include-next-absolute-path
+  )
+endif()
+
 target_link_libraries(quantum_core PRIVATE
   quantum_config
   quantum_sources

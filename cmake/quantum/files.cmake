@@ -14,12 +14,14 @@ function(find_quantum_files filename out_var)
 
   # たどるパスがkeyboardsの中にあることを確認する
   cmake_path(IS_PREFIX goal_dir ${dir} NORMALIZE is_prefix)
+
   if(NOT is_prefix)
     message(FATAL_ERROR "Keymap '${dir}' is not found in '${goal_dir}'")
   endif()
 
   # 終点のディレクトリに到達するまで、<filename>とpost_<filename>という名前のファイルを列挙する
   set(out "")
+
   while(NOT ${dir} STREQUAL ${goal_dir})
     # <filename>はディレクトリの浅い順に並べる
     if(EXISTS "${dir}/${filename}")
@@ -50,6 +52,7 @@ endfunction()
 # Quantumのルールに従ってrulesを読み込む
 function(load_quantum_rules)
   find_quantum_files(rules.cmake QUANTUM_RULES_FILES)
+
   foreach(RULES_FILE ${QUANTUM_RULES_FILES})
     # 許可された変数のみを外部に開示する
     block(SCOPE_FOR VARIABLES PROPAGATE
@@ -110,7 +113,14 @@ function(load_quantum_rules)
       WEAR_LEVELING_ENABLE
       WPM_ENABLE
     )
-      include("${RULES_FILE}")
+    include("${RULES_FILE}")
     endblock()
   endforeach()
+endfunction()
+
+# Quantumのルールに従って列挙したconfigヘッダのリストを作る
+function(get_quantum_config_header_list var)
+  find_quantum_files(config.h QUANTUM_CONFIG_HEADERS)
+  list(JOIN QUANTUM_CONFIG_HEADERS "\",\"" QUANTUM_CONFIG_HEADER_LIST)
+  set(${var} "\"${QUANTUM_CONFIG_HEADER_LIST}\"" PARENT_SCOPE)
 endfunction()

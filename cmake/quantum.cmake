@@ -10,11 +10,10 @@ load_quantum_rules()
 # Quantumの設定をまとめたライブラリを作る
 add_library(quantum_config INTERFACE)
 
-# Quantumのルールに基づくconfigヘッダ
-find_quantum_files(config.h QUANTUM_CONFIG_HEADERS)
-list(JOIN QUANTUM_CONFIG_HEADERS "\",\"" QUANTUM_CONFIG_HEADER_LIST)
+# Quantumのルールに基づくconfigヘッダのリスト
+get_quantum_config_header_list(QUARK_CONFIG_HEADER_LIST)
 target_compile_definitions(quantum_config INTERFACE
-  QUARK_CONFIG_HEADER_LIST=\"${QUANTUM_CONFIG_HEADER_LIST}\"
+  QUARK_CONFIG_HEADER_LIST=${QUARK_CONFIG_HEADER_LIST}
 )
 
 # ライブラリ側で用意したconfigヘッダ
@@ -24,46 +23,10 @@ if(MSVC)
   )
 else()
   target_compile_options(quantum_config INTERFACE
-    "SHELL:-include quark/quantum/config.h"
+    "SHELL:-include ${CMAKE_SOURCE_DIR}/include/quark/quantum/config.h"
   )
 endif()
 
-# セキュリティオプション
-if(MSVC)
-  target_compile_options(quantum_config INTERFACE
-    # バッファセキュリティチェック
-    /GS
-
-    # 追加のセキュリティチェック
-    /sdl
-
-    # 制御フローガード
-    /guard:cf
-  )
-  target_link_options(quantum_config INTERFACE
-    # 制御フローガード
-    /GUARD:CF
-
-    # ハードウェア保護スタック
-    /CETCOMPAT
-
-    # DLL検索パスをsystem32のみに制限
-    /DEPENDENTLOADFLAG:0x800
-  )
-else()
-  target_compile_options(quantum_config INTERFACE
-    # TODO: GCC用にセキュリティ系オプションを追加する
-    # -fstack-protector-all
-    # -fstack-clash-protection
-    # -fcf-protection=full
-    # -fsanitize=cfi
-  )
-endif()
-
-target_compile_options(quantum_config INTERFACE
-  -Wno-reserved-identifier  # _______マクロを許可
-  -Wno-gnu-include-next  # include_nextを許可
-)
 target_include_directories(quantum_config SYSTEM INTERFACE
   "${QMK_FIRMWARE_DIR}/quantum"
   "${QMK_FIRMWARE_DIR}/quantum/keymap_extras"

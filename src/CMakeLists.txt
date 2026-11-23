@@ -15,11 +15,9 @@ add_library(engine STATIC
   keyboard.cpp
   engine.cpp
 )
-target_link_libraries(engine PUBLIC
+target_link_libraries(engine PRIVATE
   engine_impl
   quantum
-)
-target_link_libraries(engine PRIVATE
   $<$<TARGET_EXISTS:keyboard>:keyboard>
   $<$<TARGET_EXISTS:keymap>:keymap>
 )

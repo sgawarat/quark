@@ -19,11 +19,19 @@
       }
     },
     {
+      "name": "gcc",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
       "name": "clang",
       "hidden": true,
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang"
+        "CMAKE_CXX_COMPILER": "clang++"
       }
     },
     {
@@ -43,6 +51,14 @@
       }
     },
     {
+      "name": "all-features",
+      "hidden": true,
+      "cacheVariables": {
+        "QUARK_ENABLE_WARNING_EVERYTHING": "yes",
+        "QUARK_ENABLE_TESTING": "yes"
+      }
+    },
+    {
       "name": "debug",
       "hidden": true,
       "cacheVariables": {
@@ -57,24 +73,80 @@
       }
     },
     {
-      "name": "windows-clang-cl-debug",
-      "displayName": "Windows clang-cl (Debug)",
-      "inherits": ["base", "clang-cl", "debug"]
+      "name": "gcc-debug",
+      "displayName": "gcc (Debug)",
+      "inherits": [
+        "base",
+        "gcc",
+        "debug"
+      ]
     },
     {
-      "name": "windows-clang-clang-tidy-debug",
-      "displayName": "Windows clang & clang-tidy (Debug)",
-      "inherits": ["base", "clang", "clang-tidy", "debug"]
+      "name": "clang-debug",
+      "displayName": "clang (Debug)",
+      "inherits": [
+        "base",
+        "clang",
+        "debug"
+      ]
     },
     {
-      "name": "windows-clang-cl-release",
-      "displayName": "Windows clang-cl (Release)",
-      "inherits": ["base", "clang-cl", "release"]
+      "name": "clang-cl-debug",
+      "displayName": "clang-cl (Debug)",
+      "inherits": [
+        "base",
+        "clang-cl",
+        "debug"
+      ]
     },
     {
-      "name": "windows-clang-clang-tidy-release",
-      "displayName": "Windows clang & clang-tidy (Release)",
-      "inherits": ["base", "clang", "clang-tidy", "release"]
+      "name": "clang-tidy-debug",
+      "displayName": "clang-tidy (Debug)",
+      "inherits": [
+        "base",
+        "clang",
+        "clang-tidy",
+        "debug",
+        "all-features"
+      ]
+    },
+    {
+      "name": "gcc-release",
+      "displayName": "gcc (Release)",
+      "inherits": [
+        "base",
+        "gcc",
+        "release"
+      ]
+    },
+    {
+      "name": "clang-release",
+      "displayName": "clang (Release)",
+      "inherits": [
+        "base",
+        "clang",
+        "release"
+      ]
+    },
+    {
+      "name": "clang-cl-release",
+      "displayName": "clang-cl (Release)",
+      "inherits": [
+        "base",
+        "clang-cl",
+        "release"
+      ]
+    },
+    {
+      "name": "clang-tidy-release",
+      "displayName": "clang-tidy (Release)",
+      "inherits": [
+        "base",
+        "clang",
+        "clang-tidy",
+        "release",
+        "all-features"
+      ]
     }
   ]
 }

@@ -15,17 +15,9 @@ target_link_libraries(doctest_main PRIVATE
 add_executable(tests
   bitset_test.cpp
 )
-
-if(MSVC)
-  target_compile_options(tests PRIVATE
-    "SHELL:/FI doctest/doctest.h"
-  )
-else()
-  target_compile_options(tests PRIVATE
-    "SHELL:-include doctest/doctest.h"
-  )
-endif()
-
+target_precompile_headers(tests PRIVATE
+  <doctest/doctest.h>
+)
 target_link_libraries(tests PRIVATE
   config
   doctest::doctest

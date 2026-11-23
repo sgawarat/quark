@@ -4,6 +4,9 @@
 cmake_minimum_required(VERSION 3.28)
 project(quark VERSION 0.5.0)
 
+# モジュールのスキャンでエラーになることがあるので無効化しておく
+set(CMAKE_CXX_SCAN_FOR_MODULES 0)
+
 # Required
 set(QMK_FIRMWARE_DIR "$ENV{QMK_FIRMWARE_DIR}" CACHE PATH "Path to the QMK Firmware Directory")
 set(QUARK_KEYBOARD "$ENV{QUARK_KEYBOARD}" CACHE STRING "Keyboard Name")
@@ -11,13 +14,15 @@ set(QUARK_KEYMAP "$ENV{QUARK_KEYMAP}" CACHE STRING "Keymap Name")
 
 # Optional
 set(QUARK_DISABLE_DEBUGGING_WORKAROUNDS "$ENV{QUARK_DISABLE_DEBUGGING_WORKAROUNDS}" CACHE BOOL
-    "Disables debugging workarounds")
+  "Disables debugging workarounds")
 set(QUARK_ENABLE_TESTING "$ENV{QUARK_ENABLE_TESTING}" CACHE BOOL "Compiles unit tests")
+set(QUARK_ENABLE_WARNING_EVERYTHING "${QUARK_ENABLE_WARNING_EVERYTHING}" CACHE BOOL "Enables -Weverything flag")
 
 # QMK Firmware
 if(NOT IS_ABSOLUTE "${QMK_FIRMWARE_DIR}")
   cmake_path(ABSOLUTE_PATH QMK_FIRMWARE_DIR NORMALIZE)
 endif()
+
 if(NOT(EXISTS "${QMK_FIRMWARE_DIR}" AND IS_DIRECTORY "${QMK_FIRMWARE_DIR}"))
   message(FATAL_ERROR "QMK Firmware directory '${QMK_FIRMWARE_DIR}' is not found")
 endif()
