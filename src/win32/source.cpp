@@ -46,6 +46,12 @@ KeyCode to_keycode(const KBDLLHOOKSTRUCT& ev) noexcept {
     vsc = code | (extended ? VSC_E0 : 0);
   }
 
+  // バックスラッシュ（VK_OEM_5）でないBACKSLASHキーはNONUS_HASHに相当すると仮定してキーコードを割り当てる
+  // TODO: BACKSLASHとNONUS_HASHの対応関係が正しいか検証する
+  if (vsc == +Key::BACKSLASH && ev.vkCode != VK_OEM_5) {
+    return KC_NONUS_HASH;
+  }
+
   // 右シフトがE0で来ることがあるので、通常の右シフトと統合する
   if (vsc == VSC_E0_RIGHT_SHIFT) return KC_RIGHT_SHIFT;
 

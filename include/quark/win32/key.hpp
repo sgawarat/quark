@@ -34,7 +34,7 @@ enum class Key : uint16_t {
   DIGIT_9 = 0x000a,
   DIGIT_0 = 0x000b,
   MINUS = 0x000c,
-  EQUAL = 0x000d,  // en: OEM_PLUS, ja,kr: OEM_7
+  EQUAL = 0x000d,  // en: OEM_PLUS, ja: OEM_7
   BACKSPACE = 0x000e,
   TAB = 0x000f,
   Q = 0x0010,
@@ -47,8 +47,8 @@ enum class Key : uint16_t {
   I = 0x0017,
   O = 0x0018,
   P = 0x0019,
-  LEFT_BRACKET = 0x001a,   // en,ja: OEM_4, kr: OEM_3
-  RIGHT_BRACKET = 0x001b,  // en,ja: OEM_6, kr: OEM_4
+  LEFT_BRACKET = 0x001a,   // en: OEM_4, ja: OEM_3
+  RIGHT_BRACKET = 0x001b,  // en: OEM_6, ja: OEM_4
   ENTER = 0x001c,
   LEFT_CTRL = 0x001d,
   A = 0x001e,
@@ -60,12 +60,12 @@ enum class Key : uint16_t {
   J = 0x0024,
   K = 0x0025,
   L = 0x0026,
-  SEMICOLON = 0x0027,  // en: OEM_1, ja,kr: OEM_PLUS
-  QUOTE = 0x0028,      // en: OEM_7, ja,kr:OEM_1
-  GRAVE = 0x0029,      // en,ja: OEM_3, kr: DBE_SBCSCHAR
+  SEMICOLON = 0x0027,  // en: OEM_1, ja: OEM_PLUS
+  QUOTE = 0x0028,      // en: OEM_7, ja: OEM_1
+  GRAVE = 0x0029,      // en: OEM_3, ja: OEM_AUTO（半角全角）
   LEFT_SHIFT = 0x002a,
-  BACKSLASH = 0x002b,  // en,ja: OEM_5, kr: OEM_6
-  NONUS_HASH = BACKSLASH,
+  BACKSLASH = 0x002b,      // en: OEM_5, ja: OEM_6
+  NONUS_HASH = BACKSLASH,  // VSCは同じ値だが、KCは異なる
   Z = 0x002c,
   X = 0x002d,
   C = 0x002e,
@@ -80,7 +80,7 @@ enum class Key : uint16_t {
   KP_ASTERISK = 0x0037,
   LEFT_ALT = 0x0038,
   SPACE = 0x0039,
-  CAPS_LOCK = 0x003a,  // en: CAPITAL, ja,kr: DBE_ALPHANUMERIC
+  CAPS_LOCK = 0x003a,  // en: CAPITAL, ja: OEM_ATTN（英数）
   F1 = 0x003b,
   F2 = 0x003c,
   F3 = 0x003d,
@@ -123,17 +123,17 @@ enum class Key : uint16_t {
   F21 = 0x006c,
   F22 = 0x006d,
   F23 = 0x006e,
-  INTERNATIONAL_2 = 0x0070,  // ja: DBE_KATAKANA (Kana), kr:DBE_HIRAGANA
+  INTERNATIONAL_2 = 0x0070,  // ja: OEM_COPY（かな）
   // LANGUAGE_2 = 0x0071,  // こちらの可能性もあるらしい（未検証）
   // LANGUAGE_1 = 0x0072,
-  INTERNATIONAL_1 = 0x0073,  // en: ABNT_C1, ja,kr: OEM_102
+  INTERNATIONAL_1 = 0x0073,  // en: ABNT_C1, ja: OEM_102
   F24 = 0x0076,
   LANGUAGE_5 = F24,
-  LANGUAGE_4 = 0x0077,       // ja: DBE_SBCSCHAR
+  LANGUAGE_4 = 0x0077,
   LANGUAGE_3 = 0x0078,       // unused?
-  INTERNATIONAL_4 = 0x0079,  // ja,kr: CONVERT
-  INTERNATIONAL_5 = 0x007b,  // ja,kr: NONCONVERT
-  INTERNATIONAL_3 = 0x007d,  // kr: OEM_5
+  INTERNATIONAL_4 = 0x0079,  // ja: CONVERT
+  INTERNATIONAL_5 = 0x007b,  // ja: NONCONVERT
+  INTERNATIONAL_3 = 0x007d,  // ja: OEM_5
   KP_COMMA = 0x007e,         // ABNT_C2
 
   MEDIA_PREV_TRACK = 0xe010,
@@ -147,7 +147,6 @@ enum class Key : uint16_t {
   AUDIO_VOL_DOWN = 0xe02e,
   AUDIO_VOL_UP = 0xe030,
   WWW_HOME = 0xe032,
-  // _ = 0xe033,  // ja: OEM_8
   KP_SLASH = 0xe035,
   PRINT_SCREEN = 0xe037,
   RIGHT_ALT = 0xe038,
@@ -178,8 +177,8 @@ enum class Key : uint16_t {
   MY_COMPUTER = 0xe06b,
   MAIL = 0xe06c,
   MEDIA_SELECT = 0xe06d,
-  LANGUAGE_2 = 0xe0f1,  // kr: IME_OFF
-  LANGUAGE_1 = 0xe0f2,  // kr: IME_ON
+  LANGUAGE_2 = 0xe0f1,  // ja: IME_OFF
+  LANGUAGE_1 = 0xe0f2,  // ja: IME_ON
 };
 
 /**
