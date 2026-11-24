@@ -130,12 +130,20 @@ void KeyboardContext::update(EventTime, TickEvent) {
 void KeyboardContext::update(EventTime, KeyPressEvent event) {
   matrix_set(event.keycode);
 
+  // OSのキー表現経由ではBACKSLASHとNONUS_HASHを区別するのが難しいので、BACKSLASHはNONUS_HASHとしても扱う
+  // （BACKSLASHとNONUS_HASHを両方使いたいケースは相当特殊なはずなので、実用上はこれで問題ないと思います）
+  // TODO: BACKSLASHとNONUS_HASHを個別に扱うためのオプションを作る？
+  if (event.keycode == KC_BACKSLASH) matrix_set(KC_NONUS_HASH);
+
   // 新しいキーイベントが来たので、アクティブ時間をリセットする
   tick_timeout_tp_ = EventClock::now() + TICK_ACTIVE_TIME;
 }
 
 void KeyboardContext::update(EventTime, KeyReleaseEvent event) {
   matrix_reset(event.keycode);
+
+  // OSのキー表現経由ではBACKSLASHとNONUS_HASHを区別するのが難しいので、BACKSLASHはNONUS_HASHとしても扱う
+  if (event.keycode == KC_BACKSLASH) matrix_reset(KC_NONUS_HASH);
 
   // 新しいキーイベントが来たので、アクティブ時間をリセットする
   tick_timeout_tp_ = EventClock::now() + TICK_ACTIVE_TIME;

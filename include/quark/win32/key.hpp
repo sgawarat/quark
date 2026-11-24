@@ -65,7 +65,7 @@ enum class Key : uint16_t {
   GRAVE = 0x0029,      // en: OEM_3, ja: OEM_AUTO（半角全角）
   LEFT_SHIFT = 0x002a,
   BACKSLASH = 0x002b,      // en: OEM_5, ja: OEM_6
-  NONUS_HASH = BACKSLASH,  // VSCは同じ値だが、KCは異なる
+  NONUS_HASH = BACKSLASH,  // 区別が難しいので、NONUS_HASHはBACKSLASHとして扱う
   Z = 0x002c,
   X = 0x002d,
   C = 0x002e,
