@@ -7,6 +7,7 @@
  */
 #include <Windows.h>
 
+#include <iostream>
 #include <print>
 
 #include "print.hpp"
@@ -41,6 +42,8 @@ LRESULT CALLBACK hookproc(int code, WPARAM wparam, LPARAM lparam) noexcept {
 int main() {
   try {
     using namespace quark::keytest;
+
+    std::wcout.imbue(std::locale(""));
 
     // 有効なスキャンコードを列挙する
     std::println("-----  VK  -----");
