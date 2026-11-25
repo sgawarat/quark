@@ -99,7 +99,7 @@ add_library(keyboard STATIC
     keyboard.cpp
 )
 target_link_libraries(keyboard PRIVATE
-    config  # 共通設定をまとめたライブラリ
+    quantum_config  # 共通設定をまとめたライブラリ
 )
 ```
 

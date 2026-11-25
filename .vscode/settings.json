@@ -3,7 +3,6 @@
     "QMK_FIRMWARE_DIR": "../qmk_firmware",
     "QUARK_KEYBOARD": "jis",
     "QUARK_KEYMAP": "example",
-    "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
   },
   "editor.formatOnSave": true,
   "cmake.configureOnEdit": false,

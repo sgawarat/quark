@@ -2,7 +2,12 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 cmake_minimum_required(VERSION 3.28)
-project(quark VERSION 0.5.0)
+
+if(ENV{VCPKG_ROOT})
+  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+endif()
+
+project(quark VERSION 0.6.0)
 
 # モジュールのスキャンでエラーになることがあるので無効化しておく
 set(CMAKE_CXX_SCAN_FOR_MODULES 0)

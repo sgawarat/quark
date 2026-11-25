@@ -66,6 +66,6 @@ add_library(keymap STATIC
     keymap.cpp
 )
 target_link_libraries(keymap PRIVATE
-    config  # 共通設定をまとめたライブラリ
+    quantum_config  # 共通設定をまとめたライブラリ
 )
 ```
