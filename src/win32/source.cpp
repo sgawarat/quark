@@ -124,6 +124,10 @@ SourceContext::~SourceContext() noexcept {
 }
 
 void SourceContext::run(const std::stop_token& stop_token) {
+  // ダミーのメッセージ取得を行い、スレッドのメッセージキューを生成させる
+  MSG msg{};
+  PeekMessage(&msg, nullptr, 0, 0, PM_NOREMOVE);
+
   const DWORD thread_id = GetCurrentThreadId();
   const std::stop_callback _{
     stop_token, [=] { PostThreadMessage(thread_id, WM_QUIT, EXIT_SUCCESS, 0); }};
@@ -132,7 +136,7 @@ void SourceContext::run(const std::stop_token& stop_token) {
   const std::array handles{
     consumer_->handle(),
   };
-  while (true) {
+  while (!stop_token.stop_requested()) {
     const auto ret = MsgWaitForMultipleObjectsEx(
         handles.size(), handles.data(), INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
     if (ret == WAIT_OBJECT_0) {
