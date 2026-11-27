@@ -25,13 +25,7 @@ namespace quark::inline win32 {
 /**
  * @brief Sourceに送られるイベントの時刻をはかる時計
  */
-struct SourceEventClock final {
-  using time_point = DWORD;
-
-  static time_point now() noexcept {
-    return static_cast<time_point>(GetMessageTime());
-  }
-};
+using SourceEventClock = std::chrono::steady_clock;
 
 /**
  * @brief Sourceに送られるイベントの時刻を格納するための型
@@ -71,7 +65,7 @@ public:
     }
 
   private:
-    SourceEventTime time_{};
+    SourceEventTime time_;
     std::variant<TickEvent, EngineSignal> value_;
   };
 
