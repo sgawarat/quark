@@ -75,8 +75,8 @@ public:
     std::variant<TickEvent, EngineSignal> value_;
   };
 
-  SourceEventQueue() : handle_{CreateEventW(nullptr, FALSE, FALSE, nullptr)} {
-    if (!handle_) throw std::runtime_error("Failed to CreateEvent");
+  SourceEventQueue() : handle_{CreateSemaphoreW(nullptr, 0, LONG_MAX, nullptr)} {
+    if (!handle_) throw std::runtime_error("Failed to CreateSemaphore");
   }
 
   /**
@@ -88,8 +88,8 @@ public:
       const std::scoped_lock<std::mutex> lock{mutex_};
       queue_.emplace_back(std::in_place, std::forward<T>(value));
     }
-    if (SetEvent(handle_.get()) == 0) {
-      throw std::runtime_error("Failed to SetEvent");
+    if (ReleaseSemaphore(handle_.get(), 1, nullptr) == 0) {
+      throw Win32Error("Failed to ReleaseSemaphore");
     }
   }
 
@@ -102,8 +102,8 @@ public:
       const std::scoped_lock<std::mutex> lock{mutex_};
       queue_.emplace_back(std::in_place_type<T>, std::forward<Args>(args)...);
     }
-    if (SetEvent(handle_.get()) == 0) {
-      throw std::runtime_error("Failed to SetEvent");
+    if (ReleaseSemaphore(handle_.get(), 1, nullptr) == 0) {
+      throw Win32Error("Failed to ReleaseSemaphore");
     }
   }
 
@@ -119,24 +119,27 @@ public:
   }
 
   /**
-   * @brief キューを初期化する
+   * @brief キューを空にする
+   *
+   * @note 以前の通知ハンドルは無効化される。
    */
   void reset() {
     const std::unique_lock<std::mutex> lock{mutex_};
     queue_ = {};  // 内部で確保されたメモリを解放する
+    handle_.reset(CreateSemaphoreW(nullptr, 0, LONG_MAX, nullptr));
   }
 
   /**
    * @brief キューに値が追加されたことを通知するハンドルを取得する
    */
-  [[nodiscard]] HANDLE handle() const noexcept [[clang::lifetimebound]] {
+  [[nodiscard]] HANDLE handle() const noexcept {
     return handle_.get();
   }
 
 private:
   std::deque<Packet> queue_;
   std::mutex mutex_;
-  Handle handle_;  ///< キューにイベントが追加されたことを通知するためのEvent
+  Handle handle_;  ///< キューにイベントが追加されたことを通知するためのSemaphore
 };
 
 /**
