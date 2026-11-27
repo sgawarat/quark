@@ -50,6 +50,13 @@ public:
   }
 
   /**
+   * @brief ビットが1か調べる
+   */
+  [[nodiscard]] constexpr bool contains(KeyCode keycode) const noexcept {
+    return BitArray::contains(+keycode);
+  }
+
+  /**
    * @brief ビットを1にする
    */
   constexpr void insert(KeyCode keycode) noexcept {

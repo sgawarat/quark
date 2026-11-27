@@ -18,6 +18,7 @@
 
 #include "quark/engine.hpp"
 #include "quark/keyboard.hpp"
+#include "quark/keyset.hpp"
 #include "quark/utility.hpp"
 #include "quark/win32/utility.hpp"
 
@@ -171,6 +172,6 @@ private:
   std::shared_ptr<KeyboardEventQueue> producer_;
   std::shared_ptr<SourceEventQueue> consumer_;
   Hook hook_;
-  KeyCode last_key_;  ///< 最後に押されたキー
+  KeySet prev_keys_;  ///< 直前のキー状態
 };
 }  // namespace quark::inline win32

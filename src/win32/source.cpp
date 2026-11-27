@@ -185,21 +185,22 @@ LRESULT SourceContext::hookproc(int code, WPARAM wparam, LPARAM lparam) {
 
       // 仮想キーボードが処理できないキーは素通りさせる
       const KeyCode keycode = to_keycode(*info_ptr);
-      if (keycode == KC_NO) {
-        last_key_ = KC_NO;
-        break;
-      }
+      if (keycode == KC_NO) break;
 
       // 入力イベントを仮想キーボードへ横流しする
-      // TODO: キーリピートが最新のキー以外でも発生するとしたらどうする？
       if ((info_ptr->flags & LLKHF_UP) != 0) {
         producer_->emplace<KeyReleaseEvent>(keycode);
-        last_key_ = KC_NO;
+        prev_keys_.remove(keycode);
       } else {
         // 初回のキー押下のみを仮想キーボードに送る
-        if (keycode != last_key_) {
+        if (!prev_keys_.contains(keycode)) {
           producer_->emplace<KeyPressEvent>(keycode);
-          last_key_ = filter_last_key(info_ptr->vkCode, keycode);
+
+          // 離したときにイベントが来るキーだけ押下を記憶しておく
+          // 離したときにイベントが来ないキーは、キーリピートを判別できないので、すべて初回の押下として解釈する
+          if (get_key_property<NonHoldable>(keycode) == NonHoldable::NO) {
+            prev_keys_.insert(keycode);
+          }
         }
       }
       return TRUE;
@@ -219,7 +220,7 @@ void SourceContext::update(SourceEventTime, EngineSignal signal) {
     }
     case EngineSignal::SCREEN_UNLOCKED: {
       QUARK_LOG_DEBUG("SCREEN_UNLOCKED ");
-      last_key_ = KC_NO;
+      prev_keys_ = {};
       break;
     }
   }
