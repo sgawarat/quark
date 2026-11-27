@@ -10,6 +10,7 @@
 #include <memory>
 #include <type_traits>
 
+namespace quark {
 /**
  * @brief ハンドルを破棄するための関数オブジェクト型
  *
@@ -33,3 +34,4 @@ struct HandleDeleter {
 template <typename T, auto D>
   requires(std::is_pointer_v<T> && std::is_invocable_v<decltype(D), T>)
 using UniqueHandle = std::unique_ptr<std::remove_pointer_t<T>, HandleDeleter<T, D>>;
+}  // namespace quark
