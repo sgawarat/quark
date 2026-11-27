@@ -35,10 +35,10 @@ constexpr uint16_t VSC_E0_RIGHT_SHIFT{VSC_E0 | +Key::RIGHT_SHIFT};
 constexpr uint16_t VSC_E1_PAUSE = 0xe11d;
 
 KeyCode to_keycode(const KBDLLHOOKSTRUCT& ev) noexcept {
-  // キーでない入力はQMKで処理できない
-  if ((ev.flags & KEYEVENTF_UNICODE) != 0) return KC_NO;
+  // TODO: VK_PROCESSKEYはどう処理する？
 
-  // TODO: VK_PACKETを正しいキーコードに変換する方法は？
+  // VK_PACKETはキー入力ではないので、対応するキーコードはない
+  if (ev.vkCode == VK_PACKET) return KC_NO;
 
   // 通常のキー入力は仮想スキャンコードで判定する
   uint16_t vsc = 0;
