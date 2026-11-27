@@ -5,10 +5,9 @@
  * @file main.cpp
  * @brief キーの値を確認するためのアプリケーション
  */
-#include <Windows.h>
+#include <windows.h>
 
 #include <iostream>
-#include <print>
 
 #include "print.hpp"
 
@@ -46,17 +45,17 @@ int main() {
     std::wcout.imbue(std::locale(""));
 
     // 有効なスキャンコードを列挙する
-    std::println("-----  VK  -----");
+    std::wcout << L"-----  VK  -----\n";
     for (uint32_t vk = 0x00; vk <= UINT8_MAX; ++vk) {
       const UINT scan = MapVirtualKey(vk, MAPVK_VK_TO_VSC_EX);
       if (scan > 0) print_key_event(vk, scan);
     }
-    std::println("-----  SC  -----");
+    std::wcout << L"-----  SC  -----\n";
     for (uint32_t scan = 0x0000; scan <= UINT16_MAX; ++scan) {
       const UINT vk = MapVirtualKey(scan, MAPVK_VSC_TO_VK_EX);
       if (vk > 0) print_key_event(vk, scan);
     }
-    std::println("----- HOOK -----");
+    std::wcout << L"----- HOOK -----\n";
 
     // 押したキーの番号を表示するため、キーイベントを覗き見る
     auto* const hook = SetWindowsHookEx(WH_KEYBOARD_LL, hookproc, GetModuleHandle(nullptr), 0);
@@ -71,7 +70,7 @@ int main() {
     }
     UnhookWindowsHookEx(hook);
 
-    std::println("----- ---- -----");
+    std::wcout << L"----- ---- -----\n";
 
     return static_cast<int>(msg.wParam);
   } catch (...) {

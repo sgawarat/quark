@@ -7,7 +7,7 @@
  */
 #include "quark/win32/sink.hpp"
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <array>
 #include <chrono>

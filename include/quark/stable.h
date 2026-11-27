@@ -8,7 +8,7 @@
 #pragma once
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 
 // 名前衝突するマクロを退避させる
 // TODO: Windows.hとQMKのマクロが衝突しないように、もっと穏便な方法で解決したい

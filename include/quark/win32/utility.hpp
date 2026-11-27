@@ -7,7 +7,7 @@
  */
 #pragma once
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <memory>
 #include <string>
@@ -17,9 +17,13 @@
 #include "quark/handle.hpp"
 
 namespace quark::inline win32 {
-using Handle = UniqueHandle<HANDLE, [](HANDLE h) {
+namespace detail {
+inline void close_handle(HANDLE h) noexcept {
   if (h != INVALID_HANDLE_VALUE) CloseHandle(h);
-}>;
+};
+}  // namespace detail
+
+using Handle = UniqueHandle<HANDLE, detail::close_handle>;
 using Hook = UniqueHandle<HHOOK, UnhookWindowsHookEx>;
 using LocalMemory = UniqueHandle<HLOCAL, LocalFree>;
 

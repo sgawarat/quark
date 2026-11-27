@@ -7,7 +7,7 @@
  */
 #include "print.hpp"
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <array>
 #include <format>

@@ -7,7 +7,7 @@
  */
 #include "quark/win32/injected.hpp"
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <bit>
 

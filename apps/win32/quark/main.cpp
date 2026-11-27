@@ -5,9 +5,9 @@
  * @file main.cpp
  * @brief Win32バックグラウンドアプリケーション
  */
-#include <Windows.h>
 #include <sddl.h>     // IWYU pragma: keep
 #include <timeapi.h>  // timeBeginPeriod
+#include <windows.h>
 
 #include <cstdlib>
 #include <filesystem>
@@ -220,12 +220,16 @@ int main(int argc, char* argv[]) {
     }
 
 // ここだけはどうしようもないので警告をオフにする
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#endif
     // argvを安全なコンテナにラップする
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     const std::vector<std::string_view> args{&argv[1], &argv[argc]};
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
     // コマンド引数
     const ArgList arg_list{args};

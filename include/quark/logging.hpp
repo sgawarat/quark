@@ -104,7 +104,7 @@ public:
   static void log(LogSeverity severity, std::format_string<Args...> fmt, Args&&... args) noexcept {
     if (severity > s_log_level) return;
     try {
-      auto str = std::format(
+      const auto str = std::format(
           "{{\"timestamp\":\"{:%FT%TZ}\",\"severity\":{:?},\"module\":{:?},"
           "\"message\":{:?}}}\n",
           Clock::now(), to_string(severity), t_module,
@@ -113,7 +113,7 @@ public:
       // TODO: 専用スレッドでログを出力するようにしたい
       const std::scoped_lock<std::mutex> lock{mutex_};
       auto& os = s_log_file ? *s_log_file : std::clog;
-      os << std::move(str);
+      os << str;
       if (severity <= LogSeverity::ERROR) os.flush();  // severityの高いログは即座に出力する
     } catch (const std::exception& e) {
       try {

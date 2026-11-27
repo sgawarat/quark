@@ -6,7 +6,7 @@
  * @brief print関数
  */
 
-#include <Windows.h>
+#include <windows.h>
 
 namespace quark::keytest::inline win32 {
 void print_key_event(DWORD vk, DWORD scan);

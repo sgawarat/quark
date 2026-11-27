@@ -5,9 +5,9 @@
  * @file main.cpp
  * @brief Win32 GUIアプリケーション
  */
-#include <Windows.h>
 #include <sddl.h>      // SDDL conversion
 #include <shellapi.h>  // NotifyIcon
+#include <windows.h>
 #include <windowsx.h>  // GET_X_PARAM, etc.
 
 #include <exception>

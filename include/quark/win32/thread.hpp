@@ -7,8 +7,8 @@
  */
 #pragma once
 
-#include <Windows.h>
 #include <sddl.h>
+#include <windows.h>
 
 #include <concepts>
 #include <stop_token>

@@ -50,6 +50,23 @@
       }
     },
     {
+      "name": "w64-mingw32-gcc",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_SYSTEM_NAME": "Windows",
+        "CMAKE_SYSTEM_PROCESSOR": "x86_64",
+        "CMAKE_C_COMPILER": "x86_64-w64-mingw32-gcc",
+        "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-g++",
+        "CMAKE_RC_COMPILER": "x86_64-w64-mingw32-windres",
+        "CMAKE_FIND_ROOT_PATH": "/usr/x86_64-w64-mingw32",
+        "CMAKE_FIND_ROOT_PATH_MODE_PROGRAM": "NEVER",
+        "CMAKE_FIND_ROOT_PATH_MODE_LIBRARY": "ONLY",
+        "CMAKE_FIND_ROOT_PATH_MODE_INCLUDE": "ONLY",
+        "CMAKE_GET_RUNTIME_DEPENDENCIES_PLATFORM": "windows+pe",
+        "CMAKE_TOOLCHAIN_FILE": ""
+      }
+    },
+    {
       "name": "all-features",
       "hidden": true,
       "cacheVariables": {
@@ -95,6 +112,15 @@
       "inherits": [
         "base",
         "clang-cl",
+        "debug"
+      ]
+    },
+    {
+      "name": "w64-mingw32-gcc-debug",
+      "displayName": "w64-mingw32-gcc (Debug)",
+      "inherits": [
+        "base",
+        "w64-mingw32-gcc",
         "debug"
       ]
     },

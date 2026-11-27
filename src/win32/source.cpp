@@ -7,7 +7,7 @@
  */
 #include "quark/win32/source.hpp"
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <atomic>
 #include <cstdint>
