@@ -14,19 +14,12 @@
 #include <system_error>
 #include <type_traits>
 
-namespace quark::inline win32 {
-/**
- * @brief Win32ハンドルを管理するためのunique_ptrラッパークラス
- *
- * @tparam T ハンドルを表すポインタ型
- * @tparam D ハンドルの破棄を定義する関数オブジェクト
- */
-template <typename T, auto D>
-  requires(std::is_pointer_v<T> && std::invocable<decltype(D), T>)
-using UniqueHandle =
-    std::unique_ptr<std::remove_pointer_t<T>, decltype([](T ptr) noexcept { D(ptr); })>;
+#include "quark/handle.hpp"
 
-using Handle = UniqueHandle<HANDLE, CloseHandle>;
+namespace quark::inline win32 {
+using Handle = UniqueHandle<HANDLE, [](HANDLE h) {
+  if (h != INVALID_HANDLE_VALUE) CloseHandle(h);
+}>;
 using Hook = UniqueHandle<HHOOK, UnhookWindowsHookEx>;
 using LocalMemory = UniqueHandle<HLOCAL, LocalFree>;
 
