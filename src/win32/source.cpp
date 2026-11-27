@@ -110,6 +110,7 @@ SourceContext::SourceContext(std::shared_ptr<KeyboardEventQueue> producer,
     };
     if (!hook_) throw std::runtime_error("Failed to SetWindowsHookEx");
   } catch (...) {
+    hook_ = {};
     // Quantumの使用権を返却する
     SourceContext* prev_host{this};
     s_current_host.compare_exchange_strong(prev_host, nullptr);

@@ -75,6 +75,14 @@ QuantumHost::QuantumHost() {
       .send_extra = send_report,
     };
     host_set_driver(&s_host_driver);
+
+    // 状態を初期化する
+    // TODO: QMKを再開させる必要があるなら、その状態をクリアする方法を作る必要がある
+    s_exception_ptr_from_quantum = {};
+    s_raw_matrix_changed = false;
+    s_matrix_changed = false;
+    s_matrix_mask = {};
+    s_debounce_disabled = false;
   } catch (...) {
     // Quantumの使用権を返却する
     QuantumHost* prev_host{this};
@@ -124,7 +132,7 @@ void QuantumHost::matrix_clear() {
 void QuantumHost::keyboard_task() {
   ::keyboard_task();
   if (s_exception_ptr_from_quantum) {
-    std::rethrow_exception(s_exception_ptr_from_quantum);
+    std::rethrow_exception(std::exchange(s_exception_ptr_from_quantum, nullptr));
   }
 
   // 押下の成立したNonHoldableキーがあれば、それを離した状態に更新する
@@ -143,7 +151,7 @@ void QuantumHost::keyboard_task() {
       s_debounce_disabled = true;
       ::keyboard_task();
       if (s_exception_ptr_from_quantum) {
-        std::rethrow_exception(s_exception_ptr_from_quantum);
+        std::rethrow_exception(std::exchange(s_exception_ptr_from_quantum, nullptr));
       }
     }
   }
@@ -167,7 +175,7 @@ uint8_t matrix_scan(void) {
 #ifdef SPLIT_KEYBOARD
     // NOLINTNEXTLINE(*-array-to-pointer-decay)
     s_matrix_changed = debounce(raw_matrix, matrix + thisHand, raw_matrix_changed);
-    s_matrix_changed || = matrix_post_scan();
+    s_matrix_changed = s_matrix_changed || matrix_post_scan();
 #else
     // NOLINTNEXTLINE(*-array-to-pointer-decay)
     s_matrix_changed = debounce(raw_matrix, matrix, raw_matrix_changed);

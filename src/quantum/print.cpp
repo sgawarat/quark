@@ -16,6 +16,7 @@ extern "C" {
 
 [[gnu::format(printf, 1, 2)]]
 void quark_log_printf(const char* fmt, ...) {
+  if (!fmt) return;
   constexpr auto BUFFER_SIZE = 512;
   std::array<char, BUFFER_SIZE> buffer{};
   va_list args{};
