@@ -208,7 +208,7 @@ SinkContext::SinkContext(std::shared_ptr<SinkEventQueue> consumer, const SinkCon
     DWORD size = sizeof(buffer);
     if (RegGetValueW(HKEY_CURRENT_USER, L"Control Panel\\Keyboard", L"KeyboardDelay", RRF_RT_REG_SZ,
             nullptr, buffer.data(), &size) == ERROR_SUCCESS) {
-      const auto value = _wtoll(buffer.data());  // [0, 3] => [250ms, 1000ms]
+      const auto value = std::clamp(_wtoi(buffer.data()), 0, 3);  // [0, 3] => [250ms, 1000ms]
       keyboard_delay_ = std::chrono::milliseconds((value + 1) * KEYBOARD_DELAY_DELTA);
     } else {
       QUARK_LOG_WARN("Failed to RegGetValue from KeyboardDelay");
@@ -218,7 +218,8 @@ SinkContext::SinkContext(std::shared_ptr<SinkEventQueue> consumer, const SinkCon
     size = sizeof(buffer);
     if (RegGetValueW(HKEY_CURRENT_USER, L"Control Panel\\Keyboard", L"KeyboardSpeed", RRF_RT_REG_SZ,
             nullptr, buffer.data(), &size) == ERROR_SUCCESS) {
-      const auto value = _wtoll(buffer.data());  // [0, 31] -> [~2.5hz, ~30hz] -> [~400ms, ~33ms]
+      const auto value =
+          std::clamp(_wtoi(buffer.data()), 0, 31);  // [0, 31] -> [~2.5hz, ~30hz] -> [~400ms, ~33ms]
       keyboard_speed_ =
           std::chrono::milliseconds(12400 / (31 + (11 * value)));  // NOLINT(*-magic-numbers)
     } else {
