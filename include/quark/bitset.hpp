@@ -304,17 +304,17 @@ public:
    * @param bytes バイト列
    */
   template <BitSetByteRange R>
-  constexpr void assign(const R& bytes) noexcept {
+  void assign(const R& bytes) noexcept {
     const auto dest = std::as_writable_bytes(std::span{values_});
     const auto size = std::min(std::ranges::size(bytes), dest.size());
     auto [_, mid] = std::ranges::copy_n(std::ranges::begin(bytes), size, dest.begin());
     std::ranges::fill(mid, dest.end(), std::byte{});
-    clear_unused_bits();
     if constexpr (std::endian::native == std::endian::big) {
       for (auto& value : values_) {
         value = std::byteswap(value);
       }
     }
+    clear_unused_bits();
   }
 
   /**
