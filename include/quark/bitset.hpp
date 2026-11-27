@@ -72,7 +72,8 @@ concept BitSetByteRange = std::ranges::input_range<R> && std::ranges::sized_rang
  * @tparam N ビット列の大きさ
  * @tparam T ビットを格納する数値列の要素型
  */
-template <size_t N, std::unsigned_integral T = uintptr_t>
+template <size_t N, typename T = uintptr_t>
+  requires(std::unsigned_integral<T> && !std::same_as<T, bool>)
 class BitArray {
 public:
   /**
