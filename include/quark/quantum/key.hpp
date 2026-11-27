@@ -25,7 +25,8 @@ public:
   constexpr KeyCode() = default;
 
   // NOLINTNEXTLINE(*-explicit-constructor)
-  constexpr KeyCode(qk_keycode_defines keycode) noexcept : value_{static_cast<uint8_t>(keycode)} {}
+  constexpr KeyCode(qk_keycode_defines keycode) noexcept
+    : value_{keycode <= UINT8_MAX ? static_cast<uint8_t>(keycode) : uint8_t{0}} {}
 
   constexpr explicit KeyCode(uint8_t value) noexcept : value_{value} {}
 
