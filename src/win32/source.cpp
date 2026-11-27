@@ -133,8 +133,8 @@ void SourceContext::run(const std::stop_token& stop_token) {
     consumer_->handle(),
   };
   while (true) {
-    const auto ret =
-        MsgWaitForMultipleObjects(handles.size(), handles.data(), FALSE, INFINITE, QS_ALLINPUT);
+    const auto ret = MsgWaitForMultipleObjectsEx(
+        handles.size(), handles.data(), INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
     if (ret == WAIT_OBJECT_0) {
       // イベントが届いた場合
       const auto packet_opt = consumer_->pop();
