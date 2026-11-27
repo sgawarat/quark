@@ -7,12 +7,14 @@
  */
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <exception>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <mutex>
 #include <string_view>
 
 #include "quark/utility.hpp"
@@ -76,13 +78,17 @@ public:
   explicit Logger(LogSeverity log_level, const std::filesystem::path& output_path = {}) {
     s_log_level = log_level;
     if (!output_path.empty()) {
+      const std::scoped_lock<std::mutex> lock{mutex_};
       s_log_file = std::make_unique<std::ofstream>(output_path, std::ios::app);
+      if (!s_log_file->is_open()) throw std::runtime_error("Failed to open a log file");
     }
   }
 
   ~Logger() noexcept {
-    s_log_file = {};
     s_log_level = DEFAULT_LOG_LEVEL;
+
+    const std::scoped_lock<std::mutex> lock{mutex_};
+    s_log_file = {};
   }
 
   /**
@@ -98,12 +104,16 @@ public:
   static void log(LogSeverity severity, std::format_string<Args...> fmt, Args&&... args) noexcept {
     if (severity > s_log_level) return;
     try {
-      auto& os = s_log_file ? *s_log_file : std::clog;
-      os << std::format(
+      auto str = std::format(
           "{{\"timestamp\":\"{:%FT%TZ}\",\"severity\":{:?},\"module\":{:?},"
           "\"message\":{:?}}}\n",
           Clock::now(), to_string(severity), t_module,
           std::format(fmt, std::forward<Args>(args)...));
+
+      // TODO: 専用スレッドでログを出力するようにしたい
+      const std::scoped_lock<std::mutex> lock{mutex_};
+      auto& os = s_log_file ? *s_log_file : std::clog;
+      os << std::move(str);
       if (severity <= LogSeverity::ERROR) os.flush();  // severityの高いログは即座に出力する
     } catch (const std::exception& e) {
       try {
@@ -137,9 +147,10 @@ public:
   }
 
 private:
-  static inline std::unique_ptr<std::ofstream> s_log_file;    ///< 出力先のファイル
-  static inline LogSeverity s_log_level = DEFAULT_LOG_LEVEL;  ///< ログレベルのしきい値
-  static thread_local inline std::string_view t_module;       ///< ログの発信元を示す文字列
+  static inline std::mutex mutex_;
+  static inline std::unique_ptr<std::ofstream> s_log_file;                ///< 出力先のファイル
+  static inline std::atomic<LogSeverity> s_log_level{DEFAULT_LOG_LEVEL};  ///< ログレベルのしきい値
+  static thread_local inline std::string_view t_module;  ///< ログの発信元を示す文字列
 };
 
 /**
