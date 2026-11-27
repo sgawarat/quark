@@ -111,7 +111,7 @@ public:
   }
 
   bool send() noexcept {
-    if (size_ == 0) return true;
+    if (size_ == 0) return false;
     return SendInput(size_, inputs_.data(), sizeof(*inputs_.data())) != 0;
   }
 
@@ -152,7 +152,7 @@ public:
   }
 
   bool send() noexcept {
-    if (size_ == 0) return true;
+    if (size_ == 0) return false;
     return SendInput(size_, inputs_.data(), sizeof(*inputs_.data())) != 0;
   }
 
@@ -179,7 +179,7 @@ public:
   }
 
   bool send() noexcept {
-    if (size_ == 0) return true;
+    if (size_ == 0) return false;
     return SendInput(size_, inputs_.data(), sizeof(*inputs_.data())) != 0;
   }
 
