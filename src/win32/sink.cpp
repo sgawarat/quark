@@ -254,10 +254,10 @@ void SinkContext::update(EventTime, TickEvent) {
   if (last_key_ == KC_NO) return;
   if (KeyPressInput{last_key_}.send()) {
     repeat_period_ = EventClock::now() + keyboard_speed_;  // 初回以降はspeedで時間を求める
-    QUARK_LOG_DEBUG("Sink: repeat {}", +last_key_);
+    QUARK_LOG_TRACE("repeat {}", +last_key_);
   } else {
     // 安全のために、送信に失敗したらキーリピートを止める
-    QUARK_LOG_DEBUG("Sink: Failed to repeat {}", +last_key_);
+    QUARK_LOG_TRACE("Failed to repeat {}", +last_key_);
     last_key_ = KC_NO;
   }
 }
@@ -267,18 +267,18 @@ void SinkContext::update(EventTime, KeyPressEvent event) {
     prev_keys_.insert(event.keycode);
     last_key_ = event.keycode;
     repeat_period_ = EventClock::now() + keyboard_delay_;  // 初回はdelayで時間を求める
-    QUARK_LOG_DEBUG("Sink: press {}", +event.keycode);
+    QUARK_LOG_TRACE("press {}", +event.keycode);
   } else {
-    QUARK_LOG_DEBUG("Sink: Failed to press {}", +event.keycode);
+    QUARK_LOG_TRACE("Failed to press {}", +event.keycode);
   }
 }
 
 void SinkContext::update(EventTime, KeyReleaseEvent event) {
   if (KeyReleaseInput{event.keycode}.send()) {
     prev_keys_.remove(event.keycode);
-    QUARK_LOG_DEBUG("Sink: release {}", +event.keycode);
+    QUARK_LOG_TRACE("release {}", +event.keycode);
   } else {
-    QUARK_LOG_DEBUG("Sink: Failed to release {}", +event.keycode);
+    QUARK_LOG_TRACE("Failed to release {}", +event.keycode);
   }
   if (event.keycode == last_key_) last_key_ = KC_NO;
 }
@@ -306,16 +306,17 @@ void SinkContext::update(EventTime, MouseCursorEvent event) {
 void SinkContext::update(EventTime, EngineSignal signal) {
   switch (signal) {
     case EngineSignal::SCREEN_LOCKED: {
+      QUARK_LOG_DEBUG("SCREEN_LOCKED");
       break;
     }
     case EngineSignal::SCREEN_UNLOCKED: {
-      QUARK_LOG_DEBUG("Sink: SCREEN_UNLOCKED signal");
+      QUARK_LOG_DEBUG("SCREEN_UNLOCKED");
       prev_keys_.scan([](KeyCode keycode) {
         if (!KeyReleaseInput{keycode}.send()) {
-          QUARK_LOG_DEBUG("Sink: Failed to clear {}", +keycode);
+          QUARK_LOG_TRACE("Failed to clear {}", +keycode);
           return;
         }
-        QUARK_LOG_DEBUG("Sink: clear {}", +keycode);
+        QUARK_LOG_TRACE("clear {}", +keycode);
       });
       prev_keys_ = {};
       last_key_ = KC_NO;

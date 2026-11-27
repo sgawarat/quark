@@ -152,10 +152,11 @@ void KeyboardContext::update(EventTime, KeyReleaseEvent event) {
 void KeyboardContext::update(EventTime, EngineSignal signal) {
   switch (signal) {
     case EngineSignal::SCREEN_LOCKED: {
+      QUARK_LOG_DEBUG("SCREEN_LOCKED");
       break;
     }
     case EngineSignal::SCREEN_UNLOCKED: {
-      QUARK_LOG_DEBUG("Keyboard: SCREEN_UNLOCKED signal");
+      QUARK_LOG_DEBUG("SCREEN_UNLOCKED");
       matrix_clear();
 
       // 新しいキーイベントが来たと同じことなので、アクティブ時間をリセットする
@@ -171,19 +172,19 @@ void KeyboardContext::send_report(const report_keyboard_t& report) {
   const KeySet pressed_keys = pressing(prev_keys_, keys);
 
   released_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを離す
-    QUARK_LOG_DEBUG("Keyboard: release {}", +keycode);
+    QUARK_LOG_TRACE("release {}", +keycode);
     producer_->emplace<KeyReleaseEvent>(keycode);
   });
   released_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを離す
-    QUARK_LOG_DEBUG("Keyboard: release {}", +keycode);
+    QUARK_LOG_TRACE("release {}", +keycode);
     producer_->emplace<KeyReleaseEvent>(keycode);
   });
   pressed_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを押す
-    QUARK_LOG_DEBUG("Keyboard: press {}", +keycode);
+    QUARK_LOG_TRACE("press {}", +keycode);
     producer_->emplace<KeyPressEvent>(keycode);
   });
   pressed_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを押す
-    QUARK_LOG_DEBUG("Keyboard: press {}", +keycode);
+    QUARK_LOG_TRACE("press {}", +keycode);
     producer_->emplace<KeyPressEvent>(keycode);
   });
 
@@ -196,19 +197,19 @@ void KeyboardContext::send_report(const report_nkro_t& report) {
   const KeySet pressed_keys = pressing(prev_keys_, keys);
 
   released_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを離す
-    QUARK_LOG_DEBUG("Keyboard: release {}", +keycode);
+    QUARK_LOG_TRACE("release {}", +keycode);
     producer_->emplace<KeyReleaseEvent>(keycode);
   });
   released_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを離す
-    QUARK_LOG_DEBUG("Keyboard: release {}", +keycode);
+    QUARK_LOG_TRACE("release {}", +keycode);
     producer_->emplace<KeyReleaseEvent>(keycode);
   });
   pressed_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを押す
-    QUARK_LOG_DEBUG("Keyboard: press {}", +keycode);
+    QUARK_LOG_TRACE("press {}", +keycode);
     producer_->emplace<KeyPressEvent>(keycode);
   });
   pressed_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを押す
-    QUARK_LOG_DEBUG("Keyboard: press {}", +keycode);
+    QUARK_LOG_TRACE("press {}", +keycode);
     producer_->emplace<KeyPressEvent>(keycode);
   });
 

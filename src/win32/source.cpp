@@ -187,13 +187,11 @@ LRESULT SourceContext::hookproc(int code, WPARAM wparam, LPARAM lparam) {
 
       // 入力イベントを仮想キーボードへ横流しする
       if ((info_ptr->flags & LLKHF_UP) != 0) {
-        QUARK_LOG_DEBUG("Source: release {}", +keycode);
         producer_->emplace<KeyReleaseEvent>(keycode);
         last_key_ = KC_NO;
       } else {
         // 初回のキー押下のみを仮想キーボードに送る
         if (keycode != last_key_) {
-          QUARK_LOG_DEBUG("Source: press {}", +keycode);
           producer_->emplace<KeyPressEvent>(keycode);
           last_key_ = filter_last_key(info_ptr->vkCode, keycode);
         }
@@ -210,10 +208,11 @@ void SourceContext::update(SourceEventTime, TickEvent) {}
 void SourceContext::update(SourceEventTime, EngineSignal signal) {
   switch (signal) {
     case EngineSignal::SCREEN_LOCKED: {
+      QUARK_LOG_DEBUG("SCREEN_LOCKED");
       break;
     }
     case EngineSignal::SCREEN_UNLOCKED: {
-      QUARK_LOG_DEBUG("Source: SCREEN_UNLOCKED signal");
+      QUARK_LOG_DEBUG("SCREEN_UNLOCKED ");
       last_key_ = KC_NO;
       break;
     }

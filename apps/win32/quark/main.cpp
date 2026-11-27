@@ -180,12 +180,12 @@ public:
               switch (type) {
                 case CTRL_C_EVENT:
                   // スレッドに終了シグナルを出して安全に終了させる
-                  QUARK_LOG_INFO("Backend received a Ctrl+C");
+                  QUARK_LOG_INFO("Received a Ctrl+C");
                   PostThreadMessage(s_main_thread_id, WM_QUIT, EXIT_SUCCESS, 0);
                   return TRUE;
                 case CTRL_BREAK_EVENT:
                   // スレッドに終了シグナルを出して安全に終了させる
-                  QUARK_LOG_INFO("Backend received a Ctrl+Break");
+                  QUARK_LOG_INFO("Received a Ctrl+Break");
                   PostThreadMessage(s_main_thread_id, WM_QUIT, EXIT_SUCCESS, 0);
                   return TRUE;
               }
