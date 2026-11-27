@@ -104,6 +104,8 @@ public:
 
   /**
    * @brief キューからイベントを取り出す
+   *
+   * @note 通知ハンドルから通知を受けるたびに一度だけ呼び出すことができる。
    */
   std::optional<Packet> pop() {
     const std::unique_lock<std::mutex> lock{mutex_};
@@ -115,7 +117,9 @@ public:
   }
 
   /**
-   * @brief キューを初期化する
+   * @brief キューを空にする
+   *
+   * @note 以前の通知ハンドルは無効化される
    */
   void reset() {
     const std::unique_lock<std::mutex> lock{mutex_};

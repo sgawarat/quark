@@ -181,8 +181,8 @@ bool SourceContext::receive_input_event(size_t device_index, const InputDevice& 
   }
   const auto& event_opt = *event_res;
 
-  // イベントが来なかったら、次のループでもう一度試みる
-  if (!event_opt) return true;  // 継続
+  // イベントが来なかったら、空回りを回避するために待機処理へ戻る
+  if (!event_opt) return false;  // 中断
   const auto& event = *event_opt;
 
   // イベントが来たら、それを振り分ける

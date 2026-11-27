@@ -137,6 +137,7 @@ void QuantumHost::keyboard_task() {
 
   // 押下の成立したNonHoldableキーがあれば、それを離した状態に更新する
   if (s_matrix_changed) {
+    // matrixからNonHoldableキーのビットを消す
     s_matrix_changed = false;
     for (auto&& [row, raw, mask] : std::views::zip(s_matrix, s_raw_matrix, s_matrix_mask)) {
       const matrix_row_t masked_row = row & mask;
@@ -147,7 +148,10 @@ void QuantumHost::keyboard_task() {
         mask &= ~masked_row;
       }
     }
+
+    // 実際に消したNonHoldableキーのビットがあれば、それをキー入力として処理する
     if (s_matrix_changed) {
+      // 押してからすぐ離したので、debounceに引っかからないように処理をスキップさせる
       s_debounce_disabled = true;
       ::keyboard_task();
       if (s_exception_ptr_from_quantum) {
@@ -167,7 +171,8 @@ void matrix_init_custom(void) {
 
 uint8_t matrix_scan(void) {
   if (s_debounce_disabled) {
-    s_debounce_disabled = false;
+    // すでにmatrixの更新を終えているので、そのまま通り抜ける
+    s_debounce_disabled = false;  // debounceのスキップは一度だけ
   } else {
     const bool raw_matrix_changed = s_raw_matrix_changed;
     s_raw_matrix_changed = false;

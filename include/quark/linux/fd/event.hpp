@@ -34,11 +34,13 @@ public:
   EventFd() noexcept = default;
 
   [[nodiscard]] Result<void> write(eventfd_t value) const noexcept {
+    // TODO: EINTRをハンドリングする？
     QUARK_EVDEV_RESULT_CHECK(eventfd_write(handle(), value));
     return {};
   }
 
   [[nodiscard]] Result<eventfd_t> read() const noexcept {
+    // TODO: EINTRをハンドリングする？
     eventfd_t value{};
     QUARK_EVDEV_RESULT_CHECK(eventfd_read(handle(), &value));
     return value;

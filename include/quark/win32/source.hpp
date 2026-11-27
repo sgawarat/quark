@@ -103,6 +103,8 @@ public:
 
   /**
    * @brief キューからイベントを取り出す
+   *
+   * @note 通知ハンドルから通知を受けるたびに一度だけ呼び出すことができる。
    */
   std::optional<Packet> pop() {
     const std::unique_lock<std::mutex> lock{mutex_};

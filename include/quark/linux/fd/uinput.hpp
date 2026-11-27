@@ -71,6 +71,7 @@ public:
   }
 
   [[nodiscard]] Result<size_t> write(std::span<const input_event> events) const noexcept {
+    // TODO: write()がサイズ未満を書き込んで戻ってきたときの対処を実装する
     QUARK_EVDEV_RESULT_TRY(auto&& count, ::write(handle(), events.data(), events.size_bytes()));
     return static_cast<size_t>(count);
   }

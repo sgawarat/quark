@@ -11,6 +11,7 @@
 #include <Windows.h>
 
 // 名前衝突するマクロを退避させる
+// TODO: Windows.hとQMKのマクロが衝突しないように、もっと穏便な方法で解決したい
 static const unsigned int QUARK_WIN32_KEY_EVENT = KEY_EVENT;
 static const unsigned long QUARK_WIN32_DELETE = DELETE;
 static const unsigned int QUARK_WIN32_ERROR = ERROR;

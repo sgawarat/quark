@@ -38,6 +38,9 @@ KeyCode to_keycode(const KBDLLHOOKSTRUCT& ev) noexcept {
   // キーでない入力はQMKで処理できない
   if ((ev.flags & KEYEVENTF_UNICODE) != 0) return KC_NO;
 
+  // TODO: VK_PACKETを正しいキーコードに変換する方法は？
+
+  // 通常のキー入力は仮想スキャンコードで判定する
   uint16_t vsc = 0;
   if (ev.scanCode == 0) {
     vsc = static_cast<uint16_t>(MapVirtualKey(ev.vkCode, MAPVK_VK_TO_VSC_EX));
@@ -89,6 +92,8 @@ SourceContext::SourceContext(std::shared_ptr<KeyboardEventQueue> producer,
       throw std::logic_error("WH_KEYBOAD_LL is already in use");
     }
 
+    // TODO: Win32でもフック開始前にすべてのキーが離されているかを確認するほうが良い？（コマンド確定時のENTERをリリースさせるため）
+
     // フック開始
     s_exception_ptr_from_hookproc = {};
     hook_ = Hook{
@@ -111,6 +116,7 @@ SourceContext::SourceContext(std::shared_ptr<KeyboardEventQueue> producer,
     if (!hook_) throw std::runtime_error("Failed to SetWindowsHookEx");
   } catch (...) {
     hook_ = {};
+
     // Quantumの使用権を返却する
     SourceContext* prev_host{this};
     s_current_host.compare_exchange_strong(prev_host, nullptr);
@@ -133,7 +139,6 @@ void SourceContext::run(const std::stop_token& stop_token) {
   const std::stop_callback _{
     stop_token, [=] { PostThreadMessage(thread_id, WM_QUIT, EXIT_SUCCESS, 0); }};
 
-  MSG msg{};
   const std::array handles{
     consumer_->handle(),
   };
@@ -186,6 +191,7 @@ LRESULT SourceContext::hookproc(int code, WPARAM wparam, LPARAM lparam) {
       }
 
       // 入力イベントを仮想キーボードへ横流しする
+      // TODO: キーリピートが最新のキー以外でも発生するとしたらどうする？
       if ((info_ptr->flags & LLKHF_UP) != 0) {
         producer_->emplace<KeyReleaseEvent>(keycode);
         last_key_ = KC_NO;

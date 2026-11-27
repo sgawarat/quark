@@ -35,7 +35,7 @@ public:
   /**
    * @brief 既定値で構築する
    *
-   * @param on_error エラー発生時に呼び出される関数。その呼出はスレッドセーフである必要がある。
+   * @param on_error エラー発生時にワーカースレッド内で呼び出される関数。この関数内でEngineを操作してはならない。
    */
   explicit Engine(std::function<void()> on_error);
 
