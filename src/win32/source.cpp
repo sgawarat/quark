@@ -35,6 +35,9 @@ constexpr uint16_t VSC_E0_RIGHT_SHIFT{VSC_E0 | +Key::RIGHT_SHIFT};
 constexpr uint16_t VSC_E1_PAUSE = 0xe11d;
 
 KeyCode to_keycode(const KBDLLHOOKSTRUCT& ev) noexcept {
+  // キーでない入力はQMKで処理できない
+  if ((ev.flags & KEYEVENTF_UNICODE) != 0) return KC_NO;
+
   uint16_t vsc = 0;
   if (ev.scanCode == 0) {
     vsc = static_cast<uint16_t>(MapVirtualKey(ev.vkCode, MAPVK_VK_TO_VSC_EX));
