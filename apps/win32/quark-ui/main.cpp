@@ -525,7 +525,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
   try {
     // ロガー
     Logger::set_module("ui");
-    const auto log_path = std::filesystem::path{get_current_module_path()} / "quark-ui.log";
+    const auto log_path =
+        std::filesystem::path{get_current_module_path()}.parent_path() / "quark-ui.log";
     const Logger logger{DEFAULT_LOG_LEVEL, log_path};
 
     // アプリケーション
