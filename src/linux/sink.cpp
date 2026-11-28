@@ -76,8 +76,8 @@ public:
 
   void send(const UinputFd& uifd) const {
     if (size_ == 0) return;
-    // TODO: events_をsize_に切り詰めて渡す
-    uifd.write(events_).or_throw("Failed to send input events to the virtual device");
+    uifd.write(std::span{events_}.first(size_))
+        .or_throw("Failed to send input events to the virtual device");
   }
 
 private:
@@ -121,7 +121,8 @@ public:
 
   void send(const UinputFd& uifd) const {
     if (size_ == 0) return;
-    uifd.write(events_).or_throw("Failed to send input events to the virtual device");
+    uifd.write(std::span{events_}.first(size_))
+        .or_throw("Failed to send input events to the virtual device");
   }
 
 private:
@@ -160,7 +161,8 @@ public:
 
   void send(const UinputFd& uifd) const {
     if (size_ == 0) return;
-    uifd.write(events_).or_throw("Failed to send input events to the virtual device");
+    uifd.write(std::span{events_}.first(size_))
+        .or_throw("Failed to send input events to the virtual device");
   }
 
 private:
