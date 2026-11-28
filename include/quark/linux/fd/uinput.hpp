@@ -66,14 +66,25 @@ public:
   }
 
   [[nodiscard]] Result<void> write(const input_event& event) const noexcept {
-    QUARK_EVDEV_RESULT_CHECK(::write(handle(), &event, sizeof(event)));
-    return {};
+    return write(std::span{&event, 1});
   }
 
-  [[nodiscard]] Result<size_t> write(std::span<const input_event> events) const noexcept {
-    // TODO: write()がサイズ未満を書き込んで戻ってきたときの対処を実装する
-    QUARK_EVDEV_RESULT_TRY(auto&& count, ::write(handle(), events.data(), events.size_bytes()));
-    return static_cast<size_t>(count);
+  [[nodiscard]] Result<void> write(std::span<const input_event> events) const noexcept {
+    const auto bytes = std::as_bytes(events);
+    size_t retry_count = 0;
+    size_t offset = 0;
+    while (offset < bytes.size()) {
+      const int ret = ::write(handle(), bytes.data() + offset, bytes.size() - offset);
+      if (ret < 0) [[unlikely]] {
+        if (errno == EINTR && retry_count++ < MAX_RETRY_COUNT) continue;
+        return make_error(errno);
+      }
+      if (ret == 0) [[unlikely]] {
+        return make_error(ENODEV);
+      }
+      offset += static_cast<size_t>(ret);
+    }
+    return {};
   }
 
 private:
