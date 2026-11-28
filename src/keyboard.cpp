@@ -167,53 +167,11 @@ void KeyboardContext::update(EventTime, EngineSignal signal) {
 }
 
 void KeyboardContext::send_report(const report_keyboard_t& report) {
-  const KeySet keys{report};
-  const KeySet released_keys = releasing(prev_keys_, keys);
-  const KeySet pressed_keys = pressing(prev_keys_, keys);
-
-  released_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを離す
-    QUARK_LOG_TRACE("release {}", +keycode);
-    producer_->emplace<KeyReleaseEvent>(keycode);
-  });
-  released_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを離す
-    QUARK_LOG_TRACE("release {}", +keycode);
-    producer_->emplace<KeyReleaseEvent>(keycode);
-  });
-  pressed_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを押す
-    QUARK_LOG_TRACE("press {}", +keycode);
-    producer_->emplace<KeyPressEvent>(keycode);
-  });
-  pressed_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを押す
-    QUARK_LOG_TRACE("press {}", +keycode);
-    producer_->emplace<KeyPressEvent>(keycode);
-  });
-
-  prev_keys_ = keys;
+  send_report(KeySet{report});
 }
 
 void KeyboardContext::send_report(const report_nkro_t& report) {
-  const KeySet keys{report};
-  const KeySet released_keys = releasing(prev_keys_, keys);
-  const KeySet pressed_keys = pressing(prev_keys_, keys);
-
-  released_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを離す
-    QUARK_LOG_TRACE("release {}", +keycode);
-    producer_->emplace<KeyReleaseEvent>(keycode);
-  });
-  released_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを離す
-    QUARK_LOG_TRACE("release {}", +keycode);
-    producer_->emplace<KeyReleaseEvent>(keycode);
-  });
-  pressed_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを押す
-    QUARK_LOG_TRACE("press {}", +keycode);
-    producer_->emplace<KeyPressEvent>(keycode);
-  });
-  pressed_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを押す
-    QUARK_LOG_TRACE("press {}", +keycode);
-    producer_->emplace<KeyPressEvent>(keycode);
-  });
-
-  prev_keys_ = keys;
+  send_report(KeySet{report});
 }
 
 void KeyboardContext::send_report(const report_mouse_t& report) {
@@ -240,5 +198,29 @@ void KeyboardContext::send_report(const report_extra_t& report) {
   if (last_extra_key_ != KC_NO) {
     producer_->emplace<KeyPressEvent>(last_extra_key_);
   }
+}
+
+void KeyboardContext::send_report(const KeySet& keys) {
+  const KeySet released_keys = releasing(prev_keys_, keys);
+  const KeySet pressed_keys = pressing(prev_keys_, keys);
+
+  released_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを離す
+    QUARK_LOG_TRACE("release {}", +keycode);
+    producer_->emplace<KeyReleaseEvent>(keycode);
+  });
+  released_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを離す
+    QUARK_LOG_TRACE("release {}", +keycode);
+    producer_->emplace<KeyReleaseEvent>(keycode);
+  });
+  pressed_keys.scan_mods([this](KeyCode keycode) {  // 修飾キーを押す
+    QUARK_LOG_TRACE("press {}", +keycode);
+    producer_->emplace<KeyPressEvent>(keycode);
+  });
+  pressed_keys.scan_keys([this](KeyCode keycode) {  // 非修飾キーを押す
+    QUARK_LOG_TRACE("press {}", +keycode);
+    producer_->emplace<KeyPressEvent>(keycode);
+  });
+
+  prev_keys_ = keys;
 }
 }  // namespace quark

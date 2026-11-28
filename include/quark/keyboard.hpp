@@ -94,6 +94,8 @@ private:
   void update(EventTime time, KeyReleaseEvent event);
   void update(EventTime time, EngineSignal signal);
 
+  void send_report(const KeySet& keys);
+
   std::shared_ptr<KeyboardEventQueue> consumer_;
   std::shared_ptr<SinkEventQueue> producer_;
   EventClock::time_point tick_period_tp_;   ///< 次のtickの開始時間
