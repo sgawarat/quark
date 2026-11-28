@@ -105,6 +105,9 @@ KeyboardContext::KeyboardContext(
 KeyboardContext::~KeyboardContext() noexcept = default;
 
 void KeyboardContext::run(const std::stop_token& stop_token) {
+  tick_period_tp_ = EventClock::now() + TICK_INTERVAL;
+  tick_timeout_tp_ = EventClock::now() + TICK_ACTIVE_TIME;
+
   std::optional<KeyboardEventPacket> packet_opt;
   while (!stop_token.stop_requested()) {
     if (tick_period_tp_ < tick_timeout_tp_) {
