@@ -9,8 +9,10 @@
 
 #include <unistd.h>
 
+#include <cstddef>
 #include <utility>
 
+#include "quark/result.hpp"
 #include "quark/utility.hpp"
 
 namespace quark::inline evdev {
@@ -41,6 +43,11 @@ public:
   }
 
 protected:
+  /**
+   * @brief read/writeで失敗時にリトライする最大回数
+   */
+  static constexpr size_t MAX_RETRY_COUNT = 16;
+
   FdBase() = default;
 
   FdBase(FdBase&& other) noexcept : fd_{other.fd_} {

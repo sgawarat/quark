@@ -10,7 +10,7 @@
 #include <sys/eventfd.h>
 #include <unistd.h>
 
-#include <utility>
+#include <cstddef>
 
 #include "quark/linux/fd/base.hpp"
 #include "quark/linux/result.hpp"
@@ -33,17 +33,31 @@ public:
 
   EventFd() noexcept = default;
 
-  [[nodiscard]] Result<void> write(eventfd_t value) const noexcept {
-    // TODO: EINTRをハンドリングする？
-    QUARK_EVDEV_RESULT_CHECK(eventfd_write(handle(), value));
-    return {};
+  [[nodiscard]] Result<eventfd_t> read() const noexcept {
+    size_t retry_count = 0;
+    eventfd_t value{};
+    while (true) {
+      const int ret = eventfd_read(handle(), &value);
+      if (ret < 0) [[unlikely]] {
+        if (errno == EINTR && retry_count++ < MAX_RETRY_COUNT) continue;
+        return make_error(errno);
+      }
+      break;
+    }
+    return value;
   }
 
-  [[nodiscard]] Result<eventfd_t> read() const noexcept {
-    // TODO: EINTRをハンドリングする？
-    eventfd_t value{};
-    QUARK_EVDEV_RESULT_CHECK(eventfd_read(handle(), &value));
-    return value;
+  [[nodiscard]] Result<void> write(eventfd_t value) const noexcept {
+    size_t retry_count = 0;
+    while (true) {
+      const int ret = eventfd_write(handle(), value);
+      if (ret < 0) [[unlikely]] {
+        if (errno == EINTR && retry_count++ < MAX_RETRY_COUNT) continue;
+        return make_error(errno);
+      }
+      break;
+    }
+    return {};
   }
 
 private:
