@@ -419,8 +419,8 @@ public:
 
     constexpr Iterator() noexcept = default;
 
-    constexpr explicit Iterator(ValueIterator iter, Position position) noexcept
-      : iter_{iter}, position_{position} {
+    constexpr explicit Iterator(ValueIterator iter, Position first, Position last) noexcept
+      : iter_{iter}, position_{first}, last_{std::min(last, N)} {
       next();  // 最初の1に移動する
     }
 
@@ -444,12 +444,16 @@ public:
       return iter_ == other.iter_ && position_ == other.position_;
     }
 
+    [[nodiscard]] constexpr bool operator==(std::default_sentinel_t) const noexcept {
+      return position_ == last_;
+    }
+
   private:
     /**
      * @brief 現在地から昇順に1のビットを探す
      */
     constexpr void next() noexcept {
-      while (position_ < N) {
+      while (position_ < last_) {
         // 直前の1より上位に現れる次の1を探す
         const typename ValueIterator::difference_type index = position_ / WIDTH;
         const size_t offset = position_ % WIDTH;
@@ -466,12 +470,13 @@ public:
         position_ += WIDTH - offset;
       }
 
-      // 終端位置をビット列の大きさに揃える
-      if (position_ > N) position_ = N;
+      // 終端位置を整える
+      if (position_ > last_) position_ = last_;
     }
 
     ValueIterator iter_{};
     Position position_{};
+    Position last_{};
   };
 
   /**
@@ -481,19 +486,20 @@ public:
 
   /**
    * @brief 指定の範囲のビューを構築する
+   *
+   * @param first 先頭のビット位置
+   * @param last 終端のビット位置
    */
   constexpr explicit BitOneView(
       const BitArray<N, T>& bits, Position first, Position last = N) noexcept
-    : values_{bits.values()}, first_{first}, last_{last} {
-    if (last_ < first_) last_ = first_;
-  }
+    : values_{bits.values()}, first_{first}, last_{last} {}
 
   [[nodiscard]] constexpr auto begin() const noexcept {
-    return Iterator{values_.begin(), first_};
+    return Iterator{values_.begin(), first_, last_};
   }
 
   [[nodiscard]] constexpr auto end() const noexcept {
-    return Iterator{values_.begin(), last_};
+    return std::default_sentinel;
   }
 
 private:
