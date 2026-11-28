@@ -10,6 +10,8 @@
 #include <thread>
 
 extern "C" {
+#include "quark/quantum/system/_wait.h"  // IWYU pragma: keep
+
 void wait_ms(uintptr_t msec) {
   if (msec > 0) std::this_thread::sleep_for(std::chrono::milliseconds(msec));
 }

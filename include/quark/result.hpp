@@ -38,11 +38,11 @@
 #define QUARK_RESULT_TRY_CONST(decl, ...) \
   QUARK_RESULT_TRY_CONST_1(decl, QUARK_RESULT_VARIABLE_NAME, __VA_ARGS__)
 #define QUARK_RESULT_TRY_CONST_1(decl, result, ...) \
-  const auto&& result = (__VA_ARGS__); \
+  const auto& result = (__VA_ARGS__); \
   if (!result) { \
-    return ::std::unexpected{std::forward<decltype(result)>(result).error()}; \
+    return ::std::unexpected{result.error()}; \
   } \
-  decl(*::std::forward<decltype(result)>(result))
+  decl(*result)
 
 /**
  * @brief expectedがエラーのときにリターンするマクロ

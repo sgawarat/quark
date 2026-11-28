@@ -128,7 +128,7 @@ enum class Key : uint16_t {
   // LANGUAGE_1 = 0x0072,
   INTERNATIONAL_1 = 0x0073,  // en: ABNT_C1, ja: OEM_102
   F24 = 0x0076,
-  LANGUAGE_5 = F24,
+  LANGUAGE_5 = F24,  // TODO: Win32でF24とLANG5を区別する方法を調べる
   LANGUAGE_4 = 0x0077,
   LANGUAGE_3 = 0x0078,       // unused?
   INTERNATIONAL_4 = 0x0079,  // ja: CONVERT

@@ -2,14 +2,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /**
- * @file keyboard.h
+ * @file keymap.h
  * @brief キーマップの宣言のみ
  */
 #pragma once
 
 #ifdef QUARK_QUANTUM_KEYMAP_HEADER
 #include QUARK_QUANTUM_KEYMAP_HEADER  // IWYU pragma: export
-#else
 #endif
 
 #include <quantum.h>

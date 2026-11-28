@@ -213,7 +213,7 @@ bool SourceContext::receive_input_event(size_t device_index, const InputDevice& 
   // SYN_DROPPEDが来たら、処理が追いついていないという証なので、安全のためにデバイスを監視リストから除外する
   if (event.type == EV_SYN && event.code == SYN_DROPPED) {
     // TODO: SYN_DROPPEDを正しくハンドリングする
-    QUARK_LOG_WARN("Input events was dropped in the device #{}", device_index);
+    QUARK_LOG_WARN("A input event was dropped in the device #{}", device_index);
     remove_device(device_index);
     return false;  // 中断
   }

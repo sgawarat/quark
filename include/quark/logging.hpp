@@ -76,12 +76,12 @@ public:
    * @param output_path 出力先のファイルパス。空であれば、代わりにstderrに出力される。
    */
   explicit Logger(LogSeverity log_level, const std::filesystem::path& output_path = {}) {
-    s_log_level = log_level;
     if (!output_path.empty()) {
       const std::scoped_lock<std::mutex> lock{mutex_};
       s_log_file = std::make_unique<std::ofstream>(output_path, std::ios::app);
       if (!s_log_file->is_open()) throw std::runtime_error("Failed to open a log file");
     }
+    s_log_level = log_level;
   }
 
   ~Logger() noexcept {
@@ -150,7 +150,7 @@ private:
   static inline std::mutex mutex_;
   static inline std::unique_ptr<std::ofstream> s_log_file;                ///< 出力先のファイル
   static inline std::atomic<LogSeverity> s_log_level{DEFAULT_LOG_LEVEL};  ///< ログレベルのしきい値
-  static thread_local inline std::string_view t_module;  ///< ログの発信元を示す文字列
+  static thread_local inline std::string t_module;  ///< ログの発信元を示す文字列
 };
 
 /**
@@ -165,15 +165,21 @@ private:
     } \
   } while (false)
 
-#define QUARK_LOG_FATAL(fmt, ...) QUARK_LOG(::quark::LogSeverity::FATAL, fmt, __VA_ARGS__)
-#define QUARK_LOG_ERROR(fmt, ...) QUARK_LOG(::quark::LogSeverity::ERROR, fmt, __VA_ARGS__)
-#define QUARK_LOG_WARN(fmt, ...) QUARK_LOG(::quark::LogSeverity::WARN, fmt, __VA_ARGS__)
-#define QUARK_LOG_INFO(fmt, ...) QUARK_LOG(::quark::LogSeverity::INFO, fmt, __VA_ARGS__)
+#define QUARK_LOG_FATAL(fmt, ...) \
+  QUARK_LOG(::quark::LogSeverity::FATAL, fmt __VA_OPT__(, ) __VA_ARGS__)
+#define QUARK_LOG_ERROR(fmt, ...) \
+  QUARK_LOG(::quark::LogSeverity::ERROR, fmt __VA_OPT__(, ) __VA_ARGS__)
+#define QUARK_LOG_WARN(fmt, ...) \
+  QUARK_LOG(::quark::LogSeverity::WARN, fmt __VA_OPT__(, ) __VA_ARGS__)
+#define QUARK_LOG_INFO(fmt, ...) \
+  QUARK_LOG(::quark::LogSeverity::INFO, fmt __VA_OPT__(, ) __VA_ARGS__)
 
 // DEBUGとTRACEはデバッグビルドのみで有効
 #ifndef NDEBUG
-#define QUARK_LOG_DEBUG(fmt, ...) QUARK_LOG(::quark::LogSeverity::DEBUG, fmt, __VA_ARGS__)
-#define QUARK_LOG_TRACE(fmt, ...) QUARK_LOG(::quark::LogSeverity::TRACE, fmt, __VA_ARGS__)
+#define QUARK_LOG_DEBUG(fmt, ...) \
+  QUARK_LOG(::quark::LogSeverity::DEBUG, fmt __VA_OPT__(, ) __VA_ARGS__)
+#define QUARK_LOG_TRACE(fmt, ...) \
+  QUARK_LOG(::quark::LogSeverity::TRACE, fmt __VA_OPT__(, ) __VA_ARGS__)
 #else
 #define QUARK_LOG_DEBUG(...) (void)0
 #define QUARK_LOG_TRACE(...) (void)0

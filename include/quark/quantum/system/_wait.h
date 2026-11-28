@@ -28,7 +28,7 @@ void wait_ms(uintptr_t millisec);
 /**
  * @brief 入力ピンを切り替えるために待機する
  *
- * matric_common.cで使われている。
+ * matrix_common.cで使われている。
  *
  * ハードウェアに関連するものなので、ソフトウェア実装では必要ない。
  */

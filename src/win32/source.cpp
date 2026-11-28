@@ -64,19 +64,6 @@ KeyCode to_keycode(const KBDLLHOOKSTRUCT& ev) noexcept {
   // それ以外は対応表で変換する
   return to_keycode(Key{vsc});
 }
-
-/**
- * @brief 最後に押したキーをフィルタリングする
- */
-constexpr KeyCode filter_last_key(DWORD vkcode, KeyCode keycode) noexcept {
-  // 半角全角・英数・かなキーは離したときにイベントを寄越さずキーリピートの終わりを特定できないので、押してすぐ離したことにする
-  if ((vkcode == VK_OEM_AUTO || vkcode == VK_OEM_ENLW || vkcode == VK_OEM_COPY ||
-          vkcode == VK_OEM_ATTN) &&
-      (keycode == KC_GRAVE || keycode == KC_CAPS_LOCK || keycode == KC_LANGUAGE_2)) {
-    return KC_NO;
-  }
-  return keycode;
-}
 }  // namespace
 
 SourceContext::SourceContext(std::shared_ptr<KeyboardEventQueue> producer,
@@ -89,7 +76,7 @@ SourceContext::SourceContext(std::shared_ptr<KeyboardEventQueue> producer,
     // フックの使用許可を得る
     SourceContext* prev_host{nullptr};
     if (!s_current_host.compare_exchange_strong(prev_host, this)) {
-      throw std::logic_error("WH_KEYBOAD_LL is already in use");
+      throw std::logic_error("WH_KEYBOARD_LL is already in use");
     }
 
     // TODO: Win32でもフック開始前にすべてのキーが離されているかを確認するほうが良い？（コマンド確定時のENTERをリリースさせるため）
@@ -125,6 +112,8 @@ SourceContext::SourceContext(std::shared_ptr<KeyboardEventQueue> producer,
 }
 
 SourceContext::~SourceContext() noexcept {
+  hook_ = {};
+
   // Quantumの使用権を返却する
   if (s_current_host != this) return;
   s_current_host.store(nullptr);
@@ -219,7 +208,7 @@ void SourceContext::update(SourceEventTime, EngineSignal signal) {
       break;
     }
     case EngineSignal::SCREEN_UNLOCKED: {
-      QUARK_LOG_DEBUG("SCREEN_UNLOCKED ");
+      QUARK_LOG_DEBUG("SCREEN_UNLOCKED");
       prev_keys_ = {};
       break;
     }

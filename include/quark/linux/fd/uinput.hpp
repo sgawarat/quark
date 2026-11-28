@@ -74,7 +74,8 @@ public:
     size_t retry_count = 0;
     size_t offset = 0;
     while (offset < bytes.size()) {
-      const int ret = ::write(handle(), bytes.data() + offset, bytes.size() - offset);
+      // NOLINTNEXTLINE(*-avoid-unchecked-container-access)
+      const ssize_t ret = ::write(handle(), &bytes[offset], bytes.size() - offset);
       if (ret < 0) [[unlikely]] {
         if (errno == EINTR && retry_count++ < MAX_RETRY_COUNT) continue;
         return make_error(errno);
