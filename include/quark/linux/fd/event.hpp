@@ -22,30 +22,25 @@ namespace quark::inline evdev {
 class EventFd final : public FdBase {
 public:
   static Result<EventFd> create() noexcept {
-    QUARK_EVDEV_RESULT_TRY(EventFd evfd, eventfd(0, EFD_CLOEXEC));
-    return evfd;
-  }
-
-  static Result<EventFd> create_semaphore() noexcept {
-    QUARK_EVDEV_RESULT_TRY(EventFd evfd, eventfd(0, EFD_SEMAPHORE | EFD_CLOEXEC));
+    QUARK_EVDEV_RESULT_TRY(EventFd evfd, eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC));
     return evfd;
   }
 
   EventFd() noexcept = default;
 
-  [[nodiscard]] Result<eventfd_t> read() const noexcept {
-    size_t retry_count = 0;
-    eventfd_t value{};
-    while (true) {
-      const int ret = eventfd_read(handle(), &value);
-      if (ret < 0) [[unlikely]] {
-        if (errno == EINTR && retry_count++ < MAX_RETRY_COUNT) continue;
-        return make_error(errno);
-      }
-      break;
-    }
-    return value;
-  }
+  // [[nodiscard]] Result<eventfd_t> read() const noexcept {
+  //   size_t retry_count = 0;
+  //   eventfd_t value{};
+  //   while (true) {
+  //     const int ret = eventfd_read(handle(), &value);
+  //     if (ret < 0) [[unlikely]] {
+  //       if (errno == EINTR && retry_count++ < MAX_RETRY_COUNT) continue;
+  //       return make_error(errno);
+  //     }
+  //     break;
+  //   }
+  //   return value;
+  // }
 
   [[nodiscard]] Result<void> write(eventfd_t value) const noexcept {
     size_t retry_count = 0;

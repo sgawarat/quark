@@ -24,6 +24,7 @@
 #include "quark/linux/fd/epoll.hpp"
 #include "quark/linux/fd/event.hpp"
 #include "quark/linux/fd/input.hpp"
+#include "quark/linux/fd/semaphore.hpp"
 #include "quark/linux/fd/uinput.hpp"
 #include "quark/utility.hpp"
 
@@ -76,18 +77,16 @@ public:
   };
 
   SourceEventQueue()
-    : event_fd_{EventFd::create_semaphore().or_throw("Failed to create eventfd").value()} {}
+    : semaphore_fd_{SemaphoreEventFd::create().or_throw("Failed to create a semaphore").value()} {}
 
   /**
    * @brief イベントを追加する
    */
   template <typename T>
   void push(T&& value) {
-    {
-      const std::scoped_lock<std::mutex> lock{mutex_};
-      queue_.emplace_back(std::in_place, std::forward<T>(value));
-    }
-    event_fd_.write(1).or_throw("Failed to eventfd_write");
+    const std::scoped_lock<std::mutex> lock{mutex_};
+    semaphore_fd_.release().or_throw("Failed to eventfd_write");
+    queue_.emplace_back(std::in_place, std::forward<T>(value));
   }
 
   /**
@@ -95,23 +94,22 @@ public:
    */
   template <typename T, typename... Args>
   void emplace(Args&&... args) {
-    {
-      const std::scoped_lock<std::mutex> lock{mutex_};
-      queue_.emplace_back(std::in_place_type<T>, std::forward<Args>(args)...);
-    }
-    event_fd_.write(1).or_throw("Failed to eventfd_write");
+    const std::scoped_lock<std::mutex> lock{mutex_};
+    semaphore_fd_.release().or_throw("Failed to eventfd_write");
+    queue_.emplace_back(std::in_place_type<T>, std::forward<Args>(args)...);
   }
 
   /**
    * @brief キューからイベントを取り出す
-   *
-   * @note 通知ハンドルから通知を受けるたびに一度だけ呼び出すことができる。
    */
   std::optional<Packet> pop() {
     const std::unique_lock<std::mutex> lock{mutex_};
     if (queue_.empty()) return std::nullopt;
+
+    const auto acquired = semaphore_fd_.acquire().or_throw("Failed to eventfd_read").value();
+    if (!acquired) return std::nullopt;
+
     auto out = queue_.front();
-    event_fd_.read().or_throw("Failed to eventfd_read");
     queue_.pop_front();
     return out;
   }
@@ -124,20 +122,20 @@ public:
   void reset() {
     const std::unique_lock<std::mutex> lock{mutex_};
     queue_ = {};  // 内部で確保されたメモリを解放する
-    event_fd_ = EventFd::create_semaphore().or_throw("Failed to create eventfd").value();
+    semaphore_fd_ = SemaphoreEventFd::create().or_throw("Failed to create a semaphore").value();
   }
 
   /**
    * @brief キューに値が追加されたことを通知するハンドルを取得する
    */
   [[nodiscard]] int handle() const noexcept {
-    return event_fd_.handle();
+    return semaphore_fd_.handle();
   }
 
 private:
   std::deque<Packet> queue_;
   std::mutex mutex_;
-  EventFd event_fd_;  ///< キューにイベントが追加されたことを通知するためのEvent
+  SemaphoreEventFd semaphore_fd_;  ///< キューにイベントが追加されたことを通知するためのセマフォ
 };
 
 /**
